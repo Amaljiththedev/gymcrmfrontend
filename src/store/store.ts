@@ -3,6 +3,7 @@ import authReducer from './authSlice';
 import memberReducer from '@/src/features/members/memberSlice';
 import membershipPlanReducer from '@/src/features/membershipPlans/membershipPlanSlice';
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
+import staffReducer from '@/src/features/staff/staffSlice';
 import { persistReducer, persistStore } from 'redux-persist';
 
 // Configuration for redux-persist; only persist the auth slice.
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
   auth: authReducer, // Persisted
   members: memberReducer, // Not persisted
   membershipPlans: membershipPlanReducer, // Not persisted
+  staff: staffReducer, 
 });
 
 // Wrap the rootReducer with persist capabilities.
