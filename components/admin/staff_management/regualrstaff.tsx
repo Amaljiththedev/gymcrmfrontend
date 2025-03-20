@@ -4,11 +4,10 @@ import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { RootState, AppDispatch } from "@/src/store/store";
-import { fetchAllStaff } from "@/src/features/staff/staffSlice";
+import { fetchRegularStaff, Staff } from "@/src/features/staff/staffSlice";
 import {
   Avatar,
   Box,
-  Chip,
   Typography,
   Input,
   Sheet,
@@ -22,10 +21,6 @@ import {
   ModalDialog,
   ModalClose,
   Divider,
-  Menu,
-  MenuButton,
-  MenuItem,
-  Dropdown,
   IconButton,
   CssVarsProvider,
   extendTheme,
@@ -37,12 +32,9 @@ import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import BlockIcon from "@mui/icons-material/Block";
-import { Staff } from "@/src/features/staff/staffSlice";
-import { ColorPaletteProp } from "@mui/joy/styles";
 
 // Create a dark theme
 const darkTheme = extendTheme({
@@ -107,10 +99,11 @@ const headCells = [
   { id: "actions", label: "Actions", sortable: false },
 ];
 
-export default function StaffTable() {
+export default function RegularStaffPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { all: staff } = useSelector((state: RootState) => state.staff);
+  // Use the 'all' property to get regular staff
+  const { all: staff, loading, error } = useSelector((state: RootState) => state.staff);
   const [order, setOrder] = useState<Order>("desc");
   const [orderBy, setOrderBy] = useState<SortKey>("first_name");
   const [page, setPage] = useState(0);
@@ -120,8 +113,9 @@ export default function StaffTable() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  // Dispatch the fetchRegularStaff thunk when component mounts
   useEffect(() => {
-    dispatch(fetchAllStaff());
+    dispatch(fetchRegularStaff());
   }, [dispatch]);
 
   // Filter staff based on search term, department, and role
@@ -163,7 +157,11 @@ export default function StaffTable() {
         <Select
           size="sm"
           value={departmentFilter}
-          onChange={(e) => setDepartmentFilter((e.target as HTMLSelectElement).value)}
+          onChange={(e) => {
+            if (e && e.target) {
+              setDepartmentFilter((e.target as HTMLSelectElement).value);
+            }
+          }}
           placeholder="Filter by department"
           sx={{
             color: '#fff',
@@ -187,7 +185,11 @@ export default function StaffTable() {
         <Select
           size="sm"
           value={roleFilter}
-          onChange={(e) => setRoleFilter((e.target as HTMLSelectElement).value)}
+          onChange={(e) => {
+            if (e) {
+              setRoleFilter((e.target as HTMLSelectElement).value);
+            }
+          }}
           placeholder="Filter by role"
           sx={{
             color: '#fff',
@@ -203,6 +205,22 @@ export default function StaffTable() {
       </FormControl>
     </>
   );
+
+  // Render loading or error states if needed
+  if (loading) {
+    return (
+      <Box sx={{ p: 4, textAlign: "center", color: "#fff" }}>
+        <Typography>Loading Regular Staff...</Typography>
+      </Box>
+    );
+  }
+  if (error) {
+    return (
+      <Box sx={{ p: 4, textAlign: "center", color: "#fff" }}>
+        <Typography>Error: {error}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <CssVarsProvider theme={darkTheme} defaultMode="dark">
@@ -361,7 +379,7 @@ export default function StaffTable() {
           <tbody>
             {filteredStaff
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((staffMember: { id: boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | Promise<React.AwaitedReactNode> | React.Key | null | undefined; first_name: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | Promise<React.AwaitedReactNode> | null | undefined; last_name: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; email: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; phone_number: string; department: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; salary: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; role: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; }) => (
+              .map((staffMember) => (
                 <tr key={staffMember.id}>
                   <td>
                     <Typography level="body-sm" sx={{ color: "rgba(255,255,255,0.9)" }}>
@@ -428,7 +446,7 @@ export default function StaffTable() {
                           size="sm"
                           variant="plain"
                           color="neutral"
-                          onClick={() => typeof staffMember.id === 'number' && handleEditStaff(staffMember.id)}
+                          onClick={() => handleEditStaff(staffMember.id)}
                           sx={{ color: "#fff" }}
                         >
                           <EditIcon />

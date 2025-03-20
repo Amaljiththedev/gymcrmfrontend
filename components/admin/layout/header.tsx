@@ -141,6 +141,9 @@ export default function Sidebar() {
       id: 'salarymanagement',
       href: '/admin/staff/salary',
     },
+    { label: 'Super Staff', id: 'superstaff', href: '/admin/staff/superstaff' },
+    { label: 'Super Staff', id: 'superstaff', href: '/admin/staff/addregularstaff' },
+    { label: 'Super Staff', id: 'superstaff', href: '/admin/staff/addsuperstaff' },
   ];
   const filteredStaffItems = filterItems(staffItems);
   const staffHeaderMatches =

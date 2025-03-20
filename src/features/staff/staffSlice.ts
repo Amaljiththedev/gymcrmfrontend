@@ -1,4 +1,3 @@
-// staffSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
@@ -24,6 +23,7 @@ export interface Staff {
 // Define the state interface for the staff slice
 interface StaffState {
   all: Staff[];
+  superStaff: Staff[];
   detail: Staff | null;
   loading: boolean;
   error: string | null;
@@ -36,6 +36,7 @@ interface StaffState {
 // Initial state
 const initialState: StaffState = {
   all: [],
+  superStaff: [],
   detail: null,
   loading: false,
   error: null,
@@ -45,20 +46,52 @@ const initialState: StaffState = {
   addError: null,
 };
 
-// Async thunk for fetching all staff members (regular + super)
+// Async thunk for fetching all staff members
 export const fetchAllStaff = createAsyncThunk<Staff[], void>(
   'staff/fetchAllStaff',
   async (_, thunkAPI) => {
     try {
       const response = await axios.get<Staff[]>('/staff/all-staff/');
+      console.log("All Staff Data:", response.data);
       return response.data;
     } catch (error: any) {
+      console.error("Error fetching all staff:", error.response?.data || error.message);
       return thunkAPI.rejectWithValue(error.response?.data || error.message);
     }
   }
 );
 
-// Async thunk for fetching a single staff member's details by ID
+// Async thunk for fetching super staff
+export const fetchSuperstaff = createAsyncThunk<Staff[], void>(
+  'staff/fetchSuperstaff',
+  async (_, thunkAPI) => {
+    try {
+      const response = await axios.get<Staff[]>('/staff/super-staff/');
+      console.log("Super Staff Data:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("Error fetching super staff:", error.response?.data || error.message);
+      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+// Async thunk for fetching regular staff
+export const fetchRegularStaff = createAsyncThunk<Staff[], void>(
+  'staff/fetchRegularStaff',
+  async (_, thunkAPI) => {
+    try {
+      const response = await axios.get<Staff[]>('/staff/regular-staff/');
+      console.log("Regular Staff Data:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("Error fetching regular staff:", error.response?.data || error.message);
+      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+// Async thunk for fetching a single staff member's details
 export const fetchStaffDetail = createAsyncThunk<Staff, number>(
   'staff/fetchStaffDetail',
   async (id, thunkAPI) => {
@@ -71,7 +104,7 @@ export const fetchStaffDetail = createAsyncThunk<Staff, number>(
   }
 );
 
-// Async thunk for updating a staff member by ID (using PATCH for partial updates)
+// Async thunk for updating a staff member
 export const updateStaff = createAsyncThunk<Staff, { id: number; staffData: Partial<Staff> }>(
   'staff/updateStaff',
   async ({ id, staffData }, thunkAPI) => {
@@ -84,7 +117,7 @@ export const updateStaff = createAsyncThunk<Staff, { id: number; staffData: Part
   }
 );
 
-// Async thunk for adding Regular Staff (no password required)
+// Async thunk for adding Regular Staff (expects a plain object)
 export const addRegularStaff = createAsyncThunk<Staff, Omit<Staff, 'id' | 'role'>>(
   'staff/addRegularStaff',
   async (staffData, thunkAPI) => {
@@ -97,15 +130,15 @@ export const addRegularStaff = createAsyncThunk<Staff, Omit<Staff, 'id' | 'role'
   }
 );
 
-// Async thunk for adding Super Staff (requires a password)
-export const addSuperStaff = createAsyncThunk<
-  Staff,
-  Omit<Staff, 'id' | 'role'> & { password: string }
->(
+// Async thunk for adding Super Staff (requires password)
+// Now updated to accept a FormData instance so that files and text fields (including department) are supported.
+export const addSuperStaff = createAsyncThunk<Staff, FormData>(
   'staff/addSuperStaff',
-  async (staffData, thunkAPI) => {
+  async (formData, thunkAPI) => {
     try {
-      const response = await axios.post<Staff>('/staff/super-staff/', staffData);
+      const response = await axios.post<Staff>('/staff/super-staff/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       return response.data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue(error.response?.data || error.message);
@@ -132,6 +165,37 @@ const staffSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     });
+
+    // Handle fetchSuperstaff
+    builder.addCase(fetchSuperstaff.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchSuperstaff.fulfilled, (state, action: PayloadAction<Staff[]>) => {
+      state.loading = false;
+      state.superStaff = action.payload;
+      console.log("Updated State with Super Staff:", state.superStaff);
+    });
+    builder.addCase(fetchSuperstaff.rejected, (state, action: PayloadAction<any>) => {
+      state.loading = false;
+      state.error = action.payload;
+    });
+
+    // Handle fetchRegularStaff
+    builder.addCase(fetchRegularStaff.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchRegularStaff.fulfilled, (state, action: PayloadAction<Staff[]>) => {
+      state.loading = false;
+      state.all = action.payload;
+      console.log("Updated State with Regular Staff:", state.all);
+    });
+    builder.addCase(fetchRegularStaff.rejected, (state, action: PayloadAction<any>) => {
+      state.loading = false;
+      state.error = action.payload;
+    });
+
     // Handle fetchStaffDetail
     builder.addCase(fetchStaffDetail.pending, (state) => {
       state.loading = true;
@@ -146,6 +210,7 @@ const staffSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     });
+
     // Handle updateStaff
     builder.addCase(updateStaff.pending, (state) => {
       state.updateLoading = true;
@@ -159,6 +224,7 @@ const staffSlice = createSlice({
       state.updateLoading = false;
       state.updateError = action.payload;
     });
+
     // Handle addRegularStaff
     builder.addCase(addRegularStaff.pending, (state) => {
       state.addLoading = true;
@@ -172,6 +238,7 @@ const staffSlice = createSlice({
       state.addLoading = false;
       state.addError = action.payload;
     });
+
     // Handle addSuperStaff
     builder.addCase(addSuperStaff.pending, (state) => {
       state.addLoading = true;
@@ -179,7 +246,7 @@ const staffSlice = createSlice({
     });
     builder.addCase(addSuperStaff.fulfilled, (state, action: PayloadAction<Staff>) => {
       state.addLoading = false;
-      state.all.push(action.payload);
+      state.superStaff.push(action.payload);
     });
     builder.addCase(addSuperStaff.rejected, (state, action: PayloadAction<any>) => {
       state.addLoading = false;
