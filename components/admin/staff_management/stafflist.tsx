@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { RootState, AppDispatch } from "@/src/store/store";
-import { fetchAllStaff } from "@/src/features/staff/staffSlice";
+import { fetchAllStaff, Staff } from "@/src/features/staff/staffSlice";
 import {
   Avatar,
   Box,
@@ -41,8 +41,6 @@ import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import BlockIcon from "@mui/icons-material/Block";
-import { Staff } from "@/src/features/staff/staffSlice";
-import { ColorPaletteProp } from "@mui/joy/styles";
 
 // Create a dark theme
 const darkTheme = extendTheme({
@@ -50,24 +48,24 @@ const darkTheme = extendTheme({
     dark: {
       palette: {
         background: {
-          body: '#000',
-          surface: 'rgba(0, 0, 0, 0.8)',
-          level1: 'rgba(20, 20, 20, 0.9)',
-          level2: 'rgba(35, 35, 35, 0.8)',
+          body: "#000",
+          surface: "rgba(0, 0, 0, 0.8)",
+          level1: "rgba(20, 20, 20, 0.9)",
+          level2: "rgba(35, 35, 35, 0.8)",
         },
         primary: {
-          softColor: '#fff',
-          softBg: 'rgba(60, 60, 60, 0.5)',
+          softColor: "#fff",
+          softBg: "rgba(60, 60, 60, 0.5)",
         },
         neutral: {
-          outlinedBg: 'rgba(45, 45, 45, 0.6)',
-          outlinedColor: '#fff',
-          plainColor: '#fff',
-          plainHoverBg: 'rgba(60, 60, 60, 0.5)',
+          outlinedBg: "rgba(45, 45, 45, 0.6)",
+          outlinedColor: "#fff",
+          plainColor: "#fff",
+          plainHoverBg: "rgba(60, 60, 60, 0.5)",
         },
         text: {
-          primary: '#fff',
-          secondary: 'rgba(255, 255, 255, 0.7)',
+          primary: "#fff",
+          secondary: "rgba(255, 255, 255, 0.7)",
         },
       },
     },
@@ -159,17 +157,19 @@ export default function StaffTable() {
   const renderFilters = () => (
     <>
       <FormControl size="sm">
-        <FormLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Department</FormLabel>
+        <FormLabel sx={{ color: "rgba(255,255,255,0.7)" }}>Department</FormLabel>
         <Select
           size="sm"
           value={departmentFilter}
-          onChange={(e) => setDepartmentFilter((e.target as HTMLSelectElement).value)}
+          onChange={(e) =>
+            setDepartmentFilter((e?.target as HTMLSelectElement)?.value ?? "all")
+          }
           placeholder="Filter by department"
           sx={{
-            color: '#fff',
-            bgcolor: 'rgba(30,30,30,0.8)',
-            '& .MuiSelect-indicator': { color: '#fff' },
-            '&:hover': { bgcolor: 'rgba(40,40,40,0.8)' },
+            color: "#fff",
+            bgcolor: "rgba(30,30,30,0.8)",
+            "& .MuiSelect-indicator": { color: "#fff" },
+            "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
           }}
         >
           <Option value="all">All</Option>
@@ -183,17 +183,19 @@ export default function StaffTable() {
         </Select>
       </FormControl>
       <FormControl size="sm">
-        <FormLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Role</FormLabel>
+        <FormLabel sx={{ color: "rgba(255,255,255,0.7)" }}>Role</FormLabel>
         <Select
           size="sm"
           value={roleFilter}
-          onChange={(e) => setRoleFilter((e.target as HTMLSelectElement).value)}
+          onChange={(e) =>
+            setRoleFilter((e?.target as HTMLSelectElement)?.value ?? "all")
+          }
           placeholder="Filter by role"
           sx={{
-            color: '#fff',
-            bgcolor: 'rgba(30,30,30,0.8)',
-            '& .MuiSelect-indicator': { color: '#fff' },
-            '&:hover': { bgcolor: 'rgba(40,40,40,0.8)' },
+            color: "#fff",
+            bgcolor: "rgba(30,30,30,0.8)",
+            "& .MuiSelect-indicator": { color: "#fff" },
+            "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
           }}
         >
           <Option value="all">All</Option>
@@ -208,60 +210,62 @@ export default function StaffTable() {
     <CssVarsProvider theme={darkTheme} defaultMode="dark">
       {/* Mobile Search and Filters */}
       <Sheet
-        sx={{ 
-          display: { xs: "flex", sm: "none" }, 
-          my: 1, 
+        sx={{
+          display: { xs: "flex", sm: "none" },
+          my: 1,
           gap: 1,
-          bgcolor: 'transparent',
-          boxShadow: 'none'
+          bgcolor: "transparent",
+          boxShadow: "none",
         }}
       >
         <Input
           size="sm"
           placeholder="Search staff..."
-          startDecorator={<SearchIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />}
-          sx={{ 
-            flexGrow: 1, 
-            color: '#fff',
-            bgcolor: 'rgba(30,30,30,0.8)',
-            '&:hover': { bgcolor: 'rgba(40,40,40,0.8)' },
-            '& .MuiInput-input::placeholder': { color: 'rgba(255,255,255,0.5)' }
+          startDecorator={<SearchIcon sx={{ color: "rgba(255,255,255,0.7)" }} />}
+          sx={{
+            flexGrow: 1,
+            color: "#fff",
+            bgcolor: "rgba(30,30,30,0.8)",
+            "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
+            "& .MuiInput-input::placeholder": { color: "rgba(255,255,255,0.5)" },
           }}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e?.target.value ?? "")}
         />
-        <IconButton 
-          size="sm" 
-          variant="outlined" 
-          color="neutral" 
+        <IconButton
+          size="sm"
+          variant="outlined"
+          color="neutral"
           onClick={() => setIsFilterOpen(true)}
-          sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}
+          sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.3)" }}
         >
           <FilterAltIcon />
         </IconButton>
         <Modal open={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
-          <ModalDialog 
-            aria-labelledby="filter-modal" 
+          <ModalDialog
+            aria-labelledby="filter-modal"
             layout="fullscreen"
-            sx={{ bgcolor: '#000', color: '#fff' }}
+            sx={{ bgcolor: "#000", color: "#fff" }}
           >
-            <ModalClose sx={{ color: '#fff' }} />
-            <Typography id="filter-modal" level="h2" sx={{ color: '#fff' }}>
+            <ModalClose sx={{ color: "#fff" }} />
+            <Typography id="filter-modal" level="h2" sx={{ color: "#fff" }}>
               Filters
             </Typography>
-            <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
-            <Sheet sx={{ 
-              display: "flex", 
-              flexDirection: "column", 
-              gap: 2,
-              bgcolor: 'transparent',
-              boxShadow: 'none'
-            }}>
+            <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
+            <Sheet
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                bgcolor: "transparent",
+                boxShadow: "none",
+              }}
+            >
               {renderFilters()}
-              <Button 
-                color="primary" 
+              <Button
+                color="primary"
                 onClick={() => setIsFilterOpen(false)}
-                sx={{ bgcolor: 'rgba(70,130,180,0.8)', color: '#fff' }}
+                sx={{ bgcolor: "rgba(70,130,180,0.8)", color: "#fff" }}
               >
                 Apply Filters
               </Button>
@@ -279,22 +283,22 @@ export default function StaffTable() {
           flexWrap: "wrap",
           gap: 1.5,
           "& > *": { minWidth: { xs: "120px", md: "160px" } },
-          bgcolor: 'transparent'
+          bgcolor: "transparent",
         }}
       >
         <FormControl sx={{ flex: 1 }} size="sm">
-          <FormLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Search staff</FormLabel>
+          <FormLabel sx={{ color: "rgba(255,255,255,0.7)" }}>Search staff</FormLabel>
           <Input
             size="sm"
             placeholder="Search by name, email or phone"
-            startDecorator={<SearchIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />}
+            startDecorator={<SearchIcon sx={{ color: "rgba(255,255,255,0.7)" }} />}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ 
-              color: '#fff',
-              bgcolor: 'rgba(30,30,30,0.8)',
-              '&:hover': { bgcolor: 'rgba(40,40,40,0.8)' },
-              '& .MuiInput-input::placeholder': { color: 'rgba(255,255,255,0.5)' }
+            onChange={(e) => setSearchTerm(e?.target.value ?? "")}
+            sx={{
+              color: "#fff",
+              bgcolor: "rgba(30,30,30,0.8)",
+              "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
+              "& .MuiInput-input::placeholder": { color: "rgba(255,255,255,0.5)" },
             }}
           />
         </FormControl>
@@ -302,16 +306,16 @@ export default function StaffTable() {
       </Box>
 
       {/* Staff Table */}
-      <Sheet 
-        variant="outlined" 
-        sx={{ 
-          width: "100%", 
-          borderRadius: "sm", 
-          flexShrink: 1, 
+      <Sheet
+        variant="outlined"
+        sx={{
+          width: "100%",
+          borderRadius: "sm",
+          flexShrink: 1,
           overflow: "auto",
-          bgcolor: 'rgba(20,20,20,0.6)',
-          borderColor: 'rgba(255,255,255,0.1)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+          bgcolor: "rgba(20,20,20,0.6)",
+          borderColor: "rgba(255,255,255,0.1)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
         }}
       >
         <Table
@@ -325,7 +329,10 @@ export default function StaffTable() {
             "--TableCell-paddingX": "12px",
             color: "#fff",
             "& thead th": { color: "#fff", fontWeight: "bold" },
-            "& tbody td": { color: "rgba(255,255,255,0.9)", borderColor: "rgba(255,255,255,0.1)" },
+            "& tbody td": {
+              color: "rgba(255,255,255,0.9)",
+              borderColor: "rgba(255,255,255,0.1)",
+            },
             "& tbody tr:hover td": { color: "#fff" },
           }}
         >
@@ -345,7 +352,10 @@ export default function StaffTable() {
                         "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
                         "& svg": {
                           transition: "0.2s",
-                          transform: orderBy === headCell.id && order === "asc" ? "rotate(180deg)" : "none",
+                          transform:
+                            orderBy === headCell.id && order === "asc"
+                              ? "rotate(180deg)"
+                              : "none",
                         },
                       }}
                     >
@@ -361,7 +371,7 @@ export default function StaffTable() {
           <tbody>
             {filteredStaff
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((staffMember: { id: boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | Promise<React.AwaitedReactNode> | React.Key | null | undefined; first_name: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | Promise<React.AwaitedReactNode> | null | undefined; last_name: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; email: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; phone_number: string; department: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; salary: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; role: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; }) => (
+              .map((staffMember: Staff) => (
                 <tr key={staffMember.id}>
                   <td>
                     <Typography level="body-sm" sx={{ color: "rgba(255,255,255,0.9)" }}>
@@ -372,16 +382,20 @@ export default function StaffTable() {
                     <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
                       <Avatar
                         size="sm"
-                        sx={{ 
-                          bgcolor: "rgba(60,60,60,0.8)", 
+                        sx={{
+                          bgcolor: "rgba(60,60,60,0.8)",
                           color: "#fff",
-                          border: "1px solid rgba(255,255,255,0.2)"
+                          border: "1px solid rgba(255,255,255,0.2)",
                         }}
                       >
                         {staffMember.first_name[0]}
                       </Avatar>
                       <div>
-                        <Typography level="body-sm" fontWeight="medium" sx={{ color: "rgba(255,255,255,0.9)" }}>
+                        <Typography
+                          level="body-sm"
+                          fontWeight="medium"
+                          sx={{ color: "rgba(255,255,255,0.9)" }}
+                        >
                           {staffMember.first_name} {staffMember.last_name}
                         </Typography>
                         <Typography level="body-xs" sx={{ color: "rgba(255,255,255,0.7)" }}>
@@ -417,7 +431,7 @@ export default function StaffTable() {
                           size="sm"
                           variant="plain"
                           color="neutral"
-                          onClick={() => handleViewStaff(staffMember.id)}
+                          onClick={() => handleViewStaff(staffMember.id as number)}
                           sx={{ color: "#fff" }}
                         >
                           <VisibilityIcon />
@@ -428,7 +442,7 @@ export default function StaffTable() {
                           size="sm"
                           variant="plain"
                           color="neutral"
-                          onClick={() => typeof staffMember.id === 'number' && handleEditStaff(staffMember.id)}
+                          onClick={() => handleEditStaff(staffMember.id as number)}
                           sx={{ color: "#fff" }}
                         >
                           <EditIcon />
@@ -439,7 +453,7 @@ export default function StaffTable() {
                           size="sm"
                           variant="plain"
                           color="neutral"
-                          onClick={() => handleBlockStaff(staffMember.id)}
+                          onClick={() => handleBlockStaff(staffMember.id as number)}
                           sx={{ color: "#fff" }}
                         >
                           <BlockIcon />
@@ -473,14 +487,14 @@ export default function StaffTable() {
             startDecorator={<KeyboardArrowLeftIcon />}
             disabled={page === 0}
             onClick={() => setPage(page - 1)}
-            sx={{ 
-              color: "#fff", 
+            sx={{
+              color: "#fff",
               borderColor: "rgba(255,255,255,0.3)",
               "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
-              "&.Mui-disabled": { 
-                color: "rgba(255,255,255,0.3)", 
-                borderColor: "rgba(255,255,255,0.1)" 
-              }
+              "&.Mui-disabled": {
+                color: "rgba(255,255,255,0.3)",
+                borderColor: "rgba(255,255,255,0.1)",
+              },
             }}
           >
             Previous
@@ -493,10 +507,10 @@ export default function StaffTable() {
                 variant={page === i ? "outlined" : "plain"}
                 color="neutral"
                 onClick={() => setPage(i)}
-                sx={{ 
-                  color: "#fff", 
+                sx={{
+                  color: "#fff",
                   borderColor: page === i ? "rgba(255,255,255,0.5)" : "transparent",
-                  "&:hover": { bgcolor: "rgba(40,40,40,0.8)" }
+                  "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
                 }}
               >
                 {i + 1}
@@ -510,14 +524,14 @@ export default function StaffTable() {
             endDecorator={<KeyboardArrowRightIcon />}
             disabled={page >= Math.ceil(filteredStaff.length / rowsPerPage) - 1}
             onClick={() => setPage(page + 1)}
-            sx={{ 
-              color: "#fff", 
+            sx={{
+              color: "#fff",
               borderColor: "rgba(255,255,255,0.3)",
               "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
-              "&.Mui-disabled": { 
-                color: "rgba(255,255,255,0.3)", 
-                borderColor: "rgba(255,255,255,0.1)" 
-              }
+              "&.Mui-disabled": {
+                color: "rgba(255,255,255,0.3)",
+                borderColor: "rgba(255,255,255,0.1)",
+              },
             }}
           >
             Next

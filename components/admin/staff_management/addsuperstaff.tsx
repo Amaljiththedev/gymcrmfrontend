@@ -1,6 +1,9 @@
-"use client"
+"use client";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 import AspectRatio from '@mui/joy/AspectRatio';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
@@ -24,11 +27,10 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import HomeIcon from '@mui/icons-material/Home';
 import BadgeIcon from '@mui/icons-material/Badge';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PasswordIcon from '@mui/icons-material/Password';
 import { addSuperStaff } from '@/src/features/staff/staffSlice';
 import axios from 'axios';
-import { DatePicker } from "@/components/ui/date-picker"; // Custom date picker with selectedDate and onDateChange props
+import { DatePicker } from "@/components/ui/date-picker"; // Custom date picker component
 
 // Transparent theme with white text and crisp styling
 const transparentThemeStyles = {
@@ -65,6 +67,7 @@ const transparentThemeStyles = {
 
 export default function CreateSuperStaff() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -73,59 +76,65 @@ export default function CreateSuperStaff() {
     address: '',
     department: '',
     salary: '',
-    salaryCreditedDay: '', // Stores the day as a string
+    // Use salaryCreditedDate to match the Django model field
+    salaryCreditedDate: '', 
     password: '',
     photo: null as File | null,
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Department options coming exclusively from the backend
   const [departments, setDepartments] = useState<{ value: string; label: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [startDate, setStartDate] = useState<Date>(new Date()); // Salary day date
+  const [startDate, setStartDate] = useState<Date>(new Date());
 
   // Fetch department choices from the backend API
   useEffect(() => {
     async function fetchDepartments() {
       try {
         const response = await axios.get('/staff/departments/');
+        // Assuming response.data is an array of objects with "value" and "label"
         setDepartments(response.data);
       } catch (error) {
-        console.error('Error fetching departments:', error);
+        console.error('Error fetching departments: 😕', error);
+        setErrors(prev => ({ ...prev, department: 'Failed to load departments 😕' }));
       }
     }
     fetchDepartments();
   }, []);
 
-  // Validate form fields
+  // Validate form fields with friendly messages & emojis
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.firstName) newErrors.firstName = 'First name is required';
-    if (!formData.lastName) newErrors.lastName = 'Last name is required';
-    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = 'Invalid email address';
-    if (!formData.phoneNumber.match(/^\+?[1-9]\d{1,14}$/)) newErrors.phoneNumber = 'Invalid phone number';
-    if (!formData.department) newErrors.department = 'Department is required';
-    if (Number(formData.salary) <= 0) newErrors.salary = 'Salary must be positive';
-    if (!formData.salaryCreditedDay) newErrors.salaryCreditedDay = 'Salary day is required';
-    if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
-    if (!formData.photo) newErrors.photo = 'Photo is required';
+    if (!formData.firstName) newErrors.firstName = 'First name is required ✨';
+    if (!formData.lastName) newErrors.lastName = 'Last name is required ✨';
+    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = 'Please enter a valid email 💌';
+    if (!formData.phoneNumber.match(/^\+?[1-9]\d{1,14}$/))
+      newErrors.phoneNumber = 'Invalid phone number 📞';
+    if (!formData.department) newErrors.department = 'Select a department 👩‍💼';
+    if (Number(formData.salary) <= 0) newErrors.salary = 'Salary must be a positive number 💰';
+    if (!formData.salaryCreditedDate) newErrors.salaryCreditedDate = 'Please choose a salary day 📅';
+    if (formData.password.length < 8)
+      newErrors.password = 'Password must be at least 8 characters 🔒';
+    if (!formData.photo) newErrors.photo = 'Photo is required 📸';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle file selection and preview generation
+  // Handle file selection and preview generation with extra check
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       const file = e.target.files[0];
       if (!file.type.startsWith('image/')) {
-        setErrors({ ...errors, photo: 'Only image files are allowed' });
+        setErrors(prev => ({ ...prev, photo: 'Only image files are allowed 🚫' }));
         return;
       }
-      setFormData({ ...formData, photo: file });
-      setErrors({ ...errors, photo: '' });
+      setFormData(prev => ({ ...prev, photo: file }));
+      setErrors(prev => ({ ...prev, photo: '' }));
     }
   };
 
-  // Handle form submission by building a FormData payload
+  // Handle form submission with robust error catching
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!validateForm()) return;
@@ -138,7 +147,8 @@ export default function CreateSuperStaff() {
     formPayload.append('address', formData.address);
     formPayload.append('department', formData.department);
     formPayload.append('salary', formData.salary);
-    formPayload.append('salary_credited_day', formData.salaryCreditedDay);
+    // Append the salary_credited_date field with the ISO formatted date
+    formPayload.append('salary_credited_date', formData.salaryCreditedDate);
     formPayload.append('password', formData.password);
     if (formData.photo) formPayload.append('photo', formData.photo);
     try {
@@ -153,16 +163,21 @@ export default function CreateSuperStaff() {
         address: '',
         department: '',
         salary: '',
-        salaryCreditedDay: '',
+        salaryCreditedDate: '',
         password: '',
         photo: null,
       });
       setStartDate(new Date());
       if (fileInputRef.current) fileInputRef.current.value = '';
-      alert('Super staff created successfully!');
+      toast.success('Super staff created successfully! 🎉');
+      router.push('/admin/staff');
     } catch (err: any) {
+      console.error('Error creating super staff: 😕', err);
       setLoading(false);
-      setErrors({ ...errors, general: err.message || 'An error occurred' });
+      // Extract error message if available
+      const errorMsg = err.response?.data?.detail || err.message || 'An unexpected error occurred 😕';
+      setErrors(prev => ({ ...prev, general: errorMsg }));
+      toast.error(errorMsg);
     }
   };
 
@@ -171,7 +186,10 @@ export default function CreateSuperStaff() {
       <Stack spacing={4} sx={{ maxWidth: '800px', mx: 'auto' }}>
         <Card variant="outlined" component="form" onSubmit={handleSubmit}>
           <CardContent sx={{ p: 4 }}>
-            <Typography level="h3" sx={{ mb: 2, color: '#fff', fontWeight: 700, fontSize: '1.75rem' }}>
+            <Typography
+              level="h3"
+              sx={{ mb: 2, color: '#fff', fontWeight: 700, fontSize: '1.75rem' }}
+            >
               Create Super Staff
             </Typography>
             <Divider sx={{ mb: 4 }} />
@@ -199,7 +217,13 @@ export default function CreateSuperStaff() {
                 )}
               </AspectRatio>
               <div>
-                <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" hidden />
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  hidden
+                />
                 <Button
                   variant="soft"
                   sx={{
@@ -211,7 +235,7 @@ export default function CreateSuperStaff() {
                   startDecorator={<EditRoundedIcon />}
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  Upload Photo
+                  Upload Photo 📸
                 </Button>
                 {errors.photo && (
                   <FormHelperText sx={{ color: '#ff4d4f', mt: 1 }}>
@@ -231,21 +255,33 @@ export default function CreateSuperStaff() {
                   <FormLabel>First Name</FormLabel>
                   <Input
                     value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, firstName: e.target.value })
+                    }
                     variant="soft"
                     startDecorator={<PersonIcon />}
                   />
-                  {errors.firstName && <FormHelperText sx={{ color: '#ff4d4f' }}>{errors.firstName}</FormHelperText>}
+                  {errors.firstName && (
+                    <FormHelperText sx={{ color: '#ff4d4f' }}>
+                      {errors.firstName}
+                    </FormHelperText>
+                  )}
                 </FormControl>
                 <FormControl error={!!errors.lastName} sx={{ flex: 1 }}>
                   <FormLabel>Last Name</FormLabel>
                   <Input
                     value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, lastName: e.target.value })
+                    }
                     variant="soft"
                     startDecorator={<PersonIcon />}
                   />
-                  {errors.lastName && <FormHelperText sx={{ color: '#ff4d4f' }}>{errors.lastName}</FormHelperText>}
+                  {errors.lastName && (
+                    <FormHelperText sx={{ color: '#ff4d4f' }}>
+                      {errors.lastName}
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Stack>
 
@@ -253,30 +289,45 @@ export default function CreateSuperStaff() {
                 <FormLabel>Email</FormLabel>
                 <Input
                   type="email"
+                  autoComplete="username" // For saved username suggestions
                   startDecorator={<EmailRoundedIcon />}
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   variant="soft"
                 />
-                {errors.email && <FormHelperText sx={{ color: '#ff4d4f' }}>{errors.email}</FormHelperText>}
+                {errors.email && (
+                  <FormHelperText sx={{ color: '#ff4d4f' }}>
+                    {errors.email}
+                  </FormHelperText>
+                )}
               </FormControl>
 
               <FormControl error={!!errors.phoneNumber}>
                 <FormLabel>Phone Number</FormLabel>
                 <Input
                   value={formData.phoneNumber}
-                  onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phoneNumber: e.target.value })
+                  }
                   variant="soft"
                   startDecorator={<PhoneIcon />}
                 />
-                {errors.phoneNumber && <FormHelperText sx={{ color: '#ff4d4f' }}>{errors.phoneNumber}</FormHelperText>}
+                {errors.phoneNumber && (
+                  <FormHelperText sx={{ color: '#ff4d4f' }}>
+                    {errors.phoneNumber}
+                  </FormHelperText>
+                )}
               </FormControl>
 
               <FormControl>
                 <FormLabel>Address</FormLabel>
                 <Input
                   value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
                   variant="soft"
                   startDecorator={<HomeIcon />}
                 />
@@ -290,30 +341,24 @@ export default function CreateSuperStaff() {
                 <FormLabel>Department</FormLabel>
                 <Select
                   value={formData.department}
-                  onChange={(e, val) => setFormData({ ...formData, department: val as string })}
+                  onChange={(e, val) =>
+                    setFormData({ ...formData, department: val as string })
+                  }
                   variant="soft"
                   startDecorator={<BadgeIcon />}
                   sx={{ backgroundColor: 'transparent' }}
                 >
-                  {departments.length > 0 ? (
-                    departments.map((dept) => (
-                      <Option key={dept.value} value={dept.value}>
-                        {dept.label}
-                      </Option>
-                    ))
-                  ) : (
-                    <>
-                      <Option value="front_desk">Front Desk</Option>
-                      <Option value="cleaning">Cleaning Staff</Option>
-                      <Option value="maintenance">Maintenance</Option>
-                      <Option value="accounting">Accounting</Option>
-                      <Option value="security">Security</Option>
-                      <Option value="sales">Sales & Marketing</Option>
-                      <Option value="customer_service">Customer Service</Option>
-                    </>
-                  )}
+                  {departments.map((dept) => (
+                    <Option key={dept.value} value={dept.value}>
+                      {dept.label}
+                    </Option>
+                  ))}
                 </Select>
-                {errors.department && <FormHelperText sx={{ color: '#ff4d4f' }}>{errors.department}</FormHelperText>}
+                {errors.department && (
+                  <FormHelperText sx={{ color: '#ff4d4f' }}>
+                    {errors.department}
+                  </FormHelperText>
+                )}
               </FormControl>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -322,22 +367,36 @@ export default function CreateSuperStaff() {
                   <Input
                     type="number"
                     value={formData.salary}
-                    onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, salary: e.target.value })
+                    }
                     variant="soft"
                     startDecorator={<AttachMoneyIcon />}
                   />
-                  {errors.salary && <FormHelperText sx={{ color: '#ff4d4f' }}>{errors.salary}</FormHelperText>}
+                  {errors.salary && (
+                    <FormHelperText sx={{ color: '#ff4d4f' }}>
+                      {errors.salary}
+                    </FormHelperText>
+                  )}
                 </FormControl>
-                <FormControl error={!!errors.salaryCreditedDay} sx={{ flex: 1 }}>
+                <FormControl error={!!errors.salaryCreditedDate} sx={{ flex: 1 }}>
                   <FormLabel>Salary Day</FormLabel>
                   <DatePicker
                     selectedDate={startDate}
                     onDateChange={(date: Date) => {
                       setStartDate(date);
-                      setFormData({ ...formData, salaryCreditedDay: date.getDate().toString() });
+                      // Save the date as ISO string (YYYY-MM-DD) to match backend format
+                      setFormData({
+                        ...formData,
+                        salaryCreditedDate: date.toISOString().split('T')[0],
+                      });
                     }}
                   />
-                  {errors.salaryCreditedDay && <FormHelperText sx={{ color: '#ff4d4f' }}>{errors.salaryCreditedDay}</FormHelperText>}
+                  {errors.salaryCreditedDate && (
+                    <FormHelperText sx={{ color: '#ff4d4f' }}>
+                      {errors.salaryCreditedDate}
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Stack>
 
@@ -349,12 +408,19 @@ export default function CreateSuperStaff() {
                 <FormLabel>Password</FormLabel>
                 <Input
                   type="password"
+                  autoComplete="current-password"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   variant="soft"
                   startDecorator={<PasswordIcon />}
                 />
-                {errors.password && <FormHelperText sx={{ color: '#ff4d4f' }}>{errors.password}</FormHelperText>}
+                {errors.password && (
+                  <FormHelperText sx={{ color: '#ff4d4f' }}>
+                    {errors.password}
+                  </FormHelperText>
+                )}
               </FormControl>
             </Stack>
           </CardContent>
@@ -370,7 +436,7 @@ export default function CreateSuperStaff() {
                   '&:hover': { backgroundColor: '#e57373', borderColor: '#e57373' },
                 }}
               >
-                Cancel
+                Cancel ❌
               </Button>
               <Button
                 type="submit"
@@ -381,7 +447,7 @@ export default function CreateSuperStaff() {
                   '&:hover': { backgroundColor: '#e57373' },
                 }}
               >
-                Create Super Staff
+                Create Super Staff 🚀
               </Button>
             </CardActions>
             {errors.general && (

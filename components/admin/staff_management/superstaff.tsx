@@ -1,4 +1,3 @@
-"use client";
 import * as React from "react";
 import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -42,24 +41,24 @@ const darkTheme = extendTheme({
     dark: {
       palette: {
         background: {
-          body: '#000',
-          surface: 'rgba(0, 0, 0, 0.8)',
-          level1: 'rgba(20, 20, 20, 0.9)',
-          level2: 'rgba(35, 35, 35, 0.8)',
+          body: "#000",
+          surface: "rgba(0, 0, 0, 0.8)",
+          level1: "rgba(20, 20, 20, 0.9)",
+          level2: "rgba(35, 35, 35, 0.8)",
         },
         primary: {
-          softColor: '#fff',
-          softBg: 'rgba(60, 60, 60, 0.5)',
+          softColor: "#fff",
+          softBg: "rgba(60, 60, 60, 0.5)",
         },
         neutral: {
-          outlinedBg: 'rgba(45, 45, 45, 0.6)',
-          outlinedColor: '#fff',
-          plainColor: '#fff',
-          plainHoverBg: 'rgba(60, 60, 60, 0.5)',
+          outlinedBg: "rgba(45, 45, 45, 0.6)",
+          outlinedColor: "#fff",
+          plainColor: "#fff",
+          plainHoverBg: "rgba(60, 60, 60, 0.5)",
         },
         text: {
-          primary: '#fff',
-          secondary: 'rgba(255, 255, 255, 0.7)',
+          primary: "#fff",
+          secondary: "rgba(255, 255, 255, 0.7)",
         },
       },
     },
@@ -153,17 +152,19 @@ export default function SuperStaffPage() {
   const renderFilters = () => (
     <>
       <FormControl size="sm">
-        <FormLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Department</FormLabel>
+        <FormLabel sx={{ color: "rgba(255,255,255,0.7)" }}>Department</FormLabel>
         <Select
           size="sm"
           value={departmentFilter}
-          onChange={(e) => setDepartmentFilter((e.target as HTMLSelectElement).value)}
+          onChange={(e) =>
+            setDepartmentFilter((e?.target as HTMLSelectElement)?.value ?? "all")
+          }
           placeholder="Filter by department"
           sx={{
-            color: '#fff',
-            bgcolor: 'rgba(30,30,30,0.8)',
-            '& .MuiSelect-indicator': { color: '#fff' },
-            '&:hover': { bgcolor: 'rgba(40,40,40,0.8)' },
+            color: "#fff",
+            bgcolor: "rgba(30,30,30,0.8)",
+            "& .MuiSelect-indicator": { color: "#fff" },
+            "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
           }}
         >
           <Option value="all">All</Option>
@@ -177,17 +178,19 @@ export default function SuperStaffPage() {
         </Select>
       </FormControl>
       <FormControl size="sm">
-        <FormLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Role</FormLabel>
+        <FormLabel sx={{ color: "rgba(255,255,255,0.7)" }}>Role</FormLabel>
         <Select
           size="sm"
           value={roleFilter}
-          onChange={(e) => setRoleFilter((e.target as HTMLSelectElement).value)}
+          onChange={(e) =>
+            setRoleFilter((e?.target as HTMLSelectElement)?.value ?? "all")
+          }
           placeholder="Filter by role"
           sx={{
-            color: '#fff',
-            bgcolor: 'rgba(30,30,30,0.8)',
-            '& .MuiSelect-indicator': { color: '#fff' },
-            '&:hover': { bgcolor: 'rgba(40,40,40,0.8)' },
+            color: "#fff",
+            bgcolor: "rgba(30,30,30,0.8)",
+            "& .MuiSelect-indicator": { color: "#fff" },
+            "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
           }}
         >
           <Option value="all">All</Option>
@@ -209,7 +212,8 @@ export default function SuperStaffPage() {
   if (error) {
     return (
       <Box sx={{ p: 4, textAlign: "center", color: "#fff" }}>
-        <Typography>Error: {error}</Typography>
+        {/* If error is an object, stringify it */}
+        <Typography>Error: {typeof error === "object" ? JSON.stringify(error) : error}</Typography>
       </Box>
     );
   }
@@ -222,30 +226,30 @@ export default function SuperStaffPage() {
           display: { xs: "flex", sm: "none" }, 
           my: 1, 
           gap: 1,
-          bgcolor: 'transparent',
-          boxShadow: 'none'
+          bgcolor: "transparent",
+          boxShadow: "none",
         }}
       >
         <Input
           size="sm"
           placeholder="Search staff..."
-          startDecorator={<SearchIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />}
+          startDecorator={<SearchIcon sx={{ color: "rgba(255,255,255,0.7)" }} />}
           sx={{ 
             flexGrow: 1, 
-            color: '#fff',
-            bgcolor: 'rgba(30,30,30,0.8)',
-            '&:hover': { bgcolor: 'rgba(40,40,40,0.8)' },
-            '& .MuiInput-input::placeholder': { color: 'rgba(255,255,255,0.5)' }
+            color: "#fff",
+            bgcolor: "rgba(30,30,30,0.8)",
+            "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
+            "& .MuiInput-input::placeholder": { color: "rgba(255,255,255,0.5)" },
           }}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e?.target.value ?? "")}
         />
         <IconButton 
           size="sm" 
           variant="outlined" 
           color="neutral" 
           onClick={() => setIsFilterOpen(true)}
-          sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}
+          sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.3)" }}
         >
           <FilterAltIcon />
         </IconButton>
@@ -253,25 +257,25 @@ export default function SuperStaffPage() {
           <ModalDialog 
             aria-labelledby="filter-modal" 
             layout="fullscreen"
-            sx={{ bgcolor: '#000', color: '#fff' }}
+            sx={{ bgcolor: "#000", color: "#fff" }}
           >
-            <ModalClose sx={{ color: '#fff' }} />
-            <Typography id="filter-modal" level="h2" sx={{ color: '#fff' }}>
+            <ModalClose sx={{ color: "#fff" }} />
+            <Typography id="filter-modal" level="h2" sx={{ color: "#fff" }}>
               Filters
             </Typography>
-            <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+            <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
             <Sheet sx={{ 
               display: "flex", 
               flexDirection: "column", 
               gap: 2,
-              bgcolor: 'transparent',
-              boxShadow: 'none'
+              bgcolor: "transparent",
+              boxShadow: "none",
             }}>
               {renderFilters()}
               <Button 
                 color="primary" 
                 onClick={() => setIsFilterOpen(false)}
-                sx={{ bgcolor: 'rgba(70,130,180,0.8)', color: '#fff' }}
+                sx={{ bgcolor: "rgba(70,130,180,0.8)", color: "#fff" }}
               >
                 Apply Filters
               </Button>
@@ -289,22 +293,22 @@ export default function SuperStaffPage() {
           flexWrap: "wrap",
           gap: 1.5,
           "& > *": { minWidth: { xs: "120px", md: "160px" } },
-          bgcolor: 'transparent'
+          bgcolor: "transparent",
         }}
       >
         <FormControl sx={{ flex: 1 }} size="sm">
-          <FormLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Search staff</FormLabel>
+          <FormLabel sx={{ color: "rgba(255,255,255,0.7)" }}>Search staff</FormLabel>
           <Input
             size="sm"
             placeholder="Search by name, email or phone"
-            startDecorator={<SearchIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />}
+            startDecorator={<SearchIcon sx={{ color: "rgba(255,255,255,0.7)" }} />}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTerm(e?.target.value ?? "")}
             sx={{ 
-              color: '#fff',
-              bgcolor: 'rgba(30,30,30,0.8)',
-              '&:hover': { bgcolor: 'rgba(40,40,40,0.8)' },
-              '& .MuiInput-input::placeholder': { color: 'rgba(255,255,255,0.5)' }
+              color: "#fff",
+              bgcolor: "rgba(30,30,30,0.8)",
+              "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
+              "& .MuiInput-input::placeholder": { color: "rgba(255,255,255,0.5)" },
             }}
           />
         </FormControl>
@@ -319,9 +323,9 @@ export default function SuperStaffPage() {
           borderRadius: "sm", 
           flexShrink: 1, 
           overflow: "auto",
-          bgcolor: 'rgba(20,20,20,0.6)',
-          borderColor: 'rgba(255,255,255,0.1)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+          bgcolor: "rgba(20,20,20,0.6)",
+          borderColor: "rgba(255,255,255,0.1)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
         }}
       >
         <Table
@@ -355,7 +359,10 @@ export default function SuperStaffPage() {
                         "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
                         "& svg": {
                           transition: "0.2s",
-                          transform: orderBy === headCell.id && order === "asc" ? "rotate(180deg)" : "none",
+                          transform:
+                            orderBy === headCell.id && order === "asc"
+                              ? "rotate(180deg)"
+                              : "none",
                         },
                       }}
                     >
@@ -385,7 +392,7 @@ export default function SuperStaffPage() {
                         sx={{ 
                           bgcolor: "rgba(60,60,60,0.8)", 
                           color: "#fff",
-                          border: "1px solid rgba(255,255,255,0.2)"
+                          border: "1px solid rgba(255,255,255,0.2)",
                         }}
                       >
                         {staffMember.first_name[0]}
@@ -506,7 +513,7 @@ export default function SuperStaffPage() {
                 sx={{ 
                   color: "#fff", 
                   borderColor: page === i ? "rgba(255,255,255,0.5)" : "transparent",
-                  "&:hover": { bgcolor: "rgba(40,40,40,0.8)" }
+                  "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
                 }}
               >
                 {i + 1}

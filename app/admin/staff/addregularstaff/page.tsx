@@ -7,11 +7,11 @@ import Breadcrumbs from "@mui/joy/Breadcrumbs";
 import Link from "@mui/joy/Link";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import SuperStaff from "@/components/admin/staff_management/superstaff";
-import { Sacramento } from "next/font/google";
-import SalaryManagementTable from "@/components/admin/staff_management/salary_management";
+import MemberTable from "@/components/admin/user_management/memberlist"; // Your Member Table Component
+import StaffTable from "@/components/admin/staff_management/stafflist";
+import CreateRegularStaff from "@/components/admin/staff_management/addregularstaff";
 
-export default function page() {
+export default function Memberlist() {
   return (
     <>
       {/* Breadcrumb Navigation */}
@@ -50,7 +50,7 @@ export default function page() {
       </Box>
 
       {/* Member Table */}
-      <SalaryManagementTable />
+      <CreateRegularStaff />
     </>
   );
 }

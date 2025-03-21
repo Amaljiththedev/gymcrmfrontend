@@ -8,6 +8,7 @@ axios.defaults.withCredentials = true;
 
 // Define the Staff interface
 export interface Staff {
+  salary_due_date: string;  // Ensure this is a string, not a function
   id: number;
   email: string;
   first_name: string;
@@ -18,6 +19,8 @@ export interface Staff {
   salary: string;
   salary_credited_day: number;
   role: string;
+
+
 }
 
 // Define the state interface for the staff slice
@@ -46,6 +49,15 @@ const initialState: StaffState = {
   addError: null,
 };
 
+// Helper function to extract error message
+const getErrorMessage = (error: any) => {
+  const data = error.response?.data;
+  if (data && Object.keys(data).length === 0) {
+    return error.message;
+  }
+  return data || error.message;
+};
+
 // Async thunk for fetching all staff members
 export const fetchAllStaff = createAsyncThunk<Staff[], void>(
   'staff/fetchAllStaff',
@@ -55,8 +67,9 @@ export const fetchAllStaff = createAsyncThunk<Staff[], void>(
       console.log("All Staff Data:", response.data);
       return response.data;
     } catch (error: any) {
-      console.error("Error fetching all staff:", error.response?.data || error.message);
-      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+      const errorMsg = getErrorMessage(error);
+      console.error("Error fetching all staff:", errorMsg);
+      return thunkAPI.rejectWithValue(errorMsg);
     }
   }
 );
@@ -70,8 +83,9 @@ export const fetchSuperstaff = createAsyncThunk<Staff[], void>(
       console.log("Super Staff Data:", response.data);
       return response.data;
     } catch (error: any) {
-      console.error("Error fetching super staff:", error.response?.data || error.message);
-      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+      const errorMsg = getErrorMessage(error);
+      console.error("Error fetching super staff:", errorMsg);
+      return thunkAPI.rejectWithValue(errorMsg);
     }
   }
 );
@@ -85,8 +99,9 @@ export const fetchRegularStaff = createAsyncThunk<Staff[], void>(
       console.log("Regular Staff Data:", response.data);
       return response.data;
     } catch (error: any) {
-      console.error("Error fetching regular staff:", error.response?.data || error.message);
-      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+      const errorMsg = getErrorMessage(error);
+      console.error("Error fetching regular staff:", errorMsg);
+      return thunkAPI.rejectWithValue(errorMsg);
     }
   }
 );
@@ -99,7 +114,8 @@ export const fetchStaffDetail = createAsyncThunk<Staff, number>(
       const response = await axios.get<Staff>(`/staff/staff-detail/${id}/`);
       return response.data;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+      const errorMsg = getErrorMessage(error);
+      return thunkAPI.rejectWithValue(errorMsg);
     }
   }
 );
@@ -112,7 +128,8 @@ export const updateStaff = createAsyncThunk<Staff, { id: number; staffData: Part
       const response = await axios.patch<Staff>(`/staff/staff-detail/${id}/`, staffData);
       return response.data;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+      const errorMsg = getErrorMessage(error);
+      return thunkAPI.rejectWithValue(errorMsg);
     }
   }
 );
@@ -125,7 +142,8 @@ export const addRegularStaff = createAsyncThunk<Staff, Omit<Staff, 'id' | 'role'
       const response = await axios.post<Staff>('/staff/regular-staff/', staffData);
       return response.data;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+      const errorMsg = getErrorMessage(error);
+      return thunkAPI.rejectWithValue(errorMsg);
     }
   }
 );
@@ -141,7 +159,8 @@ export const addSuperStaff = createAsyncThunk<Staff, FormData>(
       });
       return response.data;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+      const errorMsg = getErrorMessage(error);
+      return thunkAPI.rejectWithValue(errorMsg);
     }
   }
 );
