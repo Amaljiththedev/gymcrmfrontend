@@ -25,8 +25,8 @@ export default function page() {
           <Link underline="none" color="neutral" href="/admin/dashboard">
             <HomeRoundedIcon />
           </Link>
-          <Link underline="hover" color="neutral" href="/admin/membermanagement" sx={{ fontSize: 12, fontWeight: 500 }}>
-            Member Management
+          <Link underline="hover" color="neutral" href="/admin/staff" sx={{ fontSize: 12, fontWeight: 500 }}>
+            Staff Management
           </Link>
 
         </Breadcrumbs>

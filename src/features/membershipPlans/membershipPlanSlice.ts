@@ -10,7 +10,7 @@ export interface MembershipPlan {
   name: string;
   duration_days: number;
   price: number;
-  is_locked: boolean;
+  is_blocked: boolean;
 }
 
 interface MembershipPlanState {

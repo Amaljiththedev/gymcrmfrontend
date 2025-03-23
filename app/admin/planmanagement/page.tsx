@@ -7,7 +7,7 @@ import Breadcrumbs from "@mui/joy/Breadcrumbs";
 import Link from "@mui/joy/Link";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import PlanManagement from "@/components/admin/planmanagement/planmanagement";
+import PlanManagementTable from "@/components/admin/planmanagement/Plantable";
 
 export default function Memberlist() {
   return (
@@ -48,7 +48,7 @@ export default function Memberlist() {
       </Box>
 
       {/* Member Table */}
-      <PlanManagement/>
+      <PlanManagementTable/>
     </>
   );
 }

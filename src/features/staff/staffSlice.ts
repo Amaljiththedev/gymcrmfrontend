@@ -6,9 +6,8 @@ const API_BASE_URL = "http://localhost:8000/api";
 axios.defaults.baseURL = API_BASE_URL;
 axios.defaults.withCredentials = true;
 
-// Define the Staff interface
+// Define the Staff interface (updated to include photo)
 export interface Staff {
-  salary_due_date: string;  // Ensure this is a string, not a function
   id: number;
   email: string;
   first_name: string;
@@ -17,10 +16,10 @@ export interface Staff {
   address: string;
   department: string;
   salary: string;
+  salary_due_date: string;  // Ensure this is a string
   salary_credited_day: number;
   role: string;
-
-
+  photo: string; // URL of the staff photo returned by the API
 }
 
 // Define the state interface for the staff slice
@@ -149,7 +148,7 @@ export const addRegularStaff = createAsyncThunk<Staff, Omit<Staff, 'id' | 'role'
 );
 
 // Async thunk for adding Super Staff (requires password)
-// Now updated to accept a FormData instance so that files and text fields (including department) are supported.
+// Now updated to accept a FormData instance so that files and text fields (including photo) are supported.
 export const addSuperStaff = createAsyncThunk<Staff, FormData>(
   'staff/addSuperStaff',
   async (formData, thunkAPI) => {
@@ -169,7 +168,9 @@ export const addSuperStaff = createAsyncThunk<Staff, FormData>(
 const staffSlice = createSlice({
   name: 'staff',
   initialState,
-  reducers: {},
+  reducers: {
+    // Add synchronous reducers if needed.
+  },
   extraReducers: (builder) => {
     // Handle fetchAllStaff
     builder.addCase(fetchAllStaff.pending, (state) => {

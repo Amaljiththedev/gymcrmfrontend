@@ -1,10 +1,9 @@
 "use client";
+
 import * as React from "react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, ChangeEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
-import { RootState, AppDispatch } from "@/src/store/store";
-import { fetchAllStaff, Staff } from "@/src/features/staff/staffSlice";
 import {
   Avatar,
   Box,
@@ -22,27 +21,27 @@ import {
   ModalDialog,
   ModalClose,
   Divider,
-  Menu,
-  MenuButton,
-  MenuItem,
-  Dropdown,
   IconButton,
   CssVarsProvider,
   extendTheme,
   Stack,
   Tooltip,
+  Card,
+  CardContent,
 } from "@mui/joy";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import BlockIcon from "@mui/icons-material/Block";
+import { iconButtonClasses } from "@mui/joy/IconButton";
+import { RootState, AppDispatch } from "@/src/store/store";
+import { fetchAllStaff, Staff } from "@/src/features/staff/staffSlice";
 
-// Create a dark theme
+// Create dark theme
 const darkTheme = extendTheme({
   colorSchemes: {
     dark: {
@@ -73,12 +72,19 @@ const darkTheme = extendTheme({
 });
 
 type Order = "asc" | "desc";
-type SortKey = "id" | "first_name" | "phone_number" | "salary" | "department" | "role";
+type SortKey =
+  | "id"
+  | "first_name"
+  | "phone_number"
+  | "department"
+  | "salary"
+  | "role";
 
-// Comparator functions for sorting staff data
-function descendingComparator(a: Staff, b: Staff, orderBy: SortKey) {
-  if ((b[orderBy as keyof Staff] ?? 0) < (a[orderBy as keyof Staff] ?? 0)) return -1;
-  if ((b[orderBy as keyof Staff] ?? 0) > (a[orderBy as keyof Staff] ?? 0)) return 1;
+function descendingComparator(a: Staff, b: Staff, orderBy: SortKey): number {
+  const aValue = a[orderBy as keyof Staff];
+  const bValue = b[orderBy as keyof Staff];
+  if (bValue < aValue) return -1;
+  if (bValue > aValue) return 1;
   return 0;
 }
 
@@ -88,13 +94,13 @@ function getComparator(order: Order, orderBy: SortKey) {
     : (a: Staff, b: Staff) => -descendingComparator(a, b, orderBy);
 }
 
-// Format phone number to include +91 prefix if not already present
+// Format phone number
 const formatPhoneNumber = (phone: string) => {
   if (!phone) return "";
   return phone.startsWith("+91") ? phone : `+91 ${phone}`;
 };
 
-// Define table header cells
+// Table header configuration
 const headCells = [
   { id: "id", label: "Staff ID", sortable: true },
   { id: "first_name", label: "Staff Details", sortable: true },
@@ -111,47 +117,58 @@ export default function StaffTable() {
   const { all: staff } = useSelector((state: RootState) => state.staff);
   const [order, setOrder] = useState<Order>("desc");
   const [orderBy, setOrderBy] = useState<SortKey>("first_name");
-  const [page, setPage] = useState(0);
-  const [rowsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage] = useState<number>(10);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
   useEffect(() => {
     dispatch(fetchAllStaff());
   }, [dispatch]);
 
-  // Filter staff based on search term, department, and role
   const filteredStaff = useMemo(() => {
     return staff
       .filter((staffMember) => {
         const fullName = `${staffMember.first_name} ${staffMember.last_name}`.toLowerCase();
-        const searchFields = [fullName, staffMember.email, staffMember.phone_number].join(" ").toLowerCase();
-        const departmentMatch = departmentFilter === "all" || staffMember.department === departmentFilter;
+        const searchFields = [
+          fullName,
+          staffMember.email,
+          staffMember.phone_number,
+        ]
+          .join(" ")
+          .toLowerCase();
+        const departmentMatch =
+          departmentFilter === "all" ||
+          staffMember.department === departmentFilter;
         const roleMatch = roleFilter === "all" || staffMember.role === roleFilter;
-        return searchFields.includes(searchTerm.toLowerCase()) && departmentMatch && roleMatch;
+        return (
+          searchFields.includes(searchTerm.toLowerCase()) &&
+          departmentMatch &&
+          roleMatch
+        );
       })
       .sort(getComparator(order, orderBy));
   }, [staff, searchTerm, departmentFilter, roleFilter, order, orderBy]);
 
-  const handleRequestSort = (property: SortKey) => {
+  const handleRequestSort = (property: SortKey): void => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
 
-  const handleViewStaff = (id: number) => {
+  const handleViewStaff = (id: number): void => {
     router.push(`/admin/staff/view/${id}`);
   };
 
-  const handleEditStaff = (id: number) => {
+  const handleEditStaff = (id: number): void => {
     router.push(`/admin/staff/edit/${id}`);
   };
 
-  const handleBlockStaff = (id: number) => {
+  const handleBlockStaff = (id: number): void => {
     console.log(`Block staff member ${id}`);
-    // Implement block functionality as needed
+    // Add your block functionality here
   };
 
   const renderFilters = () => (
@@ -162,7 +179,7 @@ export default function StaffTable() {
           size="sm"
           value={departmentFilter}
           onChange={(e) =>
-            setDepartmentFilter((e?.target as HTMLSelectElement)?.value ?? "all")
+            setDepartmentFilter((e?.target as HTMLSelectElement).value || "all")
           }
           placeholder="Filter by department"
           sx={{
@@ -188,7 +205,7 @@ export default function StaffTable() {
           size="sm"
           value={roleFilter}
           onChange={(e) =>
-            setRoleFilter((e?.target as HTMLSelectElement)?.value ?? "all")
+            setRoleFilter((e?.target as HTMLSelectElement).value || "all")
           }
           placeholder="Filter by role"
           sx={{
@@ -206,9 +223,19 @@ export default function StaffTable() {
     </>
   );
 
+  // Common button styles
+  const buttonStyles = {
+    backgroundColor: "black !important",
+    color: "#fff !important",
+    "&:hover": {
+      backgroundColor: "black !important",
+      color: "#fff !important",
+    },
+  };
+
   return (
     <CssVarsProvider theme={darkTheme} defaultMode="dark">
-      {/* Mobile Search and Filters */}
+      {/* Mobile Search & Filter Modal */}
       <Sheet
         sx={{
           display: { xs: "flex", sm: "none" },
@@ -227,10 +254,14 @@ export default function StaffTable() {
             color: "#fff",
             bgcolor: "rgba(30,30,30,0.8)",
             "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
-            "& .MuiInput-input::placeholder": { color: "rgba(255,255,255,0.5)" },
+            "& .MuiInput-input::placeholder": {
+              color: "rgba(255,255,255,0.5)",
+            },
           }}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e?.target.value ?? "")}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setSearchTerm(e.target.value)
+          }
         />
         <IconButton
           size="sm"
@@ -274,7 +305,7 @@ export default function StaffTable() {
         </Modal>
       </Sheet>
 
-      {/* Desktop Search and Filters */}
+      {/* Desktop Search & Filters */}
       <Box
         sx={{
           borderRadius: "sm",
@@ -287,18 +318,24 @@ export default function StaffTable() {
         }}
       >
         <FormControl sx={{ flex: 1 }} size="sm">
-          <FormLabel sx={{ color: "rgba(255,255,255,0.7)" }}>Search staff</FormLabel>
+          <FormLabel sx={{ color: "rgba(255,255,255,0.7)" }}>
+            Search staff
+          </FormLabel>
           <Input
             size="sm"
             placeholder="Search by name, email or phone"
             startDecorator={<SearchIcon sx={{ color: "rgba(255,255,255,0.7)" }} />}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e?.target.value ?? "")}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setSearchTerm(e.target.value)
+            }
             sx={{
               color: "#fff",
               bgcolor: "rgba(30,30,30,0.8)",
               "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
-              "& .MuiInput-input::placeholder": { color: "rgba(255,255,255,0.5)" },
+              "& .MuiInput-input::placeholder": {
+                color: "rgba(255,255,255,0.5)",
+              },
             }}
           />
         </FormControl>
@@ -318,10 +355,12 @@ export default function StaffTable() {
           boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
         }}
       >
+        {/* Table view for Desktop & Tablet */}
         <Table
           stickyHeader
           hoverRow
           sx={{
+            display: { xs: "none", md: "table" },
             "--TableCell-headBackground": "rgba(25,25,25,0.9)",
             "--Table-headerUnderlineThickness": "1px",
             "--TableRow-hoverBackground": "rgba(40,40,40,0.5)",
@@ -374,7 +413,10 @@ export default function StaffTable() {
               .map((staffMember: Staff) => (
                 <tr key={staffMember.id}>
                   <td>
-                    <Typography level="body-sm" sx={{ color: "rgba(255,255,255,0.9)" }}>
+                    <Typography
+                      level="body-sm"
+                      sx={{ color: "rgba(255,255,255,0.9)" }}
+                    >
                       #{staffMember.id}
                     </Typography>
                   </td>
@@ -382,13 +424,15 @@ export default function StaffTable() {
                     <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
                       <Avatar
                         size="sm"
+                        src={staffMember.photo || undefined}
+                        alt={`${staffMember.first_name} ${staffMember.last_name}`}
                         sx={{
                           bgcolor: "rgba(60,60,60,0.8)",
                           color: "#fff",
                           border: "1px solid rgba(255,255,255,0.2)",
                         }}
                       >
-                        {staffMember.first_name[0]}
+                        {!staffMember.photo && staffMember.first_name[0]}
                       </Avatar>
                       <div>
                         <Typography
@@ -398,29 +442,38 @@ export default function StaffTable() {
                         >
                           {staffMember.first_name} {staffMember.last_name}
                         </Typography>
-                        <Typography level="body-xs" sx={{ color: "rgba(255,255,255,0.7)" }}>
-                          {staffMember.email}
-                        </Typography>
                       </div>
                     </Box>
                   </td>
                   <td>
-                    <Typography level="body-sm" sx={{ color: "rgba(255,255,255,0.9)" }}>
+                    <Typography
+                      level="body-sm"
+                      sx={{ color: "rgba(255,255,255,0.9)" }}
+                    >
                       {formatPhoneNumber(staffMember.phone_number)}
                     </Typography>
                   </td>
                   <td>
-                    <Typography level="body-sm" sx={{ color: "rgba(255,255,255,0.9)" }}>
+                    <Typography
+                      level="body-sm"
+                      sx={{ color: "rgba(255,255,255,0.9)" }}
+                    >
                       {staffMember.department}
                     </Typography>
                   </td>
                   <td>
-                    <Typography level="body-sm" sx={{ color: "rgba(255,255,255,0.9)" }}>
+                    <Typography
+                      level="body-sm"
+                      sx={{ color: "rgba(255,255,255,0.9)" }}
+                    >
                       ₹{staffMember.salary}
                     </Typography>
                   </td>
                   <td>
-                    <Typography level="body-sm" sx={{ color: "rgba(255,255,255,0.9)" }}>
+                    <Typography
+                      level="body-sm"
+                      sx={{ color: "rgba(255,255,255,0.9)" }}
+                    >
                       {staffMember.role}
                     </Typography>
                   </td>
@@ -431,7 +484,7 @@ export default function StaffTable() {
                           size="sm"
                           variant="plain"
                           color="neutral"
-                          onClick={() => handleViewStaff(staffMember.id as number)}
+                          onClick={() => handleViewStaff(staffMember.id)}
                           sx={{ color: "#fff" }}
                         >
                           <VisibilityIcon />
@@ -442,7 +495,7 @@ export default function StaffTable() {
                           size="sm"
                           variant="plain"
                           color="neutral"
-                          onClick={() => handleEditStaff(staffMember.id as number)}
+                          onClick={() => handleEditStaff(staffMember.id)}
                           sx={{ color: "#fff" }}
                         >
                           <EditIcon />
@@ -453,7 +506,7 @@ export default function StaffTable() {
                           size="sm"
                           variant="plain"
                           color="neutral"
-                          onClick={() => handleBlockStaff(staffMember.id as number)}
+                          onClick={() => handleBlockStaff(staffMember.id)}
                           sx={{ color: "#fff" }}
                         >
                           <BlockIcon />
@@ -465,8 +518,61 @@ export default function StaffTable() {
               ))}
           </tbody>
         </Table>
+
+        {/* Mobile Card/List View */}
+        <Box sx={{ display: { xs: "block", md: "none" } }}>
+          {filteredStaff.map((staffMember: Staff) => (
+            <Card key={staffMember.id} sx={{ my: 1 }}>
+              <CardContent>
+                <Typography level="body-sm">
+                  #{staffMember.id} - {staffMember.first_name} {staffMember.last_name}
+                </Typography>
+                <Typography level="body-xs">
+                  {formatPhoneNumber(staffMember.phone_number)}
+                </Typography>
+                <Typography level="body-xs">
+                  Department: {staffMember.department}
+                </Typography>
+                <Typography level="body-xs">₹{staffMember.salary}</Typography>
+                <Typography level="body-xs">
+                  {staffMember.role}
+                </Typography>
+                <Stack direction="row" spacing={1} mt={1}>
+                  <Tooltip title="View Details">
+                    <IconButton
+                      size="sm"
+                      onClick={() => handleViewStaff(staffMember.id)}
+                      sx={{ color: "#fff" }}
+                    >
+                      <VisibilityIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Edit Staff">
+                    <IconButton
+                      size="sm"
+                      onClick={() => handleEditStaff(staffMember.id)}
+                      sx={{ color: "#fff" }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Block Staff">
+                    <IconButton
+                      size="sm"
+                      onClick={() => handleBlockStaff(staffMember.id)}
+                      sx={{ color: "#fff" }}
+                    >
+                      <BlockIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Stack>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
       </Sheet>
 
+      {/* Pagination */}
       <Box
         sx={{
           pt: 2,
@@ -541,3 +647,4 @@ export default function StaffTable() {
     </CssVarsProvider>
   );
 }
+

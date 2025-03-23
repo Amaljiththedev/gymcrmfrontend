@@ -1,13 +1,13 @@
 "use client";
+
 import * as React from "react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, ChangeEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
-import { RootState, AppDispatch } from "@/src/store/store";
-import { fetchAllStaff, Staff } from "@/src/features/staff/staffSlice";
 import {
   Avatar,
   Box,
+  Chip,
   Typography,
   Input,
   Sheet,
@@ -26,6 +26,8 @@ import {
   extendTheme,
   Stack,
   Tooltip,
+  Card,
+  CardContent,
 } from "@mui/joy";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import SearchIcon from "@mui/icons-material/Search";
@@ -35,8 +37,10 @@ import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PaymentIcon from "@mui/icons-material/Payment";
 import BlockIcon from "@mui/icons-material/Block";
+import { RootState, AppDispatch } from "@/src/store/store";
+import { fetchAllStaff, Staff } from "@/src/features/staff/staffSlice";
 
-// Create a dark theme for Joy UI
+// Create dark theme for Joy UI
 const darkTheme = extendTheme({
   colorSchemes: {
     dark: {
@@ -67,12 +71,13 @@ const darkTheme = extendTheme({
 });
 
 type Order = "asc" | "desc";
-type SortKey = "id" | "first_name" | "phone_number" | "salary" | "department" | "salary_due_date";
+type SortKey = "id" | "first_name" | "phone_number" | "department" | "salary" | "salary_due_date";
 
-// Comparator functions for sorting staff data
 function descendingComparator(a: Staff, b: Staff, orderBy: SortKey) {
-  if ((b[orderBy as keyof Staff] ?? 0) < (a[orderBy as keyof Staff] ?? 0)) return -1;
-  if ((b[orderBy as keyof Staff] ?? 0) > (a[orderBy as keyof Staff] ?? 0)) return 1;
+  const aValue = a[orderBy as keyof Staff];
+  const bValue = b[orderBy as keyof Staff];
+  if (bValue < aValue) return -1;
+  if (bValue > aValue) return 1;
   return 0;
 }
 
@@ -82,19 +87,16 @@ function getComparator(order: Order, orderBy: SortKey) {
     : (a: Staff, b: Staff) => -descendingComparator(a, b, orderBy);
 }
 
-// Helper to format phone numbers
 const formatPhoneNumber = (phone: string) => {
   if (!phone) return "";
   return phone.startsWith("+91") ? phone : `+91 ${phone}`;
 };
 
-// Helper to format dates
 const formatDate = (dateStr: string | Date) => {
   const date = new Date(dateStr);
   return date.toLocaleDateString();
 };
 
-// Returns conditional styling for salary due date based on proximity to today.
 const getDueDateStyles = (dueDate: string | Date) => {
   const today = new Date();
   const due = new Date(dueDate);
@@ -104,14 +106,11 @@ const getDueDateStyles = (dueDate: string | Date) => {
   let textColor = "#fff";
 
   if (diffDays > 15) {
-    // Far away: Green
     bgColor = "green";
   } else if (diffDays > 7) {
-    // Moderate: Yellow (with black text for contrast)
     bgColor = "yellow";
     textColor = "#000";
   } else {
-    // Close or overdue: Red
     bgColor = "red";
   }
   return { bgColor, textColor };
@@ -131,19 +130,16 @@ export default function StaffSalaryTable() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { all: staff } = useSelector((state: RootState) => state.staff);
-
-  // Sorting & Pagination
+  
   const [order, setOrder] = useState<Order>("desc");
   const [orderBy, setOrderBy] = useState<SortKey>("first_name");
-  const [page, setPage] = useState(0);
-  const [rowsPerPage] = useState(10);
-
-  // Filtering states
-  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage] = useState<number>(10);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
-  // Salary management modal state
+  // Salary Modal state
   const [isSalaryModalOpen, setIsSalaryModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [newSalary, setNewSalary] = useState<number>(0);
@@ -152,7 +148,6 @@ export default function StaffSalaryTable() {
     dispatch(fetchAllStaff());
   }, [dispatch]);
 
-  // Filtering and sorting logic
   const filteredStaff = useMemo(() => {
     return staff
       .filter((staffMember) => {
@@ -164,13 +159,13 @@ export default function StaffSalaryTable() {
       .sort(getComparator(order, orderBy));
   }, [staff, searchTerm, departmentFilter, order, orderBy]);
 
-  const handleRequestSort = (property: SortKey) => {
+  const handleRequestSort = (property: SortKey): void => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
 
-  const handleViewStaff = (id: number) => {
+  const handleViewStaff = (id: number): void => {
     router.push(`/admin/staff/view/${id}`);
   };
 
@@ -181,13 +176,11 @@ export default function StaffSalaryTable() {
   };
 
   const handleSalaryUpdate = () => {
-    // Implement API call to update/add salary info here.
     console.log(`Updating salary for ${selectedStaff?.id} to ${newSalary}`);
     setIsSalaryModalOpen(false);
   };
 
   const handleBlockStaff = (staffMember: Staff) => {
-    // Implement your logic to block the staff member here.
     console.log(`Blocking staff member ${staffMember.id}`);
   };
 
@@ -198,7 +191,7 @@ export default function StaffSalaryTable() {
         <Select
           size="sm"
           value={departmentFilter}
-          onChange={(e) => setDepartmentFilter((e?.target as HTMLSelectElement)?.value ?? "all")}
+          onChange={(e) => setDepartmentFilter((e?.target as HTMLSelectElement).value || "all")}
           placeholder="Filter by department"
           sx={{
             color: "#fff",
@@ -220,9 +213,18 @@ export default function StaffSalaryTable() {
     </>
   );
 
+  const buttonStyles = {
+    backgroundColor: "black !important",
+    color: "#fff !important",
+    "&:hover": {
+      backgroundColor: "black !important",
+      color: "#fff !important",
+    },
+  };
+
   return (
     <CssVarsProvider theme={darkTheme} defaultMode="dark">
-      {/* Mobile Search and Filters */}
+      {/* Mobile Search & Filter Modal */}
       <Sheet
         sx={{
           display: { xs: "flex", sm: "none" },
@@ -240,10 +242,10 @@ export default function StaffSalaryTable() {
             flexGrow: 1,
             bgcolor: "rgba(30,30,30,0.8)",
             "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
-            "& input::placeholder": { color: "rgba(255,255,255,0.5)" },
+            "& .MuiInput-input::placeholder": { color: "rgba(255,255,255,0.5)" },
           }}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e?.target.value ?? "")}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
         <IconButton
           size="sm"
@@ -255,7 +257,11 @@ export default function StaffSalaryTable() {
           <FilterAltIcon />
         </IconButton>
         <Modal open={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
-          <ModalDialog aria-labelledby="filter-modal" layout="fullscreen" sx={{ bgcolor: "#000", color: "#fff" }}>
+          <ModalDialog
+            aria-labelledby="filter-modal"
+            layout="fullscreen"
+            sx={{ bgcolor: "#000", color: "#fff" }}
+          >
             <ModalClose sx={{ color: "#fff" }} />
             <Typography id="filter-modal" level="h2" sx={{ color: "#fff" }}>
               Filters
@@ -263,7 +269,10 @@ export default function StaffSalaryTable() {
             <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {renderFilters()}
-              <Button onClick={() => setIsFilterOpen(false)} sx={{ bgcolor: "rgba(70,130,180,0.8)", color: "#fff" }}>
+              <Button
+                onClick={() => setIsFilterOpen(false)}
+                sx={{ bgcolor: "rgba(70,130,180,0.8)", color: "#fff" }}
+              >
                 Apply Filters
               </Button>
             </Box>
@@ -271,7 +280,7 @@ export default function StaffSalaryTable() {
         </Modal>
       </Sheet>
 
-      {/* Desktop Search and Filters */}
+      {/* Desktop Search & Filters */}
       <Box
         sx={{
           borderRadius: "sm",
@@ -289,11 +298,11 @@ export default function StaffSalaryTable() {
             placeholder="Search by name, email or phone"
             startDecorator={<SearchIcon sx={{ color: "rgba(255,255,255,0.7)" }} />}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e?.target.value ?? "")}
+            onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
               bgcolor: "rgba(30,30,30,0.8)",
               "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
-              "& input::placeholder": { color: "rgba(255,255,255,0.5)" },
+              "& .MuiInput-input::placeholder": { color: "rgba(255,255,255,0.5)" },
             }}
           />
         </FormControl>
@@ -312,11 +321,12 @@ export default function StaffSalaryTable() {
             boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
           }}
         >
+          {/* Table view for Desktop & Tablet */}
           <Table
             stickyHeader
             hoverRow
             sx={{
-              minWidth: "600px",
+              display: { xs: "none", md: "table" },
               "--TableCell-headBackground": "rgba(25,25,25,0.9)",
               "--Table-headerUnderlineThickness": "1px",
               "--TableRow-hoverBackground": "rgba(40,40,40,0.5)",
@@ -342,7 +352,10 @@ export default function StaffSalaryTable() {
                           color: "#fff",
                           bgcolor: "transparent",
                           "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
-                          "& svg": { transition: "0.2s", transform: orderBy === headCell.id && order === "asc" ? "rotate(180deg)" : "none" },
+                          "& svg": {
+                            transition: "0.2s",
+                            transform: orderBy === headCell.id && order === "asc" ? "rotate(180deg)" : "none",
+                          },
                         }}
                       >
                         {headCell.label}
@@ -356,7 +369,7 @@ export default function StaffSalaryTable() {
             </thead>
             <tbody>
               {filteredStaff.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((staffMember: Staff) => {
-                const { bgColor, textColor } = getDueDateStyles(staffMember.salary_due_date as unknown as string | Date);
+                const { bgColor, textColor } = getDueDateStyles(staffMember.salary_due_date);
                 return (
                   <tr key={staffMember.id}>
                     <td>
@@ -368,21 +381,21 @@ export default function StaffSalaryTable() {
                       <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
                         <Avatar
                           size="sm"
+                          src={staffMember.photo || undefined}
+                          alt={`${staffMember.first_name} ${staffMember.last_name}`}
                           sx={{
                             bgcolor: "rgba(60,60,60,0.8)",
                             color: "#fff",
                             border: "1px solid rgba(255,255,255,0.2)",
                           }}
                         >
-                          {staffMember.first_name[0]}
+                          {!staffMember.photo && staffMember.first_name[0]}
                         </Avatar>
                         <div>
                           <Typography level="body-sm" fontWeight="medium" sx={{ color: "rgba(255,255,255,0.9)" }}>
                             {staffMember.first_name} {staffMember.last_name}
                           </Typography>
-                          <Typography level="body-xs" sx={{ color: "rgba(255,255,255,0.7)" }}>
-                            {staffMember.email}
-                          </Typography>
+    
                         </div>
                       </Box>
                     </td>
@@ -413,23 +426,41 @@ export default function StaffSalaryTable() {
                           display: "inline-block",
                         }}
                       >
-                        {formatDate(staffMember.salary_due_date as unknown as string | Date)}
+                        {formatDate(staffMember.salary_due_date)}
                       </Typography>
                     </td>
                     <td>
                       <Stack direction="row" spacing={1}>
                         <Tooltip title="View Details">
-                          <IconButton size="sm" variant="plain" color="neutral" onClick={() => handleViewStaff(staffMember.id)} sx={{ color: "#fff" }}>
+                          <IconButton
+                            size="sm"
+                            variant="plain"
+                            color="neutral"
+                            onClick={() => handleViewStaff(staffMember.id)}
+                            sx={{ color: "#fff" }}
+                          >
                             <VisibilityIcon />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Add/Update Salary">
-                          <IconButton size="sm" variant="plain" color="neutral" onClick={() => handleOpenSalaryModal(staffMember)} sx={{ color: "#fff" }}>
+                          <IconButton
+                            size="sm"
+                            variant="plain"
+                            color="neutral"
+                            onClick={() => handleOpenSalaryModal(staffMember)}
+                            sx={{ color: "#fff" }}
+                          >
                             <PaymentIcon />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Block Staff">
-                          <IconButton size="sm" variant="plain" color="neutral" onClick={() => handleBlockStaff(staffMember)} sx={{ color: "#fff" }}>
+                          <IconButton
+                            size="sm"
+                            variant="plain"
+                            color="neutral"
+                            onClick={() => handleBlockStaff(staffMember)}
+                            sx={{ color: "#fff" }}
+                          >
                             <BlockIcon />
                           </IconButton>
                         </Tooltip>
@@ -443,8 +474,80 @@ export default function StaffSalaryTable() {
         </Sheet>
       </Box>
 
+      {/* Mobile Card/List View */}
+      <Box sx={{ display: { xs: "block", md: "none" } }}>
+        {filteredStaff.map((staffMember: Staff) => {
+          const { bgColor, textColor } = getDueDateStyles(staffMember.salary_due_date);
+          return (
+            <Card key={staffMember.id} sx={{ my: 1 }}>
+              <CardContent>
+                <Typography level="body-sm">
+                  #{staffMember.id} - {staffMember.first_name} {staffMember.last_name}
+                </Typography>
+                <Typography level="body-xs">
+                  {formatPhoneNumber(staffMember.phone_number)}
+                </Typography>
+                <Typography level="body-xs">
+                  Department: {staffMember.department}
+                </Typography>
+                <Typography level="body-xs">₹{staffMember.salary}</Typography>
+                <Typography
+                  level="body-xs"
+                  sx={{
+                    bgcolor: bgColor,
+                    color: textColor,
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: "4px",
+                    display: "inline-block",
+                  }}
+                >
+                  {formatDate(staffMember.salary_due_date)}
+                </Typography>
+                <Stack direction="row" spacing={1} mt={1}>
+                  <Tooltip title="View Details">
+                    <IconButton
+                      size="sm"
+                      onClick={() => handleViewStaff(staffMember.id)}
+                      sx={{ color: "#fff" }}
+                    >
+                      <VisibilityIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Add/Update Salary">
+                    <IconButton
+                      size="sm"
+                      onClick={() => handleOpenSalaryModal(staffMember)}
+                      sx={{ color: "#fff" }}
+                    >
+                      <PaymentIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Block Staff">
+                    <IconButton
+                      size="sm"
+                      onClick={() => handleBlockStaff(staffMember)}
+                      sx={{ color: "#fff" }}
+                    >
+                      <BlockIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Stack>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </Box>
+
       {/* Pagination */}
-      <Box sx={{ pt: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <Box
+        sx={{
+          pt: 2,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Typography level="body-sm" sx={{ color: "rgba(255,255,255,0.7)" }}>
           Showing {Math.min(filteredStaff.length, (page + 1) * rowsPerPage)} of {filteredStaff.length} staff members
         </Typography>
@@ -460,7 +563,10 @@ export default function StaffSalaryTable() {
               color: "#fff",
               borderColor: "rgba(255,255,255,0.3)",
               "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
-              "&.Mui-disabled": { color: "rgba(255,255,255,0.3)", borderColor: "rgba(255,255,255,0.1)" },
+              "&.Mui-disabled": {
+                color: "rgba(255,255,255,0.3)",
+                borderColor: "rgba(255,255,255,0.1)",
+              },
             }}
           >
             Previous
@@ -494,7 +600,10 @@ export default function StaffSalaryTable() {
               color: "#fff",
               borderColor: "rgba(255,255,255,0.3)",
               "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
-              "&.Mui-disabled": { color: "rgba(255,255,255,0.3)", borderColor: "rgba(255,255,255,0.1)" },
+              "&.Mui-disabled": {
+                color: "rgba(255,255,255,0.3)",
+                borderColor: "rgba(255,255,255,0.1)",
+              },
             }}
           >
             Next
@@ -504,7 +613,10 @@ export default function StaffSalaryTable() {
 
       {/* Salary Update Modal */}
       <Modal open={isSalaryModalOpen} onClose={() => setIsSalaryModalOpen(false)}>
-        <ModalDialog aria-labelledby="salary-update-modal" sx={{ maxWidth: "400px", bgcolor: "#000", color: "#fff" }}>
+        <ModalDialog
+          aria-labelledby="salary-update-modal"
+          sx={{ maxWidth: "400px", bgcolor: "#000", color: "#fff" }}
+        >
           <ModalClose sx={{ color: "#fff" }} />
           <Typography id="salary-update-modal" level="h3" component="h5">
             Add/Update Salary
@@ -529,3 +641,4 @@ export default function StaffSalaryTable() {
     </CssVarsProvider>
   );
 }
+

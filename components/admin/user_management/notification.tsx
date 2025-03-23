@@ -176,7 +176,7 @@ export default function ExpiringMembersTable() {
         <Select
           size="sm"
           value={amountFilter}
-          onChange={(e) => setAmountFilter((e.target as HTMLSelectElement).value)}
+          onChange={(e) => setAmountFilter((e?.target as HTMLSelectElement).value)}
           placeholder="Filter by payment"
           sx={{
             color: "#fff",
@@ -195,7 +195,7 @@ export default function ExpiringMembersTable() {
         <Select
           size="sm"
           value={planFilter}
-          onChange={(e) => setPlanFilter((e.target as HTMLSelectElement).value)}
+          onChange={(e) => setPlanFilter((e?.target as HTMLSelectElement).value)}
           placeholder="Filter by plan"
           sx={{
             color: "#fff",
