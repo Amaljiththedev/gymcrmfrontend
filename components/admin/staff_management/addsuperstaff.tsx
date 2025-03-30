@@ -76,24 +76,41 @@ export default function CreateSuperStaff() {
     address: '',
     department: '',
     salary: '',
-    // Use salaryCreditedDate to match the Django model field
     salaryCreditedDate: '', 
     password: '',
     photo: null as File | null,
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // Department options coming exclusively from the backend
   const [departments, setDepartments] = useState<{ value: string; label: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [startDate, setStartDate] = useState<Date>(new Date());
+
+  // Function to generate a random password
+  const generateRandomPassword = (length = 12) => {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * charset.length);
+      password += charset[randomIndex];
+    }
+    return password;
+  };
+
+  // Function to handle password suggestion: generate, set state, and copy to clipboard.
+  const handleSuggestPassword = () => {
+    const suggested = generateRandomPassword(12);
+    setFormData(prev => ({ ...prev, password: suggested }));
+    navigator.clipboard.writeText(suggested)
+      .then(() => toast.info("Suggested password copied to clipboard!"))
+      .catch(() => toast.error("Failed to copy password to clipboard."));
+  };
 
   // Fetch department choices from the backend API
   useEffect(() => {
     async function fetchDepartments() {
       try {
         const response = await axios.get('/staff/departments/');
-        // Assuming response.data is an array of objects with "value" and "label"
         setDepartments(response.data);
       } catch (error) {
         console.error('Error fetching departments: 😕', error);
@@ -103,7 +120,6 @@ export default function CreateSuperStaff() {
     fetchDepartments();
   }, []);
 
-  // Validate form fields with friendly messages & emojis
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.firstName) newErrors.firstName = 'First name is required ✨';
@@ -121,7 +137,6 @@ export default function CreateSuperStaff() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle file selection and preview generation with extra check
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       const file = e.target.files[0];
@@ -134,7 +149,6 @@ export default function CreateSuperStaff() {
     }
   };
 
-  // Handle form submission with robust error catching
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!validateForm()) return;
@@ -147,14 +161,12 @@ export default function CreateSuperStaff() {
     formPayload.append('address', formData.address);
     formPayload.append('department', formData.department);
     formPayload.append('salary', formData.salary);
-    // Append the salary_credited_date field with the ISO formatted date
     formPayload.append('salary_credited_date', formData.salaryCreditedDate);
     formPayload.append('password', formData.password);
     if (formData.photo) formPayload.append('photo', formData.photo);
     try {
       await dispatch(addSuperStaff(formPayload) as any).unwrap();
       setLoading(false);
-      // Reset form data after successful submission
       setFormData({
         firstName: '',
         lastName: '',
@@ -174,7 +186,6 @@ export default function CreateSuperStaff() {
     } catch (err: any) {
       console.error('Error creating super staff: 😕', err);
       setLoading(false);
-      // Extract error message if available
       const errorMsg = err.response?.data?.detail || err.message || 'An unexpected error occurred 😕';
       setErrors(prev => ({ ...prev, general: errorMsg }));
       toast.error(errorMsg);
@@ -194,7 +205,7 @@ export default function CreateSuperStaff() {
             </Typography>
             <Divider sx={{ mb: 4 }} />
 
-            {/* Photo Upload Section with Preview */}
+            {/* Photo Upload Section */}
             <Stack direction="row" spacing={3} alignItems="center" sx={{ mb: 4 }}>
               <AspectRatio
                 ratio="1"
@@ -289,7 +300,7 @@ export default function CreateSuperStaff() {
                 <FormLabel>Email</FormLabel>
                 <Input
                   type="email"
-                  autoComplete="username" // For saved username suggestions
+                  autoComplete="username"
                   startDecorator={<EmailRoundedIcon />}
                   value={formData.email}
                   onChange={(e) =>
@@ -385,7 +396,6 @@ export default function CreateSuperStaff() {
                     selectedDate={startDate}
                     onDateChange={(date: Date) => {
                       setStartDate(date);
-                      // Save the date as ISO string (YYYY-MM-DD) to match backend format
                       setFormData({
                         ...formData,
                         salaryCreditedDate: date.toISOString().split('T')[0],
@@ -406,16 +416,21 @@ export default function CreateSuperStaff() {
 
               <FormControl error={!!errors.password}>
                 <FormLabel>Password</FormLabel>
-                <Input
-                  type="password"
-                  autoComplete="current-password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  variant="soft"
-                  startDecorator={<PasswordIcon />}
-                />
+                <Stack direction="row" spacing={1}>
+                  <Input
+                    type="password"
+                    autoComplete="current-password"
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    variant="soft"
+                    startDecorator={<PasswordIcon />}
+                  />
+                  <Button variant="outlined" onClick={handleSuggestPassword}>
+                    Suggest
+                  </Button>
+                </Stack>
                 {errors.password && (
                   <FormHelperText sx={{ color: '#ff4d4f' }}>
                     {errors.password}

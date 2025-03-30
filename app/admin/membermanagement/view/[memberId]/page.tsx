@@ -1,84 +1,13 @@
 "use client";
-import React, { ReactNode, useEffect, useState } from "react";
+
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import {
-  Box,
-  Card,
-  Chip,
-  CircularProgress,
-  Divider,
-  Grid,
-  IconButton,
-  List,
-  ListItem,
-  ListItemDecorator,
-  LinearProgress,
-  Sheet,
-  Stack,
-  AspectRatio,
-} from "@mui/joy";
-import Typography from "@mui/joy/Typography";
 import axios from "axios";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
-import PaidIcon from "@mui/icons-material/Paid";
-import PersonIcon from "@mui/icons-material/Person";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import HeightIcon from "@mui/icons-material/Height";
-import MonitorWeightIcon from "@mui/icons-material/MonitorWeight";
-import ContactPhoneIcon from "@mui/icons-material/ContactPhone";
-import HomeIcon from "@mui/icons-material/Home";
-import BlockIcon from "@mui/icons-material/Block";
-import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
-import ShowChartIcon from "@mui/icons-material/ShowChart";
-import AdjustIcon from "@mui/icons-material/Adjust";
-import { styled } from "@mui/joy/styles";
-
-// ---------------------------
-// Custom Styled Components
-// ---------------------------
-const GradientText = styled(Typography)(({ theme }) => ({
-  background: "linear-gradient(45deg, #7C3AED 0%, #3B82F6 100%)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  fontWeight: "bold",
-}));
-
-const GlowCard = styled(Card)(({ theme }) => ({
-  background:
-    "radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.1) 0%, rgba(0,0,0,0) 70%)",
-  backdropFilter: "blur(10px)",
-  border: "1px solid rgba(255,255,255,0.1)",
-  position: "relative",
-  "&:before": {
-    content: '""',
-    position: "absolute",
-    inset: 0,
-    borderRadius: "inherit",
-    padding: "1px",
-    background:
-      "linear-gradient(45deg, rgba(124, 58, 237, 0.4), rgba(59, 130, 246, 0.2))",
-    WebkitMask:
-      "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
-    mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
-    WebkitMaskComposite: "xor",
-    maskComposite: "exclude",
-  },
-}));
-
-// New styled components for white highlighted text
-const WhiteText = styled(Typography)(({ theme }) => ({
-  color: "#fff",
-  textShadow: "0 0 5px rgba(255,255,255,0.5)",
-}));
-
-const HighlightedText = styled(Typography)(({ theme }) => ({
-  color: "#fff",
-  backgroundColor: "rgba(255, 255, 255, 0.15)",
-  padding: "0.2em 0.4em",
-  borderRadius: "4px",
-  textShadow: "0 0 5px rgba(255,255,255,0.5)",
-}));
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Download, User, Calendar, Phone, TrendingUp, DollarSign, Activity } from "lucide-react";
 
 // ---------------------------
 // Type Definitions
@@ -92,7 +21,7 @@ interface MembershipPlan {
 }
 
 interface Member {
-  membership_status: ReactNode;
+  membership_status: string;
   id: number;
   first_name: string;
   last_name: string;
@@ -120,7 +49,6 @@ export default function MemberView() {
   const [member, setMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("personal");
 
   useEffect(() => {
     const fetchMember = async () => {
@@ -166,443 +94,243 @@ export default function MemberView() {
     return Math.min(100, Math.round((member.days_present / daysPassed) * 100));
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          bgcolor: "#000",
-        }}
-      >
-        <CircularProgress size="lg" />
-      </Box>
+      <div className="flex items-center justify-center h-screen bg-black">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-red-500" />
+      </div>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
-      <Box sx={{ p: 4, bgcolor: "#000", minHeight: "100vh" }}>
-        <HighlightedText level="h3" sx={{ fontSize: "1.5rem" }}>
-          {error}
-        </HighlightedText>
-      </Box>
+      <div className="p-4 bg-black min-h-screen">
+        <h3 className="text-2xl text-red-500">{error}</h3>
+      </div>
     );
+  }
 
-  if (!member)
+  if (!member) {
     return (
-      <Box sx={{ p: 4, bgcolor: "#000", minHeight: "100vh" }}>
-        <HighlightedText level="h3" sx={{ fontSize: "1.5rem" }}>
-          Member not found
-        </HighlightedText>
-      </Box>
+      <div className="p-4 bg-black min-h-screen">
+        <h3 className="text-2xl text-red-500">Member not found</h3>
+      </div>
     );
+  }
 
   const fullName = `${member.first_name} ${member.last_name}`;
   const membershipProgress = calculateProgress();
   const attendanceRate = calculateAttendanceRate();
 
   return (
-    <Box sx={{ p: 4, bgcolor: "#000", minHeight: "100vh" }}>
-      <Grid container spacing={4}>
-        {/* Profile Section */}
-        <Grid xs={12} md={3}>
-          <GlowCard
-            sx={{
-              height: "100%",
-              textAlign: "center",
-              borderRadius: "20px",
-              p: 3,
-            }}
-          >
-            <AspectRatio
-              ratio={1}
-              sx={{
-                width: { xs: 120, md: 150 },
-                mx: "auto",
-                mb: 2,
-                position: "relative",
-                "&:after": {
-                  content: '""',
-                  position: "absolute",
-                  inset: -4,
-                  borderRadius: "50%",
-                  background:
-                    "linear-gradient(45deg, #7C3AED, #3B82F6)",
-                  animation: "pulse 2s infinite",
-                },
-                "@keyframes pulse": {
-                  "0%": { opacity: 0.6 },
-                  "50%": { opacity: 0.3 },
-                  "100%": { opacity: 0.6 },
-                },
-              }}
-            >
-              {member.photo ? (
-                <img
-                  src={member.photo}
-                  alt={fullName}
-                  style={{
-                    objectFit: "cover",
-                    borderRadius: "50%",
-                    border: "2px solid rgba(255,255,255,0.1)",
-                  }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: "rgba(255,255,255,0.05)",
-                    borderRadius: "50%",
-                  }}
-                >
-                  <PersonIcon sx={{ fontSize: 64, color: "#7C3AED" }} />
-                </Box>
-              )}
-            </AspectRatio>
+    <div className="container mx-auto py-6 px-4 min-h-screen bg-black text-white space-y-6">
+      {/* Header with Invoice Download */}
+      <div className="flex flex-col md:flex-row items-center justify-between">
+        <h1 className="text-3xl font-bold">{fullName}'s Profile</h1>
+        <Button 
+          variant="outline" 
+          className="mt-4 md:mt-0 border border-white/20 hover:border-white/40"
+          onClick={() => alert("Downloading Invoice...")}
+        >
+          <Download className="mr-2 h-4 w-4" /> Download Invoice
+        </Button>
+      </div>
 
-            <GradientText level="h3" sx={{ mb: 1, fontSize: "1.8rem" }}>
+      <Separator className="border-white/20" />
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Profile Card */}
+        <Card className="col-span-1 bg-transparent shadow-none border border-white/20 backdrop-blur-sm">
+          <CardHeader className="flex flex-col items-center">
+            {member.photo ? (
+              <img
+                src={member.photo}
+                alt={fullName}
+                className="w-24 h-24 rounded-full border-2 border-white/20"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
+                <User className="h-10 w-10 text-red-500" />
+              </div>
+            )}
+            <CardTitle className="mt-4 text-center text-white bg-clip-text bg-gradient-to-r from-red-500 to-gray-500">
               {fullName}
-            </GradientText>
-
-            <HighlightedText level="body-sm" sx={{ mb: 2, fontSize: "1.1rem" }}>
-              ID: #{member.id}
-            </HighlightedText>
-
-            <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 3 }}>
-              <Chip
-                variant="soft"
-                size="lg"
-                sx={{
-                  px: 2,
-                  fontSize: "1.1rem",
-                  backdropFilter: "blur(4px)",
-                  color: "#fff",
-
-                  // Conditional styling for membership status:
-                  bgcolor:
-                    member.membership_status === "blocked"
-                      ? "rgba(239,68,68,0.15)"
-                      : member.membership_status === "expired"
-                      ? "rgba(255,152,0,0.15)"
-                      : "rgba(34,197,94,0.15)",
-                }}
+            </CardTitle>
+            <p className="text-sm text-gray-300">ID: #{member.id}</p>
+            <div className="mt-2">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  member.membership_status === "blocked"
+                    ? "bg-red-800"
+                    : member.membership_status === "expired"
+                    ? "bg-yellow-800"
+                    : "bg-green-800"
+                }`}
               >
                 {member.membership_status}
-              </Chip>
-            </Stack>
-
-            <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
-
-            {/* Stats Section */}
-            <Box sx={{ textAlign: "left" }}>
-              <HighlightedText
-                level="title-sm"
-                sx={{
-                  mb: 2,
-                  fontSize: "1.2rem",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                MEMBERSHIP OVERVIEW
-              </HighlightedText>
-
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <HighlightedText sx={{ fontSize: "1rem" }}>
-                    Progress
-                  </HighlightedText>
-                  <WhiteText sx={{ fontSize: "1rem", fontWeight: 600 }}>
-                    {membershipProgress}%
-                  </WhiteText>
-                </Box>
-                <LinearProgress
-                  determinate
-                  value={membershipProgress}
-                  sx={{
-                    bgcolor: "rgba(255,255,255,0.1)",
-                    "& .MuiLinearProgress-bar": {
-                      background: "linear-gradient(90deg, #7C3AED 0%, #3B82F6 100%)",
-                    },
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-300">Membership Progress</p>
+              <div className="relative w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-500 to-gray-600 transition-all duration-500 rounded-full"
+                  style={{ width: `${membershipProgress}%` }}
+                />
+              </div>
+              <p className="text-xs mt-1">{membershipProgress}%</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-300">Attendance</p>
+              <div className="relative w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-gray-600 to-green-500 transition-all duration-500 rounded-full"
+                  style={{ width: `${attendanceRate}%` }}
+                />
+              </div>
+              <p className="text-xs mt-1">{attendanceRate}%</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-300">Payments</p>
+              <div className="relative w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-yellow-500 to-yellow-300 transition-all duration-500 rounded-full"
+                  style={{
+                    width: `${
+                      (Number(member.amount_paid) / member.membership_plan.price) *
+                      100
+                    }%`,
                   }}
                 />
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <HighlightedText sx={{ fontSize: "1rem" }}>
-                    Attendance
-                  </HighlightedText>
-                  <WhiteText sx={{ fontSize: "1rem", fontWeight: 600 }}>
-                    {attendanceRate}%
-                  </WhiteText>
-                </Box>
-                <LinearProgress
-                  determinate
-                  value={attendanceRate}
-                  sx={{
-                    bgcolor: "rgba(255,255,255,0.1)",
-                    "& .MuiLinearProgress-bar": {
-                      background: "linear-gradient(90deg, #3B82F6 0%, #10B981 100%)",
-                    },
-                  }}
-                />
-              </Box>
-
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <HighlightedText sx={{ fontSize: "1rem" }}>
-                    Payments
-                  </HighlightedText>
-                  <WhiteText sx={{ fontSize: "1rem", fontWeight: 600 }}>
-                    ₹{member.amount_paid} / ₹{member.membership_plan.price}
-                  </WhiteText>
-                </Box>
-                <LinearProgress
-                  determinate
-                  value={(Number(member.amount_paid) / member.membership_plan.price) * 100}
-                  sx={{
-                    bgcolor: "rgba(255,255,255,0.1)",
-                    "& .MuiLinearProgress-bar": {
-                      background: "linear-gradient(90deg, #F59E0B 0%, #FCD34D 100%)",
-                    },
-                  }}
-                />
-              </Box>
-            </Box>
-          </GlowCard>
-        </Grid>
+              </div>
+              <p className="text-xs mt-1">
+                ₹{member.amount_paid} / ₹{member.membership_plan.price}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Content */}
-        <Grid xs={12} md={9}>
-          {/* Navigation Tabs */}
-          <Sheet
-            sx={{
-              bgcolor: "rgba(255,255,255,0.05)",
-              borderRadius: "12px",
-              mb: 3,
-              p: 0.5,
-              display: "flex",
-              gap: 0.5,
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            {["personal", "membership", "fitness"].map((tab) => (
-              <IconButton
-                key={tab}
-                variant={activeTab === tab ? "soft" : "plain"}
-                onClick={() => setActiveTab(tab)}
-                sx={{
-                  flex: 1,
-                  borderRadius: "8px",
-                  py: 1.5,
-                  transition: "all 0.3s ease",
-                  bgcolor:
-                    activeTab === tab ? "rgba(59, 130, 246, 0.2)" : "transparent",
-                  "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.05)",
-                  },
-                }}
-              >
-                <WhiteText
-                  sx={{
-                    fontSize: "1.1rem",
-                    fontWeight: activeTab === tab ? 600 : 400,
-                  }}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </WhiteText>
-              </IconButton>
-            ))}
-          </Sheet>
-
-          {/* Content Sections */}
-          <GlowCard sx={{ borderRadius: "20px", p: 3 }}>
-            {activeTab === "personal" && (
-              <Box>
-                <GradientText level="h4" sx={{ mb: 3, fontSize: "1.6rem" }}>
-                  Personal Details
-                </GradientText>
-                <Grid container spacing={3}>
-                  {[
-                    {
-                      icon: <CalendarTodayIcon />,
-                      label: "Date of Birth",
-                      value: formatDate(member.dob),
-                    },
-                    {
-                      icon: <ContactPhoneIcon />,
-                      label: "Phone",
-                      value: member.phone || "N/A",
-                    },
-                    {
-                      icon: <HeightIcon />,
-                      label: "Height",
-                      value: member.height ? `${member.height} cm` : "N/A",
-                    },
-                    {
-                      icon: <HomeIcon />,
-                      label: "Address",
-                      value: member.address || "N/A",
-                    },
-                    {
-                      icon: <MonitorWeightIcon />,
-                      label: "Weight",
-                      value: member.weight ? `${member.weight} kg` : "N/A",
-                    },
-                    {
-                      icon: <FitnessCenterIcon />,
-                      label: "Days Present",
-                      value: `${member.days_present} days`,
-                    },
-                  ].map((item, index) => (
-                    <Grid xs={12} md={6} key={index}>
-                      <ListItem sx={{ px: 0, py: 1.5 }}>
-                        <ListItemDecorator sx={{ color: "#3B82F6", mr: 2 }}>
-                          {item.icon}
-                        </ListItemDecorator>
-                        <Box>
-                          <HighlightedText level="body-xs" sx={{ mb: 0.5 }}>
-                            {item.label}
-                          </HighlightedText>
-                          <WhiteText sx={{ fontSize: "1.1rem" }}>
-                            {item.value}
-                          </WhiteText>
-                        </Box>
-                      </ListItem>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-            )}
-
-            {activeTab === "membership" && (
-              <Box>
-                <GradientText level="h4" sx={{ mb: 3, fontSize: "1.6rem" }}>
-                  Membership Details
-                </GradientText>
-                <Grid container spacing={3}>
-                  <Grid xs={12} md={6}>
-                    <List sx={{ "--ListItem-paddingY": "1rem" }}>
-                      <ListItem>
-                        <ListItemDecorator sx={{ color: "#3B82F6" }}>
-                          <AccessTimeIcon />
-                        </ListItemDecorator>
-                        <Box>
-                          <HighlightedText level="body-xs" sx={{ mb: 0.5 }}>
-                            Membership Period
-                          </HighlightedText>
-                          <WhiteText>
-                            {formatDate(member.membership_start)} -{" "}
-                            {formatDate(member.membership_end)}
-                          </WhiteText>
-                        </Box>
-                      </ListItem>
-                      <ListItem>
-                        <ListItemDecorator sx={{ color: "#3B82F6" }}>
-                          <PaidIcon />
-                        </ListItemDecorator>
-                        <Box>
-                          <HighlightedText level="body-xs" sx={{ mb: 0.5 }}>
-                            Payment Status
-                          </HighlightedText>
-                          <WhiteText>
-                            {member.is_fully_paid ? "Fully Paid" : "Pending"} (₹
-                            {member.amount_paid}/₹{member.membership_plan.price})
-                          </WhiteText>
-                        </Box>
-                      </ListItem>
-                    </List>
-                  </Grid>
-                  <Grid xs={12} md={6}>
-                    <List sx={{ "--ListItem-paddingY": "1rem" }}>
-                      <ListItem>
-                        <ListItemDecorator sx={{ color: "#3B82F6" }}>
-                          <FitnessCenterIcon />
-                        </ListItemDecorator>
-                        <Box>
-                          <HighlightedText level="body-xs" sx={{ mb: 0.5 }}>
-                            Current Plan
-                          </HighlightedText>
-                          <WhiteText>
-                            {member.membership_plan.name} (
-                            {member.membership_plan.duration_days} days)
-                          </WhiteText>
-                        </Box>
-                      </ListItem>
-                      <ListItem>
-                        <ListItemDecorator sx={{ color: "#3B82F6" }}>
-                          <BlockIcon />
-                        </ListItemDecorator>
-                        <Box>
-                          <HighlightedText level="body-xs" sx={{ mb: 0.5 }}>
-                            Plan Status
-                          </HighlightedText>
-                          <WhiteText>
-                            {member.membership_plan.is_locked ? "Locked" : "Unlocked"}
-                          </WhiteText>
-                        </Box>
-                      </ListItem>
-                    </List>
-                  </Grid>
-                </Grid>
-              </Box>
-            )}
-
-            {activeTab === "fitness" && (
-              <Box>
-                <GradientText level="h4" sx={{ mb: 3, fontSize: "1.6rem" }}>
-                  Fitness Details
-                </GradientText>
-                <Grid container spacing={3}>
-                  <Grid xs={12} md={6}>
-                    <List sx={{ "--ListItem-paddingY": "1rem" }}>
-                      <ListItem>
-                        <ListItemDecorator sx={{ color: "#3B82F6" }}>
-                          <DirectionsRunIcon />
-                        </ListItemDecorator>
-                        <Box>
-                          <HighlightedText level="body-xs" sx={{ mb: 0.5 }}>
-                            Days Present
-                          </HighlightedText>
-                          <WhiteText>
-                            {member.days_present} days
-                          </WhiteText>
-                        </Box>
-                      </ListItem>
-                    </List>
-                  </Grid>
-                  <Grid xs={12} md={6}>
-                    <List sx={{ "--ListItem-paddingY": "1rem" }}>
-                      <ListItem>
-                        <ListItemDecorator sx={{ color: "#3B82F6" }}>
-                          <ShowChartIcon />
-                        </ListItemDecorator>
-                        <Box>
-                          <HighlightedText level="body-xs" sx={{ mb: 0.5 }}>
-                            BMI
-                          </HighlightedText>
-                          <WhiteText>
-                            {member.weight && member.height
-                              ? (
-                                  member.weight /
-                                  ((member.height / 100) ** 2)
-                                ).toFixed(2)
-                              : "N/A"}
-                          </WhiteText>
-                        </Box>
-                      </ListItem>
-                    </List>
-                  </Grid>
-                </Grid>
-              </Box>
-            )}
-          </GlowCard>
-        </Grid>
-      </Grid>
-    </Box>
+        <div className="col-span-1 md:col-span-3">
+          <Card className="bg-transparent shadow-none border border-white/20 backdrop-blur-sm">
+            <Tabs defaultValue="personal">
+              <TabsList className="grid w-full grid-cols-3 border-b border-white/20">
+                <TabsTrigger value="personal" className="data-[state=active]:bg-red-700 data-[state=active]:text-white">
+                  Personal
+                </TabsTrigger>
+                <TabsTrigger value="membership" className="data-[state=active]:bg-red-700 data-[state=active]:text-white">
+                  Membership
+                </TabsTrigger>
+                <TabsTrigger value="fitness" className="data-[state=active]:bg-red-700 data-[state=active]:text-white">
+                  Fitness
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="personal" className="space-y-4 p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-red-500" />
+                    <div>
+                      <p className="text-sm text-gray-300">Date of Birth</p>
+                      <p className="text-sm font-medium">{formatDate(member.dob)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-5 w-5 text-red-500" />
+                    <div>
+                      <p className="text-sm text-gray-300">Phone</p>
+                      <p className="text-sm font-medium">{member.phone || "N/A"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-red-500" />
+                    <div>
+                      <p className="text-sm text-gray-300">Height</p>
+                      <p className="text-sm font-medium">
+                        {member.height ? `${member.height} cm` : "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-red-500" />
+                    <div>
+                      <p className="text-sm text-gray-300">Address</p>
+                      <p className="text-sm font-medium">{member.address || "N/A"}</p>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="membership" className="space-y-4 p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-red-500" />
+                      <div>
+                        <p className="text-sm text-gray-300">Membership Period</p>
+                        <p className="text-sm font-medium">
+                          {formatDate(member.membership_start)} - {formatDate(member.membership_end)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-red-500" />
+                      <div>
+                        <p className="text-sm text-gray-300">Payment Status</p>
+                        <p className="text-sm font-medium">
+                          {member.is_fully_paid ? "Fully Paid" : "Pending"} (₹{member.amount_paid} / ₹{member.membership_plan.price})
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-red-500" />
+                      <div>
+                        <p className="text-sm text-gray-300">Current Plan</p>
+                        <p className="text-sm font-medium">
+                          {member.membership_plan.name} ({member.membership_plan.duration_days} days)
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-5 w-5 text-red-500" />
+                      <div>
+                        <p className="text-sm text-gray-300">Plan Status</p>
+                        <p className="text-sm font-medium">
+                          {member.membership_plan.is_locked ? "Locked" : "Unlocked"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="fitness" className="space-y-4 p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-red-500" />
+                    <div>
+                      <p className="text-sm text-gray-300">Days Present</p>
+                      <p className="text-sm font-medium">{member.days_present} days</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-red-500" />
+                    <div>
+                      <p className="text-sm text-gray-300">BMI</p>
+                      <p className="text-sm font-medium">
+                        {member.weight && member.height
+                          ? (member.weight / ((member.height / 100) ** 2)).toFixed(2)
+                          : "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -5,8 +5,9 @@ import membershipPlanReducer from '@/src/features/membershipPlans/membershipPlan
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
 import staffReducer from '@/src/features/staff/staffSlice';
 import { persistReducer, persistStore } from 'redux-persist';
+import paymentReducer from "@/src/features/payments/paymentSlice";  // ✅ Import Payments Slice
+import invoiceReducer from "@/src/features/invoice/invoiceSlice";
 
-// Configuration for redux-persist; only persist the auth slice.
 const persistConfig = {
   key: 'root',
   storage,
@@ -19,6 +20,9 @@ const rootReducer = combineReducers({
   members: memberReducer, // Not persisted
   membershipPlans: membershipPlanReducer, // Not persisted
   staff: staffReducer, 
+  payment: paymentReducer, // <-- payment slice registered as "payment"
+  invoice: invoiceReducer,
+
 });
 
 // Wrap the rootReducer with persist capabilities.

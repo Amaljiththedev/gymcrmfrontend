@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import * as React from 'react';
 import GlobalStyles from '@mui/joy/GlobalStyles';
 import Avatar from '@mui/joy/Avatar';
@@ -24,19 +24,25 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { closeSidebar } from '@/lib/utils';
+import { useRouter } from "next/navigation";
+
+// Redux imports
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/src/store/store';
+import { logoutManager } from '@/src/store/authSlice';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { extendTheme } from '@mui/joy/styles';
 
 function Toggler(props: {
   defaultExpanded?: boolean;
   children: React.ReactNode;
-  renderToggle: (params: {
-    open: boolean;
-    setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  }) => React.ReactNode;
+  renderToggle: (params: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; }) => React.ReactNode;
 }) {
   const { defaultExpanded = false, renderToggle, children } = props;
   const [open, setOpen] = React.useState(defaultExpanded);
   return (
-    <React.Fragment>
+    <>
       {renderToggle({ open, setOpen })}
       <Box
         sx={{
@@ -48,19 +54,52 @@ function Toggler(props: {
       >
         {children}
       </Box>
-    </React.Fragment>
+    </>
   );
 }
+
+// Define dark theme (using MUI Joy's extendTheme)
+const darkTheme = extendTheme({
+  colorSchemes: {
+    dark: {
+      palette: {
+        background: {
+          body: "#000",
+          surface: "rgba(0, 0, 0, 0.8)",
+          level1: "rgba(20, 20, 20, 0.9)",
+          level2: "rgba(35, 35, 35, 0.8)",
+        },
+        primary: {
+          softColor: "#fff",
+          softBg: "rgba(60, 60, 60, 0.5)",
+        },
+        neutral: {
+          outlinedBg: "rgba(45, 45, 45, 0.6)",
+          outlinedColor: "#fff",
+          plainColor: "#fff",
+          plainHoverBg: "rgba(60, 60, 60, 0.5)",
+        },
+        text: {
+          primary: "#fff",
+          secondary: "rgba(255, 255, 255, 0.7)",
+        },
+      },
+    },
+  },
+});
 
 export default function Sidebar() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const searchQueryLower = searchQuery.toLowerCase();
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const { user } = useSelector((state: RootState) => state.auth);
 
+  // Function to filter section items based on search query
   const filterItems = (items: { label: string; id: string; href: string }[]) =>
-    items.filter(item =>
-      item.label.toLowerCase().includes(searchQueryLower)
-    );
+    items.filter(item => item.label.toLowerCase().includes(searchQueryLower));
 
+  // Sections (your sidebar items)
   const sections = [
     {
       id: 'dashboard',
@@ -80,21 +119,20 @@ export default function Sidebar() {
         { label: 'Payment Issues', id: 'paymentnotcompleted', href: '/admin/membermanagement/paymentnotcompleted' },
         { label: 'Expiry Notifications', id: 'expiry', href: '/admin/membermanagement/expiry' },
       ],
-      href: '/admin/membermanagement', // Parent link
+      href: '/admin/membermanagement',
     },
     {
       id: 'staff',
       label: 'Staff Management',
       icon: <WorkRoundedIcon />,
       items: [
-        
         { label: 'Salary Management', id: 'salarymanagement', href: '/admin/staff/salary' },
         { label: 'Regular Staff', id: 'regularstaff', href: '/admin/staff/regularstaff' },
         { label: 'Super Staff', id: 'superstaff', href: '/admin/staff/superstaff' },
-        { label: 'Add Super Staff', id: 'addstaff', href: '/admin/staff/addsuperstaff' },
-        { label: 'Add Regular Staff', id: 'addstaff', href: '/admin/staff/addregularstaff' },
+        { label: 'Add Super Staff', id: 'addsuperstaff', href: '/admin/staff/addsuperstaff' },
+        { label: 'Add Regular Staff', id: 'addregularstaff', href: '/admin/staff/addregularstaff' },
       ],
-      href: '/admin/staff', // Parent link
+      href: '/admin/staff',
     },
     {
       id: 'plan',
@@ -155,7 +193,7 @@ export default function Sidebar() {
     },
   ];
 
-  // Use CSS !important to force styles
+  // Example button styles using !important
   const buttonStyles = {
     backgroundColor: 'black !important',
     color: '#fff !important',
@@ -171,6 +209,19 @@ export default function Sidebar() {
       backgroundColor: 'black !important',
       color: '#fff !important',
     },
+  };
+
+  // Logout handler using Redux thunk; waits 3 sec before redirecting
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutManager()).unwrap();
+      toast.success("Logged out successfully");
+      setTimeout(() => {
+        router.push("/");
+      }, 3000);
+    } catch (error: any) {
+      toast.error(`Logout failed: ${error}`);
+    }
   };
 
   return (
@@ -267,12 +318,7 @@ export default function Sidebar() {
                           justifyContent: 'space-between',
                         }}
                       >
-                        {/* Parent Link stays black at all times */}
-                        <ListItemButton
-                          component="a"
-                          href={section.href}
-                          sx={buttonStyles}
-                        >
+                        <ListItemButton component="a" href={section.href} sx={buttonStyles}>
                           {section.icon}
                           <ListItemContent>
                             <Typography level="title-sm" sx={{ color: '#fff' }}>
@@ -280,11 +326,7 @@ export default function Sidebar() {
                             </Typography>
                           </ListItemContent>
                         </ListItemButton>
-                        {/* Toggle Icon */}
-                        <IconButton
-                          onClick={() => setOpen(!open)}
-                          sx={buttonStyles}
-                        >
+                        <IconButton onClick={() => setOpen(!open)} sx={buttonStyles}>
                           <KeyboardArrowDownIcon
                             sx={{
                               transform: open ? 'rotate(180deg)' : 'none',
@@ -298,11 +340,7 @@ export default function Sidebar() {
                     <List sx={{ gap: 0.5 }}>
                       {filteredItems.map((item) => (
                         <ListItem key={item.id}>
-                          <ListItemButton
-                            component="a"
-                            href={item.href}
-                            sx={buttonStyles}
-                          >
+                          <ListItemButton component="a" href={item.href} sx={buttonStyles}>
                             {item.label}
                           </ListItemButton>
                         </ListItem>
@@ -310,11 +348,7 @@ export default function Sidebar() {
                     </List>
                   </Toggler>
                 ) : (
-                  <ListItemButton
-                    component="a"
-                    href={section.href}
-                    sx={buttonStyles}
-                  >
+                  <ListItemButton component="a" href={section.href} sx={buttonStyles}>
                     {section.icon}
                     <ListItemContent>
                       <Typography level="title-sm" sx={{ color: '#fff' }}>
@@ -339,16 +373,23 @@ export default function Sidebar() {
         />
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Typography level="title-sm" sx={{ color: '#fff' }}>
-            Admin User
+            {user?.username || "Admin User"}
           </Typography>
           <Typography level="body-xs" sx={{ color: '#fff' }}>
-            admin@gym.com
+            {user?.email || "admin@gym.com"}
           </Typography>
         </Box>
-        <IconButton size="sm" variant="plain" color="neutral" sx={buttonStyles}>
+        <IconButton
+          size="sm"
+          variant="plain"
+          color="neutral"
+          sx={buttonStyles}
+          onClick={handleLogout}
+        >
           <LogoutRoundedIcon sx={{ color: '#fff' }} />
         </IconButton>
       </Box>
+      <ToastContainer />
     </Sheet>
   );
 }

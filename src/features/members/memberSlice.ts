@@ -16,6 +16,7 @@ export interface Member {
   email: string;
   phone?: string;
   address?: string;
+  gender?: string; // Added gender field
   height?: number;
   weight?: number;
   dob?: string;
@@ -27,7 +28,7 @@ export interface Member {
   is_fully_paid: boolean;
   days_present: number;
   photo?: string;
-  membership_status: string; // e.g. "active", "expired", "blocked"
+  membership_status: string; // e.g. "active", "expired", "blocked", etc.
 }
 
 export interface MemberCreateInput extends Omit<Partial<Member>, 'photo' | 'membership_plan'> {
@@ -72,6 +73,8 @@ export const createMember = createAsyncThunk<Member, MemberCreateInput, { reject
       formData.append("email", memberData.email || "");
       if (memberData.phone) formData.append("phone", memberData.phone);
       if (memberData.address) formData.append("address", memberData.address);
+      // Append gender if available
+      if (memberData.gender) formData.append("gender", memberData.gender);
 
       let membershipStartISO = memberData.membership_start 
         ? new Date(memberData.membership_start).toISOString() 
@@ -165,6 +168,20 @@ export const fetchActiveMembers = createAsyncThunk<Member[], void, { rejectValue
   }
 );
 
+export const fetchMemberById = createAsyncThunk<Member, number, { rejectValue: string }>(
+  'members/fetchMemberById',
+  async (memberId, { rejectWithValue }) => {
+    try {
+      const response = await axios.get<Member>(
+        `${API_BASE_URL}/members/${memberId}/`,
+        { withCredentials: true }
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch member');
+    }
+  }
+);
 // ---------------------------------------------------------------------
 // Slice
 // ---------------------------------------------------------------------
@@ -256,6 +273,19 @@ const memberSlice = createSlice({
       .addCase(fetchActiveMembers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch active members';
+      })
+      // Fetch Member By ID
+      .addCase(fetchMemberById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMemberById.fulfilled, (state, action: PayloadAction<Member>) => {
+        state.loading = false;
+        state.member = action.payload;
+      })
+      .addCase(fetchMemberById.rejected, (state, action: PayloadAction<string | undefined>) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch member';
       });
   },
 });

@@ -1,10 +1,12 @@
-import { Component } from '@/components/admin/user_management/testcompoenent'
+import MainDashboard from '@/components/admin/dashboard/dashboard'
 import React from 'react'
+
+
 
 const page = () => {
   return (
     <>
-    <Component/>
+   <MainDashboard/>
     </>
   )
 }
