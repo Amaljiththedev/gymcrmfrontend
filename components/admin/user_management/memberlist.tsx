@@ -575,6 +575,13 @@ export default function MemberTable() {
                             >
                               Payment History
                             </MenuItem>
+                            <MenuItem
+                              onClick={() =>
+                                router.push(`/admin/membermanagement/renewal/${member.id}`)
+                              }
+                            >
+                              Renewal
+                            </MenuItem>
                           </Menu>
                         </Dropdown>
                       </Tooltip>

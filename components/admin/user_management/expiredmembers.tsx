@@ -172,7 +172,7 @@ export default function ExpiredMembersTable() {
         <Select
           size="sm"
           value={amountFilter}
-          onChange={(e) => setAmountFilter((e.target as HTMLSelectElement).value)}
+          onChange={(e) => setAmountFilter((e?.target as HTMLSelectElement).value)}
           placeholder="Filter by payment"
           sx={{
             color: "#fff",
@@ -192,8 +192,8 @@ export default function ExpiredMembersTable() {
           size="sm"
           value={planFilter}
           onChange={(e) => {
-            if (e.target) {
-              setPlanFilter((e.target as HTMLSelectElement).value);
+            if (e?.target) {
+              setPlanFilter((e?.target as HTMLSelectElement).value);
             }
           }}
           placeholder="Filter by plan"

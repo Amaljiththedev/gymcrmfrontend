@@ -1,391 +1,255 @@
 "use client";
 
-import React, { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { CssVarsProvider } from "@mui/joy/styles";
-import {
-  Box,
-  Button,
-  Card,
-  Divider,
-  FormControl,
-  FormLabel,
-  IconButton,
-  Input,
-  Stack,
-  Switch,
-  Typography
-} from "@mui/joy";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect, FormEvent } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/src/store/store";
+import { fetchMembershipPlans, createPlan } from "@/src/features/membershipPlans/membershipPlanSlice";
 import { toast, ToastContainer } from "react-toastify";
+import { useRouter } from "next/navigation";
+import { Label } from "@/components/ui/label2";
+import { Input } from "@/components/ui/input1";
+import { cn } from "@/lib/utils";
 import "react-toastify/dist/ReactToastify.css";
-import { Create } from "@mui/icons-material";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-// ------------------------------------------
-// Dummy Backend Function
-// ------------------------------------------
-const createPlanDummy = (planData: any): Promise<any> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log("Dummy plan created:", planData);
-      resolve(planData);
-    }, 1500);
-  });
-};
+interface FormErrors {
+  name?: string;
+  durationDays?: string;
+  price?: string;
+}
 
-// ------------------------------------------
-// Style Objects
-// ------------------------------------------
-const styles = {
-  formContainer: {
-    width: "100%",
-    minHeight: "100vh",
-    margin: 0,
-    border: "1px solid rgba(255,255,255,0.15)",
-    borderRadius: "xl",
-    p: { xs: 2, sm: 4 },
-    background: "linear-gradient(135deg, rgba(20,20,40,0.8), rgba(10,10,30,0.9))",
-    backdropFilter: "blur(20px)",
-    boxShadow: "0 10px 40px rgba(0,0,0,0.25)",
-    position: "relative",
-    overflow: "hidden",
-    "&::before": {
-      content: '""',
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background:
-        "radial-gradient(circle at top right, rgba(99,102,241,0.15), transparent 60%), radial-gradient(circle at bottom left, rgba(139,92,246,0.1), transparent 60%)",
-      zIndex: 0,
-    },
-  },
-  sectionCard: {
-    bgcolor: "rgba(15,15,35,0.5)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: "lg",
-    p: 3,
-    transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-    position: "relative",
-    zIndex: 1,
-    "&:hover": {
-      borderColor: "rgba(255,255,255,0.3)",
-      transform: "translateY(-4px)",
-      boxShadow:
-        "0 15px 30px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset",
-    },
-  },
-  input: {
-    bgcolor: "rgba(10,10,25,0.5)",
-    border: "1px solid rgba(255,255,255,0.15)",
-    fontSize: "1.2rem",
-    py: 2,
-    borderRadius: "10px",
-    transition: "all 0.25s ease",
-    color: "rgba(255,255,255,0.95)",
-    "&:hover": {
-      borderColor: "rgba(255,255,255,0.3)",
-      bgcolor: "rgba(20,20,40,0.5)",
-    },
-    "&:focus-within": {
-      borderColor: "#6366f1",
-      boxShadow: "0 0 0 3px rgba(99,102,241,0.25)",
-      bgcolor: "rgba(25,25,45,0.6)",
-    },
-  },
-  label: {
-    color: "rgba(255,255,255,0.85)",
-    mb: 1,
-    fontWeight: "600",
-    fontSize: "1.2rem",
-    letterSpacing: "0.5px",
-    display: "flex",
-    alignItems: "center",
-    gap: 1,
-  },
-  button: {
-    px: 4,
-    py: 1.5,
-    fontSize: "1rem",
-    fontWeight: "700",
-    background: "linear-gradient(45deg, #6366f1, #8b5cf6)",
-    borderRadius: "12px",
-    transition: "all 0.3s ease",
-    boxShadow: "0 4px 15px rgba(99,102,241,0.3)",
-    "&:hover": {
-      transform: "translateY(-2px)",
-      boxShadow: "0 8px 25px rgba(99,102,241,0.4)",
-      background: "linear-gradient(45deg, #5a5de8, #7c4fe9)",
-    },
-    "&:active": {
-      transform: "translateY(1px)",
-    },
-  },
-  sectionHeader: {
-    display: "flex",
-    alignItems: "center",
-    gap: 1.5,
-    color: "white",
-    fontWeight: "700",
-    fontSize: "1.25rem",
-    "& svg": {
-      transition: "all 0.3s ease",
-    },
-    "&:hover svg": {
-      transform: "scale(1.15)",
-      color: "#8b5cf6",
-    },
-  },
-  requiredBadge: {
-    display: "inline-flex",
-    ml: 1,
-    fontSize: "0.7rem",
-    color: "rgba(255,255,255,0.6)",
-    bgcolor: "rgba(99,102,241,0.2)",
-    px: 1,
-    py: 0.3,
-    borderRadius: "4px",
-    alignItems: "center",
-  },
-  submitSection: {
-    display: "flex",
-    justifyContent: "flex-end",
-    mt: 4,
-    position: "relative",
-    "&::before": {
-      content: '""',
-      position: "absolute",
-      width: "80%",
-      height: "1px",
-      background: "linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent)",
-      top: "-20px",
-      left: "10%",
-    },
-  },
-};
-
-// ------------------------------------------
-// Animation Variants
-// ------------------------------------------
-const animations = {
-  containerVariants: {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-  },
-  itemVariants: {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100, damping: 12 } },
-  },
-  fadeInVariants: {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.6 } },
-  },
-};
-
-// ------------------------------------------
-// Main Component: PlanCreationForm
-// ------------------------------------------
 export default function PlanCreationForm() {
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
-  // State for MembershipPlan fields
+  // Form State
   const [name, setName] = useState("");
   const [durationDays, setDurationDays] = useState("");
   const [price, setPrice] = useState("");
-  const [isLocked, setIsLocked] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  // Handle form submission
+  // Get plans from Redux store (for guide display)
+  const { plans, loading, error } = useSelector((state: RootState) => state.membershipPlans);
+
+  // Fetch membership plans on mount
+  useEffect(() => {
+    dispatch(fetchMembershipPlans());
+  }, [dispatch]);
+
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!name.trim()) {
+      newErrors.name = "Plan name is required.";
+    }
+    if (!durationDays.trim()) {
+      newErrors.durationDays = "Duration is required.";
+    } else if (isNaN(Number(durationDays)) || Number(durationDays) <= 0) {
+      newErrors.durationDays = "Duration must be a positive number.";
+    }
+    if (!price.trim()) {
+      newErrors.price = "Price is required.";
+    } else if (isNaN(Number(price)) || Number(price) <= 0) {
+      newErrors.price = "Price must be a positive number.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (!validate()) {
+      toast.error("Please fix the errors in the form.");
+      return;
+    }
+
     const planData = {
       name,
       duration_days: Number(durationDays),
       price: Number(price),
-      is_locked: isLocked,
     };
 
     try {
-      await createPlanDummy(planData);
-      toast.success("Plan created successfully!");
+      await dispatch(createPlan(planData)).unwrap();
+      toast.success("Plan created successfully! 🎉");
       router.push("/admin/planmanagement");
-    } catch (error: any) {
-      toast.error("Failed to create plan: " + error.message);
+    } catch (err: any) {
+      toast.error("Failed to create plan 😢: " + err);
     }
   };
 
   return (
-    <CssVarsProvider defaultMode="dark">
+    <div className="container mx-auto py-8 px-4">
       <ToastContainer />
-      <Box
-        sx={{
-          width: "100%",
-          minHeight: "100vh",
-          background: "linear-gradient(135deg, #0f0f1e, #1a1a2e)",
-          p: { xs: 2, sm: 4 },
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            style={styles.formContainer as any}
-          >
-            <form onSubmit={handleSubmit}>
-              <motion.div variants={animations.containerVariants} initial="hidden" animate="visible">
-                <Stack spacing={4} sx={{ height: "100%", position: "relative", zIndex: 1 }}>
-                  {/* --- Header Section --- */}
-                  <motion.div variants={animations.itemVariants}>
-                    <Box sx={{ textAlign: "center", mb: 3 }}>
-                      <motion.div whileHover={{ scale: 1.1, rotate: 5 }} whileTap={{ scale: 0.95 }}>
-                        <IconButton
-                          variant="soft"
-                          color="primary"
-                          sx={{
-                            mb: 2,
-                            p: 2,
-                            background: "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2))",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            animation: "pulse 2s infinite",
-                            "@keyframes pulse": {
-                              "0%": { boxShadow: "0 0 0 0 rgba(99,102,241,0.4)" },
-                              "70%": { boxShadow: "0 0 0 10px rgba(99,102,241,0)" },
-                              "100%": { boxShadow: "0 0 0 0 rgba(99,102,241,0)" },
-                            },
-                          }}
-                        >
-                          <Create sx={{ fontSize: "2rem", color: "white" }} />
-                        </IconButton>
-                      </motion.div>
-                      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}>
-                        <Typography
-                          level="h2"
-                          sx={{
-                            color: "white",
-                            fontWeight: "800",
-                            letterSpacing: "0.5px",
-                            background: "linear-gradient(to right, #fff, #c7d2fe)",
-                            backgroundClip: "text",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                          }}
-                        >
-                          New Membership Plan
-                        </Typography>
-                      </motion.div>
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.7 }}>
-                        <Typography
-                          level="body-sm"
-                          sx={{ color: "rgba(255,255,255,0.7)", mt: 1, maxWidth: "600px", mx: "auto" }}
-                        >
-                          Enter the details below to create a new membership plan.
-                        </Typography>
-                      </motion.div>
-                    </Box>
-                  </motion.div>
+      <Card className="bg-transparent border-gray-800 shadow-xl">
+        <CardHeader className="border-b border-gray-800 bg-transparent rounded-t-lg">
+          <CardTitle className="text-3xl font-bold text-white text-center">
+            Create New Membership Plan
+          </CardTitle>
+          <CardDescription className="text-gray-400 text-center">
+            Configure your new membership plan details below
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Existing Plans Card */}
+            <div className="md:w-1/3">
+              <Card className="bg-transparent border-gray-700 h-full">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl text-white">Existing Plans</CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Current membership options
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="flex items-center justify-center h-24">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-500"></div>
+                    </div>
+                  ) : error ? (
+                    <div className="p-4 rounded-md bg-red-900/20 border border-red-800 text-red-200">
+                      Error loading plans. Please try again.
+                    </div>
+                  ) : plans && plans.length > 0 ? (
+                    <ul className="space-y-2">
+                      {plans.map((plan) => (
+                        <li key={plan.id} className="p-3 border border-gray-700 rounded-md bg-transparent text-white transition-all hover:bg-gray-700">
+                          <p className="font-bold">{plan.name}</p>
+                          <div className="flex justify-between text-sm text-gray-300 mt-1">
+                            <span>{plan.duration_days} days</span>
+                            <span className="font-semibold">₹{plan.price}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-24 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p>No plans available yet.</p>
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="bg-transparent border-t border-gray-800 px-4 py-3">
+                  <p className="text-xs text-gray-400">
+                    <span className="font-semibold text-gray-300">Note:</span> Plan names should be unique and each plan should have different pricing.
+                  </p>
+                </CardFooter>
+              </Card>
+            </div>
 
-                  {/* --- Plan Details Section --- */}
-                  <motion.div variants={animations.itemVariants}>
-                    <Card variant="outlined" sx={styles.sectionCard}>
-                      <Box sx={{ mb: 3 }}>
-                        <motion.div whileHover={{ x: 5 }} transition={{ type: "spring", stiffness: 300 }}>
-                          <Typography level="title-lg" sx={styles.sectionHeader}>
-                            Plan Details
-                          </Typography>
-                        </motion.div>
-                        <Divider sx={{ mt: 1.5, bgcolor: "rgba(255,255,255,0.1)" }} />
-                      </Box>
-                      <Stack spacing={3}>
-                        <FormControl>
-                          <FormLabel sx={styles.label}>
-                            Plan Name
-                            <Box component={motion.span} sx={styles.requiredBadge} whileHover={{ scale: 1.05 }}>
-                              Required
-                            </Box>
-                          </FormLabel>
-                          <Input
-                            size="lg"
-                            sx={styles.input}
-                            placeholder="Enter plan name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                          />
-                        </FormControl>
-                        <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
-                          <FormControl sx={{ flex: 1 }}>
-                            <FormLabel sx={styles.label}>
-                              Duration (days)
-                              <Box component={motion.span} sx={styles.requiredBadge} whileHover={{ scale: 1.05 }}>
-                                Required
-                              </Box>
-                            </FormLabel>
-                            <Input
-                              type="number"
-                              size="lg"
-                              sx={styles.input}
-                              placeholder="Enter duration in days"
-                              value={durationDays}
-                              onChange={(e) => setDurationDays(e.target.value)}
-                            />
-                          </FormControl>
-                          <FormControl sx={{ flex: 1 }}>
-                            <FormLabel sx={styles.label}>
-                              Price
-                              <Box component={motion.span} sx={styles.requiredBadge} whileHover={{ scale: 1.05 }}>
-                                Required
-                              </Box>
-                            </FormLabel>
-                            <Input
-                              type="number"
-                              size="lg"
-                              sx={styles.input}
-                              placeholder="Enter price"
-                              value={price}
-                              onChange={(e) => setPrice(e.target.value)}
-                            />
-                          </FormControl>
-                        </Stack>
-                        <FormControl>
-                          <FormLabel sx={styles.label}>Locked Plan?</FormLabel>
-                          <Switch
-                            checked={isLocked}
-                            onChange={(e) => setIsLocked(e.target.checked)}
-                          />
-                        </FormControl>
-                      </Stack>
-                    </Card>
-                  </motion.div>
+            {/* Plan Creation Form */}
+            <div className="md:w-2/3">
+              <Card className="bg-transparent border-gray-700">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl text-white">Plan Details</CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Fill in the information for your new plan
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Plan Name */}
+                    <LabelInputContainer>
+                      <Label htmlFor="planName" className="text-white">Plan Name</Label>
+                      <Input
+                        id="planName"
+                        name="planName"
+                        placeholder="Enter unique plan name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="bg-transparent border-gray-700 text-white focus:border-red-500 focus:ring-red-500/20"
+                      />
+                      {errors.name && <small className="text-red-500 font-medium">{errors.name}</small>}
+                      <small className="text-gray-400">
+                        Ensure the plan name is unique to avoid confusion.
+                      </small>
+                    </LabelInputContainer>
 
-                  {/* --- Submit Section --- */}
-                  <motion.div variants={animations.fadeInVariants}>
-                    <Box sx={styles.submitSection}>
-                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                        <Button
-                          component={motion.button}
-                          size="lg"
-                          sx={styles.button}
-                          type="submit"
-                          endDecorator={
-                            <motion.div animate={{ x: [0, 3, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>
-                              <Create />
-                            </motion.div>
-                          }
-                        >
-                          Create Plan
-                        </Button>
-                      </motion.div>
-                    </Box>
-                  </motion.div>
-                </Stack>
-              </motion.div>
-            </form>
-          </motion.div>
-        </AnimatePresence>
-      </Box>
-    </CssVarsProvider>
+                    {/* Duration (days) */}
+                    <LabelInputContainer>
+                      <Label htmlFor="durationDays" className="text-white">Duration (days)</Label>
+                      <Input
+                        id="durationDays"
+                        name="durationDays"
+                        type="number"
+                        placeholder="e.g. 30"
+                        value={durationDays}
+                        onChange={(e) => setDurationDays(e.target.value)}
+                        className="bg-transparent border-gray-700 text-white focus:border-red-500 focus:ring-red-500/20"
+                      />
+                      {errors.durationDays && <small className="text-red-500 font-medium">{errors.durationDays}</small>}
+                      <small className="text-gray-400">
+                        Enter the membership duration in days.
+                      </small>
+                    </LabelInputContainer>
+
+                    {/* Price */}
+                    <LabelInputContainer>
+                      <Label htmlFor="price" className="text-white">Price (₹)</Label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <span className="text-gray-400">₹</span>
+                        </div>
+                        <Input
+                          id="price"
+                          name="price"
+                          type="number"
+                          step="0.01"
+                          placeholder="Enter price amount"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          className="bg-transparent border-gray-700 text-white pl-8 focus:border-red-500 focus:ring-red-500/20"
+                        />
+                      </div>
+                      {errors.price && <small className="text-red-500 font-medium">{errors.price}</small>}
+                      <small className="text-gray-400">
+                        Each plan must have a distinct pricing amount.
+                      </small>
+                    </LabelInputContainer>
+                  </form>
+                </CardContent>
+                <CardFooter className="flex flex-col sm:flex-row justify-end gap-3 border-t ">
+                  <button
+                    type="button"
+                    onClick={() => router.back()}
+                    className="w-full sm:w-auto py-2.5 px-5  text-gray-200 rounded-md shadow-md transition-colors hover:bg-gray-600 focus:ring-2 focus:ring-gray-500 focus:ring-offset-1 focus:outline-none"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    onClick={handleSubmit}
+                    className="w-full sm:w-auto py-2.5 px-5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md shadow-md transition duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-1 focus:outline-none"
+                  >
+                    Create Plan
+                  </button>
+                </CardFooter>
+              </Card>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
+
+const LabelInputContainer = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return <div className={cn("flex flex-col space-y-1.5", className)}>{children}</div>;
+};

@@ -140,7 +140,6 @@ export default function Sidebar() {
       icon: <AssessmentRoundedIcon />,
       items: [
         { label: 'Add Plan', id: 'addplan', href: '/admin/planmanagement/add' },
-        { label: 'Manage Plans', id: 'manageplans', href: '/admin/planmanagement/manage' },
         { label: 'Plan Reports', id: 'planreports', href: '/admin/planmanagement/reports' },
       ],
       href: '/admin/planmanagement',

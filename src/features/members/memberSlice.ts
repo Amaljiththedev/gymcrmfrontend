@@ -182,6 +182,25 @@ export const fetchMemberById = createAsyncThunk<Member, number, { rejectValue: s
     }
   }
 );
+
+export const updateMember = createAsyncThunk<Member, { memberId: number; memberData: FormData }, { rejectValue: string }>(
+  'members/updateMember',
+  async ({ memberId, memberData }, { rejectWithValue }) => {
+    try {
+      const response = await axios.put<Member>(
+        `${API_BASE_URL}/members/${memberId}/`,
+        memberData,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update member');
+    }
+  }
+);
 // ---------------------------------------------------------------------
 // Slice
 // ---------------------------------------------------------------------
@@ -248,6 +267,22 @@ const memberSlice = createSlice({
         state.loading = false;
         state.error = action.payload || 'Failed to fetch expiring members';
       })
+            // Update Member (full update)
+      .addCase(updateMember.pending, (state) => {
+              state.loading = true;
+              state.error = null;
+      })
+      .addCase(updateMember.fulfilled, (state, action: PayloadAction<Member>) => {
+              state.loading = false;
+              state.member = action.payload;
+              state.members = state.members.map((m) =>
+                m.id === action.payload.id ? action.payload : m
+              );
+            })
+      .addCase(updateMember.rejected, (state, action) => {
+              state.loading = false;
+              state.error = action.payload || 'Failed to update member';
+            })
       // Fetch Incomplete Payment Members
       .addCase(fetchIncompletePaymentMembers.pending, (state) => {
         state.loading = true;
