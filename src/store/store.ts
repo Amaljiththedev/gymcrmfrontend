@@ -7,6 +7,7 @@ import staffReducer from '@/src/features/staff/staffSlice';
 import { persistReducer, persistStore } from 'redux-persist';
 import paymentReducer from "@/src/features/payments/paymentSlice";  // ✅ Import Payments Slice
 import invoiceReducer from "@/src/features/invoice/invoiceSlice";
+import trainerReducer from "@/src/features/trainers/trainerSlice"; // ✅ Import Trainer Slice
 
 const persistConfig = {
   key: 'root',
@@ -22,6 +23,7 @@ const rootReducer = combineReducers({
   staff: staffReducer, 
   payment: paymentReducer, // <-- payment slice registered as "payment"
   invoice: invoiceReducer,
+  trainers: trainerReducer,
 
 });
 
