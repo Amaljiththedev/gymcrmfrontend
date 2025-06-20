@@ -1,23 +1,49 @@
 "use client";
 
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/src/store/store";
+import { fetchReportsOverview } from "@/src/features/reports/reportsOverviewSlice";
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Users, DollarSign, FileText } from "lucide-react";
+import { Users, FileText, IndianRupee } from "lucide-react";
+
 import { MembershipChart } from "./MembershipChart";
 import { RevenueChart } from "./RevenueChart";
 import { ExpenseChart } from "./ExpensesChart";
 
 export default function ReportsDashboard() {
-  const [startDate, setStartDate] = useState<Date>(new Date());
+  const dispatch = useDispatch<AppDispatch>();
+  const { data: overview, loading } = useSelector(
+    (state: RootState) => state.reportsOverview
+  );
+
+  const [startDate, setStartDate] = useState<Date>(
+    new Date(new Date().setDate(new Date().getDate() - 30))
+  );
   const [endDate, setEndDate] = useState<Date>(new Date());
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      dispatch(
+        fetchReportsOverview({
+          startDate: startDate.toISOString().split("T")[0],
+          endDate: endDate.toISOString().split("T")[0],
+        })
+      );
+    }
+  }, [startDate, endDate, dispatch]);
 
   return (
     <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
-      {/* Header Section with Date Picker */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-center md:text-left">
           Reports Dashboard
@@ -36,7 +62,6 @@ export default function ReportsDashboard() {
 
       <Separator className="my-4" />
 
-      {/* Reports Navigation */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {["Membership", "Trainer", "Sales", "Attendance", "Expense"].map((report) => (
           <Button key={report} variant="outline" className="w-full">
@@ -45,7 +70,6 @@ export default function ReportsDashboard() {
         ))}
       </div>
 
-      {/* Quick Stats */}
       <section className="mt-6">
         <h2 className="text-lg md:text-xl font-semibold mb-4 text-center md:text-left">
           📈 Quick Stats
@@ -57,7 +81,7 @@ export default function ReportsDashboard() {
             </CardHeader>
             <CardContent className="text-2xl font-bold flex items-center gap-2">
               <Users className="w-6 h-6 text-muted-foreground" />
-              1,200
+              {loading ? "..." : overview?.active_members ?? 0}
             </CardContent>
           </Card>
           <Card>
@@ -65,8 +89,8 @@ export default function ReportsDashboard() {
               <CardTitle>Total Revenue</CardTitle>
             </CardHeader>
             <CardContent className="text-2xl font-bold flex items-center gap-2">
-              <DollarSign className="w-6 h-6 text-muted-foreground" />
-              ₹5,00,000
+              <IndianRupee className="w-6 h-6 text-muted-foreground" />
+              {loading ? "..." : `₹${(overview?.total_revenue ?? 0).toLocaleString("en-IN")}`}
             </CardContent>
           </Card>
           <Card>
@@ -74,14 +98,13 @@ export default function ReportsDashboard() {
               <CardTitle>Expenses</CardTitle>
             </CardHeader>
             <CardContent className="text-2xl font-bold flex items-center gap-2">
-              <DollarSign className="w-6 h-6 text-muted-foreground" />
-              ₹1,50,000
+              <IndianRupee className="w-6 h-6 text-muted-foreground" />
+              {loading ? "..." : `₹${(overview?.total_expenses ?? 0).toLocaleString("en-IN")}`}
             </CardContent>
           </Card>
         </div>
       </section>
 
-      {/* Charts & Insights */}
       <section className="mt-6">
         <h2 className="text-lg md:text-xl font-semibold mb-4 text-center md:text-left">
           📊 Charts & Insights
@@ -92,7 +115,7 @@ export default function ReportsDashboard() {
               <CardTitle>Membership Growth</CardTitle>
             </CardHeader>
             <CardContent>
-              <MembershipChart />
+              <MembershipChart  startDate={startDate} endDate={endDate} />
             </CardContent>
           </Card>
           <Card>
@@ -100,7 +123,7 @@ export default function ReportsDashboard() {
               <CardTitle>Revenue Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
-              <RevenueChart />
+              <RevenueChart startDate={startDate} endDate={endDate} />
             </CardContent>
           </Card>
           <Card>
@@ -108,30 +131,9 @@ export default function ReportsDashboard() {
               <CardTitle>Expenses Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              <ExpenseChart />
+            <ExpenseChart startDate={startDate} endDate={endDate} />
             </CardContent>
           </Card>
-        </div>
-      </section>
-
-      {/* Recent Reports */}
-      <section className="mt-6">
-        <h2 className="text-lg md:text-xl font-semibold mb-4 text-center md:text-left">
-          📄 Recent Reports Generated
-        </h2>
-        <div className="space-y-4">
-          {[
-            { name: "Membership Report", date: "12 Mar 2025" },
-            { name: "Sales Report", date: "10 Mar 2025" },
-            { name: "Trainer Report", date: "08 Mar 2025" },
-          ].map((report, index) => (
-            <Card key={index} className="p-4">
-              <CardContent className="flex justify-between items-center">
-                <span>{report.name}</span>
-                <span className="text-sm text-muted-foreground">{report.date}</span>
-              </CardContent>
-            </Card>
-          ))}
         </div>
       </section>
     </div>

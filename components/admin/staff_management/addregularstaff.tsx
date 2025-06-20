@@ -130,6 +130,7 @@ export default function CreateRegularStaff() {
         salary_credited_day: new Date(formData.salaryCreditedDate).getDate(),
         salary_due_date: new Date(formData.salaryCreditedDate).toISOString().split('T')[0], // Ensure string format
         salary_due_date_string: new Date(formData.salaryCreditedDate).toISOString().split('T')[0],
+        photo: '', // Add a default or placeholder value for the photo
       };
     try {
       await dispatch(addRegularStaff(formPayload) as any).unwrap();

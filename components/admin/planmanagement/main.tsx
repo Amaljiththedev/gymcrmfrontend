@@ -14,8 +14,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 
 export default function MainDashboard() {
-  const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
+  const [startDate, setStartDate] = useState<Date>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date;
+  });
 
   return (
     <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
@@ -45,7 +49,7 @@ export default function MainDashboard() {
           Key Performance Indicators
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          <KPISection />
+          <KPISection startDate={startDate} endDate={endDate} />
         </div>
       </section>
 
@@ -65,7 +69,7 @@ export default function MainDashboard() {
                 <CardTitle>Enrollment Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <EnrollmentChart />
+                <EnrollmentChart startDate={startDate} endDate={endDate} />
               </CardContent>
             </Card>
             <Card>
@@ -73,7 +77,7 @@ export default function MainDashboard() {
                 <CardTitle>Revenue Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <RevenueRadialChart />
+                <RevenueRadialChart startDate={startDate} endDate={endDate} />
               </CardContent>
             </Card>
           </div>
@@ -82,7 +86,7 @@ export default function MainDashboard() {
               <CardTitle>Enrollment Trends</CardTitle>
             </CardHeader>
             <CardContent>
-              <EnrollmentTrendsLineChart />
+              <EnrollmentTrendsLineChart startDate={startDate} endDate={endDate} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -93,9 +97,9 @@ export default function MainDashboard() {
               <CardTitle>Detailed Enrollment Analysis</CardTitle>
             </CardHeader>
             <CardContent>
-              <EnrollmentChart />
+              <EnrollmentChart startDate={startDate} endDate={endDate} />
               <div className="mt-6">
-                <EnrollmentTrendsLineChart />
+                <EnrollmentTrendsLineChart startDate={startDate} endDate={endDate} />
               </div>
             </CardContent>
           </Card>
@@ -107,7 +111,7 @@ export default function MainDashboard() {
               <CardTitle>Revenue Performance</CardTitle>
             </CardHeader>
             <CardContent>
-              <RevenueRadialChart />
+              <RevenueRadialChart startDate={startDate} endDate={endDate} />
             </CardContent>
           </Card>
         </TabsContent>

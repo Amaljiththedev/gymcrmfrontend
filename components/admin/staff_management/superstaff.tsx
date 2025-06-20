@@ -37,7 +37,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import BlockIcon from "@mui/icons-material/Block";
 import { RootState, AppDispatch } from "@/src/store/store";
-import { fetchRegularStaff, Staff } from "@/src/features/staff/staffSlice";
+import { fetchSuperStaff, Staff } from "@/src/features/staff/staffSlice";
 
 // Create a dark theme for Joy UI
 const darkTheme = extendTheme({
@@ -101,10 +101,10 @@ const headCells = [
   { id: "actions", label: "Actions", sortable: false },
 ];
 
-export default function RegularStaffPage() {
+export default function SuperStaffPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { all: staff, loading, error } = useSelector((state: RootState) => state.staff);
+  const { superStaff: staff, loading, error } = useSelector((state: RootState) => state.staff);
   const [order, setOrder] = useState<Order>("desc");
   const [orderBy, setOrderBy] = useState<SortKey>("first_name");
   const [page, setPage] = useState<number>(0);
@@ -115,7 +115,7 @@ export default function RegularStaffPage() {
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    dispatch(fetchRegularStaff());
+    dispatch(fetchSuperStaff());
   }, [dispatch]);
 
   const filteredStaff = useMemo(() => {

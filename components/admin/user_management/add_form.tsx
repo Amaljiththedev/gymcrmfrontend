@@ -1,51 +1,64 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/src/store/store";
-import { createMember } from "@/src/features/members/memberSlice";
-import { fetchMembershipPlans } from "@/src/features/membershipPlans/membershipPlanSlice";
-import { toast } from "react-toastify";
-import { useRouter } from "next/navigation";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import React, { useState, useMemo } from "react";
 import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardFooter 
-} from "@/components/ui/card";
-import { 
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { format, getYear, getMonth, setYear, setMonth } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
-import { cn } from "@/lib/utils";
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Calendar,
+  CreditCard,
+  Camera,
+  Ruler,
+  Weight,
+  CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle,
+  X,
+  RotateCcw,
+  ArrowRight,
+  ArrowLeft
+} from "lucide-react";
 
-// Enhanced DatePicker component with year and month selection
+// Mock data for demonstration
+const mockPlans = [
+  { id: 1, name: "Basic", duration_days: 30, price: 1500 },
+  { id: 2, name: "Premium", duration_days: 90, price: 4000 },
+  { id: 3, name: "Annual", duration_days: 365, price: 15000 },
+];
+
+// Date utility functions
+const formatDate = (date: Date) => {
+  if (!date) return '';
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+};
+
+const getYear = (date: { getFullYear: () => any; }) => date.getFullYear();
+const getMonth = (date: { getMonth: () => any; }) => date.getMonth();
+const setYear = (date: { setFullYear: (arg0: any) => string | number | Date; }, year: any) => new Date(date.setFullYear(year));
+const setMonth = (date: { setMonth: (arg0: any) => string | number | Date; }, month: any) => new Date(date.setMonth(month));
+
+// Enhanced DatePicker component
+type DatePickerWithYearSelectionProps = {
+  field: {
+    value: Date | null;
+    onChange?: (value: Date) => void;
+  };
+  label: string;
+  className?: string;
+  fromYear?: number;
+  toYear?: number;
+  disabledDatesFn?: (date: Date) => boolean;
+  placeholder?: string;
+  icon?: React.ElementType;
+};
+
 function DatePickerWithYearSelection({
   field,
   label,
@@ -54,569 +67,681 @@ function DatePickerWithYearSelection({
   toYear = new Date().getFullYear(),
   disabledDatesFn,
   placeholder = "Select date",
-}: {
-  field: any;
-  label: string;
-  className?: string;
-  fromYear?: number;
-  toYear?: number;
-  disabledDatesFn?: (date: Date) => boolean;
-  placeholder?: string;
-}) {
+  icon: Icon = Calendar
+}: DatePickerWithYearSelectionProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [currentYear, setCurrentYear] = useState(
-    getYear(field.value || new Date())
+    getYear(field?.value || new Date())
   );
   const [currentMonth, setCurrentMonth] = useState(
-    getMonth(field.value || new Date())
+    getMonth(field?.value || new Date())
   );
 
-  // Generate array of years (latest first)
   const years = Array.from({ length: toYear - fromYear + 1 }, (_, i) => toYear - i);
-  // List of months for display
   const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
 
-  // Handle changing the year
   const handleYearChange = (year: number) => {
     setCurrentYear(year);
-    if (field.value) {
-      const newDate = setYear(field.value, year);
-      field.onChange(newDate);
+    if (field?.value) {
+      const newDate = new Date(field.value);
+      newDate.setFullYear(year);
+      field.onChange?.(newDate);
     }
   };
 
-  // Handle changing the month
   const handleMonthChange = (month: number) => {
     setCurrentMonth(month);
-    if (field.value) {
-      const newDate = setMonth(field.value, month);
-      field.onChange(newDate);
+    if (field?.value) {
+      const newDate = new Date(field.value);
+      newDate.setMonth(month);
+      field.onChange?.(newDate);
     }
+  };
+
+  const handleDateSelect = (day: number | undefined) => {
+    const newDate = new Date(currentYear, currentMonth, day);
+    field.onChange?.(newDate);
+    setCalendarOpen(false);
+  };
+
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (year: number, month: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const renderCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+    const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+    const days = [];
+
+    // Empty cells for days before the first day of the month
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="w-8 h-8"></div>);
+    }
+
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const isSelected = field?.value && 
+        field.value.getDate() === day && 
+        field.value.getMonth() === currentMonth && 
+        field.value.getFullYear() === currentYear;
+
+      days.push(
+        <button
+          key={day}
+          type="button"
+          onClick={() => handleDateSelect(day)}
+          className={`w-8 h-8 text-sm rounded transition-colors ${
+            isSelected 
+              ? 'bg-blue-600 text-white' 
+              : 'hover:bg-gray-700 text-gray-300'
+          }`}
+        >
+          {day}
+        </button>
+      );
+    }
+
+    return days;
   };
 
   return (
-    <FormItem className={cn("flex flex-col", className)}>
-      <FormLabel>{label}</FormLabel>
-      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-        <PopoverTrigger asChild>
-          <FormControl>
-            <Button
-              variant="outline"
-              className="w-full bg-transparent text-white border-gray-700 justify-start text-left font-normal"
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {field.value ? (
-                format(field.value, "PPP")
-              ) : (
-                <span className="text-gray-400">{placeholder}</span>
-              )}
-            </Button>
-          </FormControl>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 bg-gray-800 text-white border-gray-700">
-          <div className="flex flex-col p-3 space-y-4">
-            {/* Year selector */}
-            <div className="flex justify-between items-center px-2">
-              <Button
-                variant="ghost"
+    <div className={`space-y-2 ${className}`}>
+      <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
+        <Icon className="w-4 h-4 text-blue-400" />
+        {label}
+      </label>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setCalendarOpen(!calendarOpen)}
+          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-left text-white hover:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+        >
+          <div className="flex items-center justify-between">
+            <span className={field?.value ? "text-white" : "text-gray-400"}>
+              {field?.value ? formatDate(field.value) : placeholder}
+            </span>
+            <Calendar className="w-4 h-4 text-gray-400" />
+          </div>
+        </button>
+        
+        {calendarOpen && (
+          <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-600 rounded-xl shadow-2xl z-50 p-4">
+            <div className="flex justify-between items-center mb-4">
+              <button
+                type="button"
                 onClick={() => handleYearChange(currentYear - 1)}
                 disabled={currentYear <= fromYear}
-                className="h-8 w-8 p-0 hover:bg-gray-700"
+                className="p-1 hover:bg-gray-700 rounded disabled:opacity-50"
               >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-              <Select
-                value={currentYear.toString()}
-                onValueChange={(value) => handleYearChange(Number(value))}
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              <select
+                value={currentYear}
+                onChange={(e) => handleYearChange(Number(e.target.value))}
+                className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white"
               >
-                <SelectTrigger className="w-28 bg-gray-700 border-gray-600">
-                  <SelectValue placeholder={currentYear.toString()} />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700 max-h-60">
-                  {years.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant="ghost"
+                {years.map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <button
+                type="button"
                 onClick={() => handleYearChange(currentYear + 1)}
                 disabled={currentYear >= toYear}
-                className="h-8 w-8 p-0 hover:bg-gray-700"
+                className="p-1 hover:bg-gray-700 rounded disabled:opacity-50"
               >
-                <ChevronUp className="h-4 w-4" />
-              </Button>
+                <ChevronUp className="w-4 h-4" />
+              </button>
             </div>
-            {/* Month selector grid */}
-            <div className="grid grid-cols-3 gap-2 px-2">
+            
+            <div className="grid grid-cols-3 gap-2 mb-4">
               {months.map((month, index) => (
-                <Button
+                <button
                   key={month}
-                  variant={currentMonth === index ? "default" : "ghost"}
-                  className={`h-8 text-xs ${currentMonth === index ? 'bg-gray-600' : 'hover:bg-gray-700'}`}
+                  type="button"
                   onClick={() => handleMonthChange(index)}
+                  className={`p-2 text-xs rounded transition-colors ${
+                    currentMonth === index 
+                      ? 'bg-blue-600 text-white' 
+                      : 'hover:bg-gray-700 text-gray-300'
+                  }`}
                 >
                   {month.slice(0, 3)}
-                </Button>
+                </button>
               ))}
             </div>
+            
+            <div className="grid grid-cols-7 gap-1 mb-4">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="text-xs text-gray-400 text-center p-1">
+                  {day}
+                </div>
+              ))}
+              {renderCalendarDays()}
+            </div>
+            
+            <button
+              type="button"
+              onClick={() => {
+                const today = new Date();
+                field?.onChange?.(today);
+                setCalendarOpen(false);
+              }}
+              className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+            >
+              Select Today
+            </button>
           </div>
-          <Calendar
-            mode="single"
-            selected={field.value}
-            onSelect={(date) => {
-              field.onChange(date);
-              setCalendarOpen(false);
-            }}
-            month={new Date(currentYear, currentMonth)}
-            onMonthChange={(date) => {
-              setCurrentYear(getYear(date));
-              setCurrentMonth(getMonth(date));
-            }}
-            disabled={disabledDatesFn}
-            className="border-t border-gray-700"
-            classNames={{
-              head_row: "border-b border-gray-700",
-              row: "border-b border-gray-700",
-              day_today: "bg-gray-700 text-white",
-              day_selected: "bg-blue-600 hover:bg-blue-700",
-              day_disabled: "text-gray-500 opacity-50 cursor-not-allowed"
-            }}
-          />
-        </PopoverContent>
-      </Popover>
-      <FormMessage />
-    </FormItem>
+        )}
+      </div>
+    </div>
   );
 }
 
-// Helper function to compute expiry date based on start date and duration in days
-const getExpiryDate = (startDate: Date | undefined, durationDays: number): string => {
-  if (!startDate) return "";
-  const expiryDate = new Date(startDate);
-  expiryDate.setDate(expiryDate.getDate() + durationDays);
-  return expiryDate.toISOString().slice(0, 10);
+// Form field component
+type FormFieldProps = {
+  label: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  error?: string;
+  required?: boolean;
 };
 
-// Form schema validation
-const formSchema = z.object({
-  firstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
-  lastName: z.string().min(2, { message: "Last name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  phone: z.string().min(10, { message: "Please enter a valid phone number." }),
-  address: z.string().min(5, { message: "Address must be at least 5 characters." }),
-  gender: z.string({ required_error: "Please select a gender" }),
-  membershipStart: z.date({
-    required_error: "Please select a membership start date",
-  }),
-  selectedPlan: z.string({ required_error: "Please select a membership plan" }),
-  initialPayment: z.string().min(1, { message: "Please enter an initial payment amount" }),
-  height: z.string().optional(),
-  weight: z.string().optional(),
-  dob: z.date().optional(),
-});
+function FormField({ label, icon: Icon, children, error, required = false }: FormFieldProps) {
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
+        <Icon className="w-4 h-4 text-blue-400" />
+        {label}
+        {required && <span className="text-red-400">*</span>}
+      </label>
+      {children}
+      {error && (
+        <p className="text-sm text-red-400 flex items-center gap-1">
+          <X className="w-3 h-3" />
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Input component
+type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+  icon?: React.ElementType;
+};
+
+function Input({ icon: Icon, ...props }: InputProps) {
+  return (
+    <div className="relative">
+      {Icon && (
+        <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+      )}
+      <input
+        {...props}
+        className={`w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 hover:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+          Icon ? 'pl-10' : ''
+        } ${props.className || ''}`}
+      />
+    </div>
+  );
+}
+
+// Select component
+type SelectOption = {
+  value: string;
+  label: string;
+};
+
+type SelectProps = {
+  label: string;
+  icon: React.ElementType;
+  options: SelectOption[];
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  error?: string;
+};
+
+function Select({ label, icon: Icon, options, value, onChange, placeholder, error }: SelectProps) {
+  return (
+    <FormField label={label} icon={Icon} error={error}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white hover:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </FormField>
+  );
+}
 
 export default function MemberEnrollmentForm() {
-  const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter();
-  const { plans } = useSelector((state: RootState) => state.membershipPlans);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
+    gender: "",
+    membershipStart: null,
+    selectedPlan: "",
+    initialPayment: "",
+    height: "",
+    weight: "",
+    dob: null,
+  });
+  
   const [photo, setPhoto] = useState<File | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
+  const [currentStep, setCurrentStep] = useState(0);
 
-  // Initialize react-hook-form with default values
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
+  const steps = [
+    { title: "Personal Info", icon: User },
+    { title: "Membership", icon: CreditCard },
+    { title: "Health Data", icon: Weight }
+  ];
+
+  const handleInputChange = (field: string, value: string | Date | null) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: null }));
+    }
+  };
+
+  // Compute expiry date
+  const computedExpiryDate = useMemo(() => {
+    if (!formData.membershipStart || !formData.selectedPlan) return "";
+    const plan = mockPlans.find(p => String(p.id) === formData.selectedPlan);
+    if (!plan) return "";
+    const expiryDate = new Date(formData.membershipStart);
+    expiryDate.setDate(expiryDate.getDate() + plan.duration_days);
+    return formatDate(expiryDate);
+  }, [formData.membershipStart, formData.selectedPlan]);
+
+  const computedDurationMonths = useMemo(() => {
+    if (!formData.selectedPlan) return "";
+    const plan = mockPlans.find(p => String(p.id) === formData.selectedPlan);
+    if (!plan) return "";
+    return Math.ceil(plan.duration_days / 30).toString();
+  }, [formData.selectedPlan]);
+
+  const handleSubmit = (e: { preventDefault: () => void; }) => {
+    e.preventDefault();
+    // Validation logic here
+    console.log("Form submitted:", formData);
+    alert("Member enrolled successfully! 🎉");
+  };
+
+  const handleReset = () => {
+    setFormData({
       firstName: "",
       lastName: "",
       email: "",
       phone: "",
       address: "",
       gender: "",
+      membershipStart: null,
       selectedPlan: "",
       initialPayment: "",
       height: "",
       weight: "",
-    },
-  });
-
-  // Watch values for computed fields
-  const membershipStart = form.watch("membershipStart");
-  const selectedPlan = form.watch("selectedPlan");
-
-  useEffect(() => {
-    dispatch(fetchMembershipPlans());
-  }, [dispatch]);
-
-  // Compute expiry date based on the selected membership start and plan
-  const computedExpiryDate = useMemo(() => {
-    if (!membershipStart || !selectedPlan) return "";
-    const plan = plans.find((p) => String(p.id) === selectedPlan);
-    if (!plan) return "";
-    return getExpiryDate(membershipStart, plan.duration_days);
-  }, [membershipStart, selectedPlan, plans]);
-
-  // Compute duration in months from the plan's duration in days
-  const computedDurationMonths = useMemo(() => {
-    if (!selectedPlan) return "";
-    const plan = plans.find((p) => String(p.id) === selectedPlan);
-    if (!plan) return "";
-    const months = Math.ceil(plan.duration_days / 30);
-    return months.toString();
-  }, [selectedPlan, plans]);
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const memberData = {
-      first_name: values.firstName,
-      last_name: values.lastName,
-      email: values.email,
-      phone: values.phone,
-      address: values.address,
-      gender: values.gender,
-      membership_start: values.membershipStart.toISOString(),
-      membership_plan: Number(values.selectedPlan),
-      amount_paid: Number(values.initialPayment),
-      height: values.height ? Number(values.height) : undefined,
-      weight: values.weight ? Number(values.weight) : undefined,
-      dob: values.dob ? values.dob.toISOString().slice(0, 10) : undefined,
-      is_blocked: false,
-      photo: photo || undefined,
-    };
-    
-    try {
-      await dispatch(createMember(memberData)).unwrap();
-      toast.success("Member created successfully! 🎉");
-      router.push("/admin/membermanagement");
-    } catch (error: any) {
-      toast.error("Failed to create member 😢: " + error);
-    }
-  };
-
-  const handleReset = () => {
-    form.reset();
+      dob: null,
+    });
     setPhoto(null);
-    toast.info("Form reset");
-  };
-
-  const handleCancel = () => {
-    if (Object.values(form.getValues()).some(value => value !== "")) {
-      if (confirm("Are you sure you want to discard your changes?")) {
-        router.push("/admin/usersmanagement");
-      }
-    } else {
-      router.push("/admin/usersmanagement");
-    }
+    setErrors({});
+    setCurrentStep(0);
   };
 
   return (
-    <Card className="w-full bg-transparent text-white shadow-xl">
-      <CardHeader className="bg-transparent">
-        <CardTitle className="text-3xl font-bold text-center">Member Enrollment</CardTitle>
-      </CardHeader>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="p-6 space-y-8">
-            {/* Personal Information */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold border-b border-gray-800 pb-2">Personal Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter first name"
-                          className="bg-transparent text-white border-gray-700"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter last name"
-                          className="bg-transparent text-white border-gray-700"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="example@mail.com"
-                        className="bg-transparent text-white border-gray-700"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter phone number"
-                          className="bg-gray-800 text-white border-gray-700"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter address"
-                          className="bg-transparent text-white border-gray-700"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gender</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="bg-transparent text-white border-gray-700">
-                          <SelectValue placeholder="Select Gender" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-gray-800 text-white border-gray-700">
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+    <div className="min-h-screen  from-black via-slate-900 to-slate-900 p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Member Enrollment</h1>
+          <p className="text-gray-300">Join our fitness community today</p>
+        </div>
 
-            {/* Membership Details */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold border-b border-gray-800 pb-2">Membership Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="membershipStart"
-                  render={({ field }) => (
-                    <DatePickerWithYearSelection
-                      field={field}
-                      label="Membership Start"
-                      disabledDatesFn={(date) =>
-                        date < new Date(new Date().setHours(0, 0, 0, 0))
-                      }
-                      fromYear={new Date().getFullYear()}
-                      toYear={new Date().getFullYear() + 2}
-                      placeholder="Select start date"
+        {/* Progress Steps */}
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center space-x-4">
+            {steps.map((step, index) => (
+              <div key={index} className="flex items-center">
+                <div
+                  className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${
+                    index <= currentStep
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-lg'
+                      : 'border-gray-600 text-gray-400'
+                  }`}
+                >
+                  <step.icon className="w-5 h-5" />
+                </div>
+                <span className={`ml-3 text-sm font-medium ${
+                  index <= currentStep ? 'text-white' : 'text-gray-400'
+                }`}>
+                  {step.title}
+                </span>
+                {index < steps.length - 1 && (
+                  <div className={`w-12 h-0.5 ml-6 transition-colors ${
+                    index < currentStep ? 'bg-blue-600' : 'bg-gray-600'
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Form */}
+        <div className="bg-gray-800/30 backdrop-blur-lg border border-gray-700/50 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="p-8">
+            {/* Step 0: Personal Information */}
+            {currentStep === 0 && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-2 bg-blue-600/20 rounded-lg">
+                    <User className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">Personal Information</h2>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField label="First Name" icon={User} required>
+                    <Input
+                      placeholder="Enter first name"
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
                     />
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="selectedPlan"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Membership Plan</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="bg-transparent text-white border-gray-700">
-                            <SelectValue placeholder="Select Plan" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-gray-800 text-white border-gray-700">
-                          {plans.map((plan) => (
-                            <SelectItem key={plan.id} value={String(plan.id)}>
-                              {plan.name} | {plan.duration_days} days | ₹{plan.price}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormItem>
-                  <FormLabel>Computed Expiry Date</FormLabel>
-                  <Input
-                    readOnly
-                    value={computedExpiryDate}
-                    className="bg-transparent text-white border-gray-700"
-                  />
-                </FormItem>
-                <FormItem>
-                  <FormLabel>Duration (months)</FormLabel>
-                  <Input
-                    readOnly
-                    value={computedDurationMonths}
-                    className="bg-transparent text-white border-gray-700"
-                  />
-                </FormItem>
-              </div>
-              <FormField
-                control={form.control}
-                name="initialPayment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Initial Payment</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        className="bg-transparent text-white border-gray-700"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormItem>
-                <FormLabel htmlFor="photo">Photo</FormLabel>
-                <Input
-                  id="photo"
-                  type="file"
-                  onChange={(e) =>
-                    setPhoto(e.target.files ? e.target.files[0] : null)
-                  }
-                  className="bg-transparent text-white border-gray-700"
-                />
-              </FormItem>
-            </div>
+                  </FormField>
+                  
+                  <FormField label="Last Name" icon={User} required>
+                    <Input
+                      placeholder="Enter last name"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    />
+                  </FormField>
+                </div>
 
-            {/* Health Information */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold border-b border-gray-800 pb-2">Health Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="height"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Height (cm)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="e.g. 170.00"
-                          className="bg-transparent text-white border-gray-700"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="weight"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Weight (kg)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="e.g. 65.00"
-                          className="bg-transparent text-white border-gray-700"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="dob"
-                render={({ field }) => (
-                  <DatePickerWithYearSelection
-                    field={field}
-                    label="Date of Birth"
-                    disabledDatesFn={(date) => date > new Date()}
-                    fromYear={1920}
-                    toYear={new Date().getFullYear()}
-                    placeholder="Select birth date"
+                <FormField label="Email Address" icon={Mail} required>
+                  <Input
+                    type="email"
+                    placeholder="example@email.com"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
                   />
+                </FormField>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField label="Phone Number" icon={Phone} required>
+                    <Input
+                      placeholder="Enter phone number"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                    />
+                  </FormField>
+
+                  <Select
+                    label="Gender"
+                    icon={User}
+                    value={formData.gender}
+                    onChange={(value) => handleInputChange('gender', value)}
+                    placeholder="Select gender"
+                    options={[
+                      { value: 'male', label: 'Male' },
+                      { value: 'female', label: 'Female' },
+                      { value: 'other', label: 'Other' }
+                    ]}
+                  />
+                </div>
+
+                <FormField label="Address" icon={MapPin} required>
+                  <Input
+                    placeholder="Enter full address"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                  />
+                </FormField>
+              </div>
+            )}
+
+            {/* Step 1: Membership Details */}
+            {currentStep === 1 && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-2 bg-blue-600/20 rounded-lg">
+                    <CreditCard className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">Membership Details</h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <DatePickerWithYearSelection
+                    field={{
+                      value: formData.membershipStart,
+                      onChange: (value: Date) => handleInputChange('membershipStart', value)
+                    }}
+                    label="Membership Start Date"
+                    icon={Calendar}
+                    fromYear={new Date().getFullYear()}
+                    toYear={new Date().getFullYear() + 2}
+                    placeholder="Select start date" className={undefined} disabledDatesFn={undefined}                  />
+
+                  <Select
+                    label="Membership Plan"
+                    icon={CreditCard}
+                    value={formData.selectedPlan}
+                    onChange={(value) => handleInputChange('selectedPlan', value)}
+                    placeholder="Select a plan"
+                    options={mockPlans.map(plan => ({
+                      value: String(plan.id),
+                      label: `${plan.name} - ${plan.duration_days} days - ₹${plan.price}`
+                    }))}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField label="Membership Expiry" icon={CalendarDays}>
+                    <Input
+                      readOnly
+                      value={computedExpiryDate}
+                      className="bg-gray-700/50 cursor-not-allowed"
+                      placeholder="Auto-calculated"
+                    />
+                  </FormField>
+
+                  <FormField label="Duration (Months)" icon={Calendar}>
+                    <Input
+                      readOnly
+                      value={computedDurationMonths}
+                      className="bg-gray-700/50 cursor-not-allowed"
+                      placeholder="Auto-calculated"
+                    />
+                  </FormField>
+                </div>
+
+                <FormField label="Initial Payment" icon={CreditCard} required>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Enter amount"
+                    value={formData.initialPayment}
+                    onChange={(e) => handleInputChange('initialPayment', e.target.value)}
+                  />
+                </FormField>
+
+                <FormField label="Profile Photo" icon={Camera}>
+                  <div className="flex items-center space-x-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+                      className="hidden"
+                      id="photo-upload"
+                    />
+                    <label
+                      htmlFor="photo-upload"
+                      className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl cursor-pointer transition-colors shadow-lg"
+                    >
+                      <Camera className="w-4 h-4" />
+                      Choose Photo
+                    </label>
+                    {photo && (
+                      <div className="flex items-center gap-2 text-sm text-gray-300 bg-gray-700/50 px-3 py-2 rounded-lg">
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                        {photo.name}
+                      </div>
+                    )}
+                  </div>
+                </FormField>
+              </div>
+            )}
+
+            {/* Step 2: Health Information */}
+            {currentStep === 2 && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-2 bg-blue-600/20 rounded-lg">
+                    <Weight className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">Health Information</h2>
+                  <span className="text-sm text-gray-400">(Optional)</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField label="Height (cm)" icon={Ruler}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g. 170.5"
+                      value={formData.height}
+                      onChange={(e) => handleInputChange('height', e.target.value)}
+                    />
+                  </FormField>
+
+                  <FormField label="Weight (kg)" icon={Weight}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g. 65.5"
+                      value={formData.weight}
+                      onChange={(e) => handleInputChange('weight', e.target.value)}
+                    />
+                  </FormField>
+                </div>
+
+                <DatePickerWithYearSelection
+                    field={{
+                    value: formData.dob,
+                    onChange: (value: Date) => handleInputChange('dob', value)
+                  }}
+                  label="Date of Birth"
+                  icon={CalendarDays}
+                  fromYear={1920}
+                  toYear={new Date().getFullYear()}
+                  placeholder="Select birth date"
+                  className=""
+                  disabledDatesFn={() => false}
+                />
+
+                {/* BMI Calculator */}
+                {formData.height && formData.weight && (
+                  <div className="bg-blue-600/10 border border-blue-600/30 rounded-xl p-4">
+                    <h3 className="text-lg font-semibold text-blue-400 mb-2">BMI Calculation</h3>
+                    <p className="text-gray-300">
+                      BMI: {((parseFloat(formData.weight) / ((parseFloat(formData.height) / 100) ** 2)).toFixed(1))}
+                    </p>
+                  </div>
                 )}
-              />
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between items-center mt-12 pt-6 border-t border-gray-700">
+              <div className="flex space-x-3">
+                {currentStep > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(currentStep - 1)}
+                    className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all duration-200 flex items-center gap-2 shadow-lg"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Previous
+                  </button>
+                )}
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all duration-200 flex items-center gap-2 shadow-lg"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Reset
+                </button>
+
+                {currentStep < steps.length - 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(currentStep + 1)}
+                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all duration-200 flex items-center gap-2 shadow-lg"
+                  >
+                    Next
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl transition-all duration-200 flex items-center gap-2 shadow-lg transform hover:scale-105"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    Enroll Member
+                  </button>
+                )}
+              </div>
             </div>
-          </CardContent>
-          
-          <CardFooter className="flex flex-col sm:flex-row gap-4 p-6 bg-transparent">
-            <Button 
-              type="submit" 
-              className="w-full h-12 bg-gradient-to-t from-destructive to-destructive/85 text-destructive-foreground border border-zinc-950/25 shadow-md shadow-zinc-950/20 ring-1 ring-inset ring-white/20 hover:brightness-110 active:brightness-90"
-            >
-              Enroll Member
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleReset}
-              className="w-full h-12 bg-transparent text-white border-gray-600 hover:bg-gray-600 active:bg-gray-500"
-            >
-              Reset
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+          </div>
+        </div>
+
+        {/* Form Summary */}
+        {currentStep === 2 && (
+          <div className="mt-6 bg-gray-800/20 backdrop-blur-sm border border-gray-700/30 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Enrollment Summary</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="text-gray-300">
+                <span className="font-medium">Name:</span> {formData.firstName} {formData.lastName}
+              </div>
+              <div className="text-gray-300">
+                <span className="font-medium">Email:</span> {formData.email}
+              </div>
+              <div className="text-gray-300">
+                <span className="font-medium">Plan:</span> {
+                  formData.selectedPlan ? 
+                  mockPlans.find(p => String(p.id) === formData.selectedPlan)?.name : 
+                  'Not selected'
+                }
+              </div>
+              <div className="text-gray-300">
+                <span className="font-medium">Payment:</span> ₹{formData.initialPayment || '0'}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

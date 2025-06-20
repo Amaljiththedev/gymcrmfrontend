@@ -10,6 +10,8 @@ const API_BASE_URL = "http://localhost:8000/api";
 // ---------------------------------------------------------------------
 
 export interface Member {
+  biometric_id?: number;
+  biometric_registered: boolean;
   id: number;
   first_name: string;
   last_name: string;
@@ -30,6 +32,14 @@ export interface Member {
   photo?: string;
   membership_status: string; // e.g. "active", "expired", "blocked", etc.
 }
+
+interface RenewMemberPayload {
+  memberId: number;
+  membership_plan: number;
+  membership_start: string;
+  payment_amount: number;
+}
+
 
 export interface MemberCreateInput extends Omit<Partial<Member>, 'photo' | 'membership_plan'> {
   membership_plan: number;
@@ -201,6 +211,8 @@ export const updateMember = createAsyncThunk<Member, { memberId: number; memberD
     }
   }
 );
+
+
 // ---------------------------------------------------------------------
 // Slice
 // ---------------------------------------------------------------------
@@ -267,22 +279,24 @@ const memberSlice = createSlice({
         state.loading = false;
         state.error = action.payload || 'Failed to fetch expiring members';
       })
+      // Renew Member
+
             // Update Member (full update)
-      .addCase(updateMember.pending, (state) => {
-              state.loading = true;
-              state.error = null;
+      .addCase(updateMember.pending, (state: MemberState) => {
+        state.loading = true;
+        state.error = null;
       })
-      .addCase(updateMember.fulfilled, (state, action: PayloadAction<Member>) => {
-              state.loading = false;
-              state.member = action.payload;
-              state.members = state.members.map((m) =>
-                m.id === action.payload.id ? action.payload : m
-              );
-            })
-      .addCase(updateMember.rejected, (state, action) => {
-              state.loading = false;
-              state.error = action.payload || 'Failed to update member';
-            })
+      .addCase(updateMember.fulfilled, (state: MemberState, action: PayloadAction<Member>) => {
+        state.loading = false;
+        state.member = action.payload;
+        state.members = state.members.map((m) =>
+          m.id === action.payload.id ? action.payload : m
+        );
+      })
+      .addCase(updateMember.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to update member';
+      })
       // Fetch Incomplete Payment Members
       .addCase(fetchIncompletePaymentMembers.pending, (state) => {
         state.loading = true;
@@ -310,18 +324,20 @@ const memberSlice = createSlice({
         state.error = action.payload || 'Failed to fetch active members';
       })
       // Fetch Member By ID
-      .addCase(fetchMemberById.pending, (state) => {
+      .addCase(fetchMemberById.pending, (state: MemberState) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchMemberById.fulfilled, (state, action: PayloadAction<Member>) => {
+      .addCase(fetchMemberById.fulfilled, (state: MemberState, action: PayloadAction<Member>) => {
         state.loading = false;
         state.member = action.payload;
       })
-      .addCase(fetchMemberById.rejected, (state, action: PayloadAction<string | undefined>) => {
+      .addCase(fetchMemberById.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch member';
       });
+
+      
   },
 });
 

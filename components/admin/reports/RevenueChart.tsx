@@ -1,7 +1,12 @@
-"use client"
+"use client";
 
-import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, XAxis, YAxis } from "recharts"
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/src/store/store";
+import { fetchMonthlyRevenue } from "@/src/features/reports/monthlyRevenueSlice";
+
+import { TrendingUp } from "lucide-react";
+import { Bar, BarChart, XAxis, YAxis } from "recharts";
 
 import {
   Card,
@@ -10,42 +15,53 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
+  ChartConfig,
+} from "@/components/ui/chart";
 
-const chartData = [
-  { month: "January", revenue: 50000 },
-  { month: "February", revenue: 65000 },
-  { month: "March", revenue: 72000 },
-  { month: "April", revenue: 68000 },
-  { month: "May", revenue: 75000 },
-  { month: "June", revenue: 82000 },
-]
+type Props = {
+  startDate: Date;
+  endDate: Date;
+};
 
 const chartConfig = {
   revenue: {
     label: "Revenue",
     color: "hsl(var(--chart-1))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
-export function RevenueChart() {
+export function RevenueChart({ startDate, endDate }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { data, loading } = useSelector((state: RootState) => state.monthlyRevenue);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      const start = startDate.toISOString().split("T")[0];
+      const end = endDate.toISOString().split("T")[0];
+      dispatch(fetchMonthlyRevenue({ startDate: start, endDate: end }));
+    }
+  }, [startDate, endDate, dispatch]);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Monthly Revenue</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardDescription>
+          {startDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })} -{" "}
+          {endDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+        </CardDescription>
       </CardHeader>
+
       <CardContent>
         <ChartContainer config={chartConfig}>
           <BarChart
             accessibilityLayer
-            data={chartData}
+            data={data}
             layout="vertical"
             margin={{ left: -20 }}
           >
@@ -58,22 +74,20 @@ export function RevenueChart() {
               axisLine={false}
               tickFormatter={(value) => value.slice(0, 3)}
             />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
             <Bar dataKey="revenue" fill="var(--color-revenue)" radius={5} />
           </BarChart>
         </ChartContainer>
       </CardContent>
+
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+          Trending up this month <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total revenue for the last 6 months
+          Showing total revenue from selected months
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }

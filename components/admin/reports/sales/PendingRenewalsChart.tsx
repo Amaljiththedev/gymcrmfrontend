@@ -1,8 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/src/store/store";
+import { fetchPendingRenewals } from "@/src/features/salesreport/pendingRenewalsSlice";
+
 import { TrendingUp } from "lucide-react";
 import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer } from "recharts";
-
 import {
   Card,
   CardContent,
@@ -18,15 +22,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-const chartData = [
-  { month: "January", pendingRenewals: 45 },
-  { month: "February", pendingRenewals: 60 },
-  { month: "March", pendingRenewals: 50 },
-  { month: "April", pendingRenewals: 70 },
-  { month: "May", pendingRenewals: 55 },
-  { month: "June", pendingRenewals: 65 },
-];
-
 const chartConfig = {
   pendingRenewals: {
     label: "Pending Renewals",
@@ -34,12 +29,31 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function PendingRenewalsChart() {
+type Props = {
+  startDate: Date;
+  endDate: Date;
+};
+
+export function PendingRenewalsChart({ startDate, endDate }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { data: chartData, loading } = useSelector((state: RootState) => state.pendingRenewals);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      dispatch(
+        fetchPendingRenewals({
+          startDate: startDate.toISOString().split("T")[0],
+          endDate: endDate.toISOString().split("T")[0],
+        })
+      );
+    }
+  }, [dispatch, startDate, endDate]);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Pending Renewals</CardTitle>
-        <CardDescription>Comparison from January - June 2024</CardDescription>
+        <CardDescription>Comparison by Month</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -54,10 +68,7 @@ export function PendingRenewalsChart() {
                 axisLine={false}
                 tickFormatter={(value) => value.slice(0, 3)}
               />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-              />
+              <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
               <Bar dataKey="pendingRenewals" fill="hsl(var(--chart-1))" radius={5} />
             </BarChart>
           </ResponsiveContainer>

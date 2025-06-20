@@ -1,478 +1,377 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useDispatch } from 'react-redux';
-import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
-import AspectRatio from '@mui/joy/AspectRatio';
-import Box from '@mui/joy/Box';
-import Button from '@mui/joy/Button';
-import Divider from '@mui/joy/Divider';
-import FormControl from '@mui/joy/FormControl';
-import FormLabel from '@mui/joy/FormLabel';
-import FormHelperText from '@mui/joy/FormHelperText';
-import Input from '@mui/joy/Input';
-import Stack from '@mui/joy/Stack';
-import Select from '@mui/joy/Select';
-import Option from '@mui/joy/Option';
-import Typography from '@mui/joy/Typography';
-import Card from '@mui/joy/Card';
-import CardActions from '@mui/joy/CardActions';
-import CardContent from '@mui/joy/CardContent';
-import CardOverflow from '@mui/joy/CardOverflow';
-import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import PersonIcon from '@mui/icons-material/Person';
-import PhoneIcon from '@mui/icons-material/Phone';
-import HomeIcon from '@mui/icons-material/Home';
-import BadgeIcon from '@mui/icons-material/Badge';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import PasswordIcon from '@mui/icons-material/Password';
-import { addSuperStaff } from '@/src/features/staff/staffSlice';
-import axios from 'axios';
-import { DatePicker } from "@/components/ui/date-picker"; // Custom date picker component
+import React, { useState, useEffect, useRef } from "react";
+import { useDispatch } from "react-redux";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+import { AppDispatch } from "@/src/store/store";
+import { addSuperStaff } from "@/src/features/staff/staffSlice";
 
-// Transparent theme with white text and crisp styling
-const transparentThemeStyles = {
-  backgroundColor: 'transparent',
-  color: '#ffffff',
-  '& .MuiFormLabel-root': { color: '#ffffff' },
-  '& .MuiInput-root': {
-    backgroundColor: 'transparent',
-    borderRadius: '8px',
-    border: '1px solid #ffffff',
-    color: '#ffffff',
-    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
-    '&:focus-within': {
-      borderColor: '#6a6fff',
-      boxShadow: '0 0 0 2px rgba(106,111,255,0.2)',
-    },
-  },
-  '& .MuiSelect-root': {
-    backgroundColor: 'transparent',
-    borderRadius: '8px',
-    border: '1px solid #ffffff',
-    color: '#ffffff',
-  },
-  '& .MuiCard-root': {
-    backgroundColor: 'transparent',
-    borderRadius: '16px',
-    boxShadow: '0 8px 32px rgba(255,255,255,0.1)',
-    border: '1px solid #ffffff',
-  },
-  '& .MuiDivider-root': { backgroundColor: '#ffffff' },
-  '& .MuiButton-root': { borderRadius: '8px', textTransform: 'none', fontWeight: 600 },
-  '& .MuiCardOverflow-root': { borderTop: '1px solid #ffffff' },
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+
+import {
+  Mail,
+  User,
+  Phone,
+  Home,
+  Briefcase,
+  DollarSign,
+  Calendar,
+  Lock,
+  Image,
+  Loader2,
+} from "lucide-react";
+import axios from "axios";
+
+const initialFormState = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phoneNumber: "",
+  address: "",
+  department: "",
+  salary: "",
+  salaryCreditedDate: "",
+  password: "",
+  photo: null as File | null,
 };
 
-export default function CreateSuperStaff() {
-  const dispatch = useDispatch();
+function generatePassword(length = 12) {
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=";
+  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
+
+const CreateSuperStaff = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phoneNumber: '',
-    address: '',
-    department: '',
-    salary: '',
-    salaryCreditedDate: '', 
-    password: '',
-    photo: null as File | null,
-  });
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const [formData, setFormData] = useState(initialFormState);
+  const [startDate, setStartDate] = useState(new Date());
   const [departments, setDepartments] = useState<{ value: string; label: string }[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [startDate, setStartDate] = useState<Date>(new Date());
 
-  // Function to generate a random password
-  const generateRandomPassword = (length = 12) => {
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
-    let password = "";
-    for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
-      password += charset[randomIndex];
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!formData.firstName) e.firstName = "First name is required";
+    if (!formData.lastName) e.lastName = "Last name is required";
+    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) e.email = "Invalid email";
+    if (!formData.phoneNumber.match(/^\d{10}$/)) e.phoneNumber = "Invalid phone number";
+    if (!formData.salary || +formData.salary <= 0) e.salary = "Salary must be positive";
+    if (!formData.salaryCreditedDate) e.salaryCreditedDate = "Credited date required";
+    if (!formData.department) e.department = "Choose a department";
+    if (!formData.password || formData.password.length < 8) e.password = "Password too short";
+    if (!formData.photo) e.photo = "Photo required";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setLoading(true);
+
+    const dueDate = new Date(startDate);
+    dueDate.setDate(dueDate.getDate() + 30);
+
+    const payload = new FormData();
+    payload.append("first_name", formData.firstName);
+    payload.append("last_name", formData.lastName);
+    payload.append("email", formData.email);
+    payload.append("phone_number", formData.phoneNumber);
+    payload.append("address", formData.address);
+    payload.append("department", formData.department);
+    payload.append("salary", formData.salary);
+    payload.append("salary_credited_date", formData.salaryCreditedDate);
+    payload.append("salary_due_date", dueDate.toISOString().split("T")[0]);
+    payload.append("password", formData.password);
+    if (formData.photo) payload.append("photo", formData.photo);
+
+    try {
+      await dispatch(addSuperStaff(payload)).unwrap();
+      toast.success("Super Staff Created 🎉");
+      router.push("/admin/staff");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create super staff");
+    } finally {
+      setLoading(false);
     }
-    return password;
   };
 
-  // Function to handle password suggestion: generate, set state, and copy to clipboard.
-  const handleSuggestPassword = () => {
-    const suggested = generateRandomPassword(12);
-    setFormData(prev => ({ ...prev, password: suggested }));
-    navigator.clipboard.writeText(suggested)
-      .then(() => toast.info("Suggested password copied to clipboard!"))
-      .catch(() => toast.error("Failed to copy password to clipboard."));
-  };
-
-  // Fetch department choices from the backend API
   useEffect(() => {
     async function fetchDepartments() {
       try {
-        const response = await axios.get('/staff/departments/');
+        const response = await axios.get("/staff/departments/");
         setDepartments(response.data);
       } catch (error) {
-        console.error('Error fetching departments: 😕', error);
-        setErrors(prev => ({ ...prev, department: 'Failed to load departments 😕' }));
+        console.error("Error fetching departments: 😕", error);
+        setErrors((prev) => ({ ...prev, department: "Failed to load departments 😕" }));
       }
     }
     fetchDepartments();
   }, []);
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.firstName) newErrors.firstName = 'First name is required ✨';
-    if (!formData.lastName) newErrors.lastName = 'Last name is required ✨';
-    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = 'Please enter a valid email 💌';
-    if (!formData.phoneNumber.match(/^\+?[1-9]\d{1,14}$/))
-      newErrors.phoneNumber = 'Invalid phone number 📞';
-    if (!formData.department) newErrors.department = 'Select a department 👩‍💼';
-    if (Number(formData.salary) <= 0) newErrors.salary = 'Salary must be a positive number 💰';
-    if (!formData.salaryCreditedDate) newErrors.salaryCreditedDate = 'Please choose a salary day 📅';
-    if (formData.password.length < 8)
-      newErrors.password = 'Password must be at least 8 characters 🔒';
-    if (!formData.photo) newErrors.photo = 'Photo is required 📸';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      const file = e.target.files[0];
-      if (!file.type.startsWith('image/')) {
-        setErrors(prev => ({ ...prev, photo: 'Only image files are allowed 🚫' }));
-        return;
-      }
-      setFormData(prev => ({ ...prev, photo: file }));
-      setErrors(prev => ({ ...prev, photo: '' }));
-    }
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!validateForm()) return;
-    setLoading(true);
-    const formPayload = new FormData();
-    formPayload.append('first_name', formData.firstName);
-    formPayload.append('last_name', formData.lastName);
-    formPayload.append('email', formData.email);
-    formPayload.append('phone_number', formData.phoneNumber);
-    formPayload.append('address', formData.address);
-    formPayload.append('department', formData.department);
-    formPayload.append('salary', formData.salary);
-    formPayload.append('salary_credited_date', formData.salaryCreditedDate);
-    formPayload.append('password', formData.password);
-    if (formData.photo) formPayload.append('photo', formData.photo);
-    try {
-      await dispatch(addSuperStaff(formPayload) as any).unwrap();
-      setLoading(false);
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phoneNumber: '',
-        address: '',
-        department: '',
-        salary: '',
-        salaryCreditedDate: '',
-        password: '',
-        photo: null,
-      });
-      setStartDate(new Date());
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      toast.success('Super staff created successfully! 🎉');
-      router.push('/admin/staff');
-    } catch (err: any) {
-      console.error('Error creating super staff: 😕', err);
-      setLoading(false);
-      const errorMsg = err.response?.data?.detail || err.message || 'An unexpected error occurred 😕';
-      setErrors(prev => ({ ...prev, general: errorMsg }));
-      toast.error(errorMsg);
-    }
-  };
-
   return (
-    <Box sx={{ ...transparentThemeStyles, flex: 1, width: '100%', minHeight: '100vh', p: 3 }}>
-      <Stack spacing={4} sx={{ maxWidth: '800px', mx: 'auto' }}>
-        <Card variant="outlined" component="form" onSubmit={handleSubmit}>
-          <CardContent sx={{ p: 4 }}>
-            <Typography
-              level="h3"
-              sx={{ mb: 2, color: '#fff', fontWeight: 700, fontSize: '1.75rem' }}
-            >
-              Create Super Staff
-            </Typography>
-            <Divider sx={{ mb: 4 }} />
+    <div className="p-6 max-w-5xl mx-auto space-y-10">
+      <Card className="bg-transparent border border-white/10 shadow-md shadow-white/5 p-4">
+        <CardContent className="space-y-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-white">Create Super Staff</h2>
+            <p className="text-gray-400 mt-1">Fill in the details to create a new Super Staff member</p>
+          </div>
 
-            {/* Photo Upload Section */}
-            <Stack direction="row" spacing={3} alignItems="center" sx={{ mb: 4 }}>
-              <AspectRatio
-                ratio="1"
-                sx={{
-                  width: 120,
-                  height: 120,
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  border: formData.photo ? '3px solid #6a6fff' : '3px solid #ffffff',
-                }}
-              >
-                {formData.photo ? (
-                  <img
-                    src={URL.createObjectURL(formData.photo)}
-                    alt="Staff Preview"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                ) : (
-                  <PersonIcon sx={{ fontSize: 60, color: '#ffffff' }} />
-                )}
-              </AspectRatio>
-              <div>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  hidden
-                />
-                <Button
-                  variant="soft"
-                  sx={{
-                    color: '#ffffff',
-                    backgroundColor: '#ef9a9a',
-                    borderColor: '#ef9a9a',
-                    '&:hover': { backgroundColor: '#e57373', borderColor: '#e57373' },
-                  }}
-                  startDecorator={<EditRoundedIcon />}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Upload Photo 📸
-                </Button>
-                {errors.photo && (
-                  <FormHelperText sx={{ color: '#ff4d4f', mt: 1 }}>
-                    {errors.photo}
-                  </FormHelperText>
-                )}
+          <Separator className="my-4 bg-white/10" />
+
+          <form onSubmit={handleSubmit} className="space-y-10">
+            {/* Personal Section */}
+            <div className="space-y-6 border border-white/10 p-6 rounded-xl bg-black/20">
+              <h3 className="text-white text-lg font-semibold">Personal Information</h3>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* First Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-white">First Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="firstName"
+                      className="pl-10 bg-black/40 border-white/20 text-white"
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    />
+                  </div>
+                  {errors.firstName && <p className="text-red-500 text-sm">{errors.firstName}</p>}
+                </div>
+
+                {/* Last Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-white">Last Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="lastName"
+                      className="pl-10 bg-black/40 border-white/20 text-white"
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    />
+                  </div>
+                  {errors.lastName && <p className="text-red-500 text-sm">{errors.lastName}</p>}
+                </div>
               </div>
-            </Stack>
 
-            {/* Personal Information Section */}
-            <Stack spacing={3}>
-              <Typography level="title-md" sx={{ color: '#ffffff', mb: 1 }}>
-                Personal Information
-              </Typography>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <FormControl error={!!errors.firstName} sx={{ flex: 1 }}>
-                  <FormLabel>First Name</FormLabel>
+              {/* Email & Phone */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-white">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="email"
+                      type="email"
+                      className="pl-10 bg-black/40 border-white/20 text-white"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                  </div>
+                  {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber" className="text-white">Phone Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="phoneNumber"
+                      className="pl-10 bg-black/40 border-white/20 text-white"
+                      value={formData.phoneNumber}
+                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                    />
+                  </div>
+                  {errors.phoneNumber && <p className="text-red-500 text-sm">{errors.phoneNumber}</p>}
+                </div>
+              </div>
+
+              {/* Address */}
+              <div className="space-y-2">
+                <Label htmlFor="address" className="text-white">Address</Label>
+                <div className="relative">
+                  <Home className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    value={formData.firstName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, firstName: e.target.value })
-                    }
-                    variant="soft"
-                    startDecorator={<PersonIcon />}
+                    id="address"
+                    className="pl-10 bg-black/40 border-white/20 text-white"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   />
-                  {errors.firstName && (
-                    <FormHelperText sx={{ color: '#ff4d4f' }}>
-                      {errors.firstName}
-                    </FormHelperText>
-                  )}
-                </FormControl>
-                <FormControl error={!!errors.lastName} sx={{ flex: 1 }}>
-                  <FormLabel>Last Name</FormLabel>
+                </div>
+              </div>
+            </div>
+
+            {/* Employment */}
+            <div className="space-y-6 border border-white/10 p-6 rounded-xl bg-black/20">
+              <h3 className="text-white text-lg font-semibold">Employment Details</h3>
+
+              <div className="space-y-2">
+                <Label htmlFor="department" className="text-white">Department</Label>
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
+                  <Select
+                    value={formData.department}
+                    onValueChange={(value) => setFormData({ ...formData, department: value })}
+                  >
+                    <SelectTrigger className="pl-10 bg-black/40 border-white/20 text-white">
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 border-white/20 text-white">
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.value} value={dept.value}>
+                          {dept.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {errors.department && <p className="text-red-500 text-sm">{errors.department}</p>}
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="salary" className="text-white">Salary</Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="salary"
+                      type="number"
+                      className="pl-10 bg-black/40 border-white/20 text-white"
+                      value={formData.salary}
+                      onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                    />
+                  </div>
+                  {errors.salary && <p className="text-red-500 text-sm">{errors.salary}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="creditedDate" className="text-white">Salary Credited Date</Label>
+                  <div className="relative bg-black/40 border border-white/20 rounded-md">
+                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <div className="pl-10">
+                      <DatePicker
+                        selectedDate={startDate}
+                        onDateChange={(date: Date) => {
+                          setStartDate(date);
+                          setFormData({
+                            ...formData,
+                            salaryCreditedDate: date.toISOString().split("T")[0],
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {errors.salaryCreditedDate && <p className="text-red-500 text-sm">{errors.salaryCreditedDate}</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* Security & Photo */}
+            <div className="space-y-6 border border-white/10 p-6 rounded-xl bg-black/20">
+              <h3 className="text-white text-lg font-semibold">Security & Photo</h3>
+
+              {/* Password */}
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-white">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    value={formData.lastName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, lastName: e.target.value })
-                    }
-                    variant="soft"
-                    startDecorator={<PersonIcon />}
-                  />
-                  {errors.lastName && (
-                    <FormHelperText sx={{ color: '#ff4d4f' }}>
-                      {errors.lastName}
-                    </FormHelperText>
-                  )}
-                </FormControl>
-              </Stack>
-
-              <FormControl error={!!errors.email}>
-                <FormLabel>Email</FormLabel>
-                <Input
-                  type="email"
-                  autoComplete="username"
-                  startDecorator={<EmailRoundedIcon />}
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  variant="soft"
-                />
-                {errors.email && (
-                  <FormHelperText sx={{ color: '#ff4d4f' }}>
-                    {errors.email}
-                  </FormHelperText>
-                )}
-              </FormControl>
-
-              <FormControl error={!!errors.phoneNumber}>
-                <FormLabel>Phone Number</FormLabel>
-                <Input
-                  value={formData.phoneNumber}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phoneNumber: e.target.value })
-                  }
-                  variant="soft"
-                  startDecorator={<PhoneIcon />}
-                />
-                {errors.phoneNumber && (
-                  <FormHelperText sx={{ color: '#ff4d4f' }}>
-                    {errors.phoneNumber}
-                  </FormHelperText>
-                )}
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>Address</FormLabel>
-                <Input
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                  }
-                  variant="soft"
-                  startDecorator={<HomeIcon />}
-                />
-              </FormControl>
-
-              <Typography level="title-md" sx={{ color: '#ffffff', mb: 1, mt: 2 }}>
-                Employment Details
-              </Typography>
-
-              <FormControl error={!!errors.department}>
-                <FormLabel>Department</FormLabel>
-                <Select
-                  value={formData.department}
-                  onChange={(e, val) =>
-                    setFormData({ ...formData, department: val as string })
-                  }
-                  variant="soft"
-                  startDecorator={<BadgeIcon />}
-                  sx={{ backgroundColor: 'transparent' }}
-                >
-                  {departments.map((dept) => (
-                    <Option key={dept.value} value={dept.value}>
-                      {dept.label}
-                    </Option>
-                  ))}
-                </Select>
-                {errors.department && (
-                  <FormHelperText sx={{ color: '#ff4d4f' }}>
-                    {errors.department}
-                  </FormHelperText>
-                )}
-              </FormControl>
-
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <FormControl error={!!errors.salary} sx={{ flex: 1 }}>
-                  <FormLabel>Salary</FormLabel>
-                  <Input
-                    type="number"
-                    value={formData.salary}
-                    onChange={(e) =>
-                      setFormData({ ...formData, salary: e.target.value })
-                    }
-                    variant="soft"
-                    startDecorator={<AttachMoneyIcon />}
-                  />
-                  {errors.salary && (
-                    <FormHelperText sx={{ color: '#ff4d4f' }}>
-                      {errors.salary}
-                    </FormHelperText>
-                  )}
-                </FormControl>
-                <FormControl error={!!errors.salaryCreditedDate} sx={{ flex: 1 }}>
-                  <FormLabel>Salary Day</FormLabel>
-                  <DatePicker
-                    selectedDate={startDate}
-                    onDateChange={(date: Date) => {
-                      setStartDate(date);
-                      setFormData({
-                        ...formData,
-                        salaryCreditedDate: date.toISOString().split('T')[0],
-                      });
-                    }}
-                  />
-                  {errors.salaryCreditedDate && (
-                    <FormHelperText sx={{ color: '#ff4d4f' }}>
-                      {errors.salaryCreditedDate}
-                    </FormHelperText>
-                  )}
-                </FormControl>
-              </Stack>
-
-              <Typography level="title-md" sx={{ color: '#ffffff', mb: 1, mt: 2 }}>
-                Account Setup
-              </Typography>
-
-              <FormControl error={!!errors.password}>
-                <FormLabel>Password</FormLabel>
-                <Stack direction="row" spacing={1}>
-                  <Input
-                    type="password"
-                    autoComplete="current-password"
+                    id="password"
+                    type="text"
+                    className="pl-10 pr-32 bg-black/40 border-white/20 text-white"
                     value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    variant="soft"
-                    startDecorator={<PasswordIcon />}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
-                  <Button variant="outlined" onClick={handleSuggestPassword}>
+                  <Button
+                    type="button"
+                    className="absolute top-1.5 right-1 bg-white/10 text-white hover:bg-white/20 text-xs px-3 py-1"
+                    onClick={() => {
+                      const newPass = generatePassword();
+                      setFormData({ ...formData, password: newPass });
+                      navigator.clipboard.writeText(newPass);
+                      toast.success("Password generated & copied 🔐");
+                    }}
+                  >
                     Suggest
                   </Button>
-                </Stack>
-                {errors.password && (
-                  <FormHelperText sx={{ color: '#ff4d4f' }}>
-                    {errors.password}
-                  </FormHelperText>
-                )}
-              </FormControl>
-            </Stack>
-          </CardContent>
+                </div>
+                {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+              </div>
 
-          <CardOverflow sx={{ p: 3, backgroundColor: 'transparent' }}>
-            <CardActions sx={{ justifyContent: 'flex-end', gap: 2 }}>
+              {/* Photo Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="photo" className="text-white">Profile Photo</Label>
+                <div className="flex items-center gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-black/40 border-white/20 text-white hover:bg-white/10"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Image className="mr-2 h-4 w-4" />
+                    Upload Photo
+                  </Button>
+                  <span className="text-gray-400 text-sm">
+                    {formData.photo ? formData.photo.name : "No file selected"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        setFormData({ ...formData, photo: e.target.files[0] });
+                      }
+                    }}
+                  />
+                </div>
+                {errors.photo && <p className="text-red-500 text-sm">{errors.photo}</p>}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <CardFooter className="flex justify-end gap-4 px-0">
               <Button
-                variant="outlined"
-                sx={{
-                  color: '#ffffff',
-                  backgroundColor: '#ef9a9a',
-                  borderColor: '#ef9a9a',
-                  '&:hover': { backgroundColor: '#e57373', borderColor: '#e57373' },
-                }}
+                type="button"
+                variant="outline"
+                className="border-white/20 text-white hover:bg-white/10"
+                onClick={() => router.push("/admin/staff")}
               >
-                Cancel ❌
+                Cancel
               </Button>
               <Button
                 type="submit"
-                loading={loading}
-                sx={{
-                  backgroundColor: '#ef9a9a',
-                  color: '#ffffff',
-                  '&:hover': { backgroundColor: '#e57373' },
-                }}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={loading}
               >
-                Create Super Staff 🚀
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Super Staff
               </Button>
-            </CardActions>
-            {errors.general && (
-              <FormHelperText sx={{ color: '#ff4d4f', textAlign: 'center', mt: 1 }}>
-                {errors.general}
-              </FormHelperText>
-            )}
-          </CardOverflow>
-        </Card>
-      </Stack>
-    </Box>
+            </CardFooter>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+};
+
+export default CreateSuperStaff;

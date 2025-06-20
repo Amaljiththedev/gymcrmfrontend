@@ -11,7 +11,7 @@ import MemberTable from "@/components/admin/user_management/memberlist"; // Your
 import StaffTable from "@/components/admin/staff_management/stafflist";
 import TrainerTable from "@/components/admin/trainermanagement/Trainerlist";
 
-export default function Memberlist() {
+export default function TrainerList() {
   return (
     <>
       {/* Breadcrumb Navigation */}

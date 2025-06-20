@@ -1,4 +1,4 @@
- "use client";
+"use client";
 import * as React from "react";
 import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -34,6 +34,7 @@ import {
   Card,
   CardContent,
 } from "@mui/joy";
+
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
@@ -43,8 +44,11 @@ import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import BlockIcon from "@mui/icons-material/Block";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong"; // NEW – salary history
 
-// Create a dark theme (adjust as needed)
+/* ------------------------------------------------------------------ */
+/* 🌒 Dark theme                                                       */
+/* ------------------------------------------------------------------ */
 const darkTheme = extendTheme({
   colorSchemes: {
     dark: {
@@ -77,7 +81,9 @@ const darkTheme = extendTheme({
 type Order = "asc" | "desc";
 type SortKey = "id" | "name" | "phone_number" | "salary" | "joined_date";
 
-// Utility function to compare two trainers for sorting
+/* ------------------------------------------------------------------ */
+/* 🔧 Sorting helpers                                                  */
+/* ------------------------------------------------------------------ */
 function descendingComparator(a: Trainer, b: Trainer, orderBy: SortKey) {
   const aVal = a[orderBy] ?? "";
   const bVal = b[orderBy] ?? "";
@@ -85,100 +91,96 @@ function descendingComparator(a: Trainer, b: Trainer, orderBy: SortKey) {
   if (bVal > aVal) return 1;
   return 0;
 }
-
 function getComparator(order: Order, orderBy: SortKey) {
   return order === "desc"
     ? (a: Trainer, b: Trainer) => descendingComparator(a, b, orderBy)
     : (a: Trainer, b: Trainer) => -descendingComparator(a, b, orderBy);
 }
+const formatPhoneNumber = (phone: string) =>
+  !phone ? "" : phone.startsWith("+") ? phone : `+${phone}`;
 
-// Simple formatter for phone numbers (adjust if needed)
-const formatPhoneNumber = (phone: string) => {
-  if (!phone) return "";
-  return phone.startsWith("+") ? phone : `+${phone}`;
-};
-
+/* ------------------------------------------------------------------ */
+/* 🧮 Component                                                        */
+/* ------------------------------------------------------------------ */
 export default function TrainerTable() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { trainers } = useSelector((state: RootState) => state.trainers);
+  const { trainers } = useSelector((s: RootState) => s.trainers);
+
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<SortKey>("name");
   const [page, setPage] = useState(0);
   const [rowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  // Additional filter for blocked status: all | blocked | unblocked
   const [blockedFilter, setBlockedFilter] = useState("all");
 
+  /* ─────────────────────────── Fetch trainers ────────────────────────── */
   useEffect(() => {
     dispatch(fetchTrainers());
   }, [dispatch]);
 
-  // Filter and sort trainers based on search term and blocked filter
+  /* ─────────────────────────── Filter + sort ─────────────────────────── */
   const filteredTrainers = useMemo(() => {
     return trainers
-      .filter((trainer: { name: any; email: any; is_blocked: any; }) => {
-        const nameEmail = `${trainer.name} ${trainer.email}`.toLowerCase();
-        const searchMatch = nameEmail.includes(searchTerm.toLowerCase());
+      .filter((t) => {
+        const matchedText = `${t.name} ${t.email}`.toLowerCase();
+        const searchMatch = matchedText.includes(searchTerm.toLowerCase());
         const blockedMatch =
           blockedFilter === "all" ||
-          (blockedFilter === "blocked" && trainer.is_blocked) ||
-          (blockedFilter === "unblocked" && !trainer.is_blocked);
+          (blockedFilter === "blocked" && t.is_blocked) ||
+          (blockedFilter === "unblocked" && !t.is_blocked);
         return searchMatch && blockedMatch;
       })
       .sort(getComparator(order, orderBy));
   }, [trainers, searchTerm, blockedFilter, order, orderBy]);
 
+  /* ─────────────────────────── Handlers ──────────────────────────────── */
   const handleRequestSort = (property: SortKey) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
-
-  const handleViewTrainer = (id: number) => {
+  const handleViewTrainer = (id: number) =>
     router.push(`/admin/trainermanagement/view/${id}`);
-  };
-
-  const handleEditTrainer = (id: number) => {
+  const handleEditTrainer = (id: number) =>
     router.push(`/admin/trainermanagement/edit/${id}`);
-  };
+  const handleSalaryHistory = (id: number) =>
+    router.push(`/admin/trainermanagement/salary-history/${id}`);
+  const handleBlockTrainer = (id: number) =>
+    console.log(`Block/unblock trainer ${id}`);
 
-  const handleBlockTrainer = (id: number) => {
-    // Implement block functionality (e.g., dispatch an update trainer action)
-    console.log(`Block trainer ${id}`);
-  };
-
-  // Render filter controls
+  /* ─────────────────────────── Render filters ────────────────────────── */
   const renderFilters = () => (
-    <>
-      <FormControl size="sm">
-        <FormLabel sx={{ color: "rgba(255, 255, 255, 0.7)" }}>Blocked</FormLabel>
-        <Select
-          size="sm"
-          value={blockedFilter}
-          onChange={(e) =>
-            e && setBlockedFilter((e.target as HTMLSelectElement).value)
-          }
-          placeholder="Filter by block status"
-          sx={{
-            color: "#fff",
-            bgcolor: "rgba(30, 30, 30, 0.8)",
-            "& .MuiSelect-indicator": { color: "#fff" },
-            "&:hover": { bgcolor: "rgba(40, 40, 40, 0.8)" },
-          }}
-        >
-          <Option value="all">All</Option>
-          <Option value="blocked">Blocked</Option>
-          <Option value="unblocked">Unblocked</Option>
-        </Select>
-      </FormControl>
-    </>
+    <FormControl size="sm">
+      <FormLabel sx={{ color: "rgba(255, 255, 255, 0.7)" }}>Blocked</FormLabel>
+      <Select
+        size="sm"
+        value={blockedFilter}
+        onChange={(e) =>
+          e && setBlockedFilter((e.target as HTMLSelectElement).value)
+        }
+        placeholder="Filter by block status"
+        sx={{
+          color: "#fff",
+          bgcolor: "rgba(30, 30, 30, 0.8)",
+          "& .MuiSelect-indicator": { color: "#fff" },
+          "&:hover": { bgcolor: "rgba(40, 40, 40, 0.8)" },
+        }}
+      >
+        <Option value="all">All</Option>
+        <Option value="blocked">Blocked</Option>
+        <Option value="unblocked">Unblocked</Option>
+      </Select>
+    </FormControl>
   );
 
+  /* ------------------------------------------------------------------ */
+  /* UI                                                                 */
+  /* ------------------------------------------------------------------ */
   return (
     <CssVarsProvider theme={darkTheme} defaultMode="dark">
-      {/* Mobile Search & Filters */}
+      {/* ─── Mobile search + filters ────────────────────────────────── */}
       <Sheet
         sx={{
           display: { xs: "flex", sm: "none" },
@@ -212,31 +214,13 @@ export default function TrainerTable() {
           <FilterAltIcon />
         </IconButton>
         <Modal open={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
-          <ModalDialog
-            aria-labelledby="filter-modal"
-            layout="fullscreen"
-            sx={{ bgcolor: "#000", color: "#fff" }}
-          >
+          <ModalDialog layout="fullscreen" sx={{ bgcolor: "#000", color: "#fff" }}>
             <ModalClose sx={{ color: "#fff" }} />
-            <Typography id="filter-modal" level="h2" sx={{ color: "#fff" }}>
-              Filters
-            </Typography>
+            <Typography level="h2">Filters</Typography>
             <Divider sx={{ my: 2, bgcolor: "rgba(255, 255, 255, 0.1)" }} />
-            <Sheet
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                bgcolor: "transparent",
-                boxShadow: "none",
-              }}
-            >
+            <Sheet sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {renderFilters()}
-              <Button
-                color="primary"
-                onClick={() => setIsFilterOpen(false)}
-                sx={{ bgcolor: "rgba(70, 130, 180, 0.8)", color: "#fff" }}
-              >
+              <Button color="primary" onClick={() => setIsFilterOpen(false)}>
                 Apply Filters
               </Button>
             </Sheet>
@@ -244,7 +228,7 @@ export default function TrainerTable() {
         </Modal>
       </Sheet>
 
-      {/* Tablet & Desktop Search & Filters */}
+      {/* ─── Desktop search + filters ───────────────────────────────── */}
       <Box
         sx={{
           borderRadius: "sm",
@@ -253,11 +237,12 @@ export default function TrainerTable() {
           flexWrap: "wrap",
           gap: 1.5,
           "& > *": { minWidth: { xs: "120px", md: "160px" } },
-          bgcolor: "transparent",
         }}
       >
         <FormControl sx={{ flex: 1 }} size="sm">
-          <FormLabel sx={{ color: "rgba(255, 255, 255, 0.7)" }}>Search trainers</FormLabel>
+          <FormLabel sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
+            Search trainers
+          </FormLabel>
           <Input
             size="sm"
             placeholder="Search by name or email"
@@ -275,37 +260,31 @@ export default function TrainerTable() {
         {renderFilters()}
       </Box>
 
-      {/* Main Content: Responsive Table for Desktop & List for Mobile */}
+      {/* ─── Table (desktop) + cards (mobile) ───────────────────────── */}
       <Sheet
         variant="outlined"
         sx={{
           width: "100%",
           borderRadius: "sm",
-          flexShrink: 1,
           overflow: "auto",
           bgcolor: "rgba(20, 20, 20, 0.6)",
           borderColor: "rgba(255, 255, 255, 0.1)",
           boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
         }}
       >
-        {/* Table for Desktop & Tablet */}
+        {/* ───────────────── Table view (md+) ─────────────────────── */}
         <Table
           stickyHeader
           hoverRow
           sx={{
             display: { xs: "none", md: "table" },
             "--TableCell-headBackground": "rgba(25, 25, 25, 0.9)",
-            "--Table-headerUnderlineThickness": "1px",
             "--TableRow-hoverBackground": "rgba(40, 40, 40, 0.5)",
             "--TableCell-paddingY": "8px",
             "--TableCell-paddingX": "12px",
             color: "#fff",
             "& thead th": { color: "#fff", fontWeight: "bold" },
-            "& tbody td": {
-              color: "rgba(255, 255, 255, 0.9)",
-              borderColor: "rgba(255, 255, 255, 0.1)",
-            },
-            "& tbody tr:hover td": { color: "#fff" },
+            "& tbody td": { borderColor: "rgba(255, 255, 255, 0.1)" },
           }}
         >
           <thead>
@@ -318,31 +297,30 @@ export default function TrainerTable() {
                 { id: "joined_date", label: "Joined Date", sortable: true },
                 { id: "is_blocked", label: "Status", sortable: true },
                 { id: "actions", label: "Actions", sortable: false },
-              ].map((headCell) => (
-                <th key={headCell.id} style={{ padding: "12px 6px" }}>
-                  {headCell.sortable ? (
+              ].map((head) => (
+                <th key={head.id} style={{ padding: "12px 6px" }}>
+                  {head.sortable ? (
                     <Button
                       component="button"
-                      onClick={() => handleRequestSort(headCell.id as SortKey)}
+                      onClick={() => handleRequestSort(head.id as SortKey)}
                       endDecorator={<ArrowDropDownIcon />}
                       sx={{
                         fontWeight: "lg",
                         color: "#fff",
                         bgcolor: "transparent",
-                        "&:hover": { bgcolor: "rgba(40, 40, 40, 0.8)" },
                         "& svg": {
                           transition: "0.2s",
                           transform:
-                            orderBy === headCell.id && order === "asc"
+                            orderBy === head.id && order === "asc"
                               ? "rotate(180deg)"
                               : "none",
                         },
                       }}
                     >
-                      {headCell.label}
+                      {head.label}
                     </Button>
                   ) : (
-                    headCell.label
+                    head.label
                   )}
                 </th>
               ))}
@@ -351,66 +329,58 @@ export default function TrainerTable() {
           <tbody>
             {filteredTrainers
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((trainer) => (
-                <tr key={trainer.id}>
+              .map((tr) => (
+                <tr key={tr.id}>
                   <td>
-                    <Typography level="body-sm" sx={{ color: "rgba(255, 255, 255, 0.9)" }}>
-                      #{trainer.id}
-                    </Typography>
+                    <Typography level="body-sm">#{tr.id}</Typography>
                   </td>
                   <td>
                     <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
                       <Avatar
                         size="sm"
-                        src={trainer.photo || undefined}
+                        src={tr.photo || undefined}
                         sx={{
-                          bgcolor: trainer.photo ? "transparent" : "rgba(60, 60, 60, 0.8)",
+                          bgcolor: tr.photo ? "transparent" : "rgba(60,60,60,0.8)",
                           color: "#fff",
-                          border: "1px solid rgba(255, 255, 255, 0.2)",
+                          border: "1px solid rgba(255,255,255,0.2)",
                         }}
                       >
-                        {!trainer.photo && trainer.name.charAt(0)}
+                        {!tr.photo && tr.name.charAt(0)}
                       </Avatar>
                       <div>
-                        <Typography
-                          level="body-sm"
-                          fontWeight="medium"
-                          sx={{ color: "rgba(255, 255, 255, 0.9)" }}
-                        >
-                          {trainer.name}
-                        </Typography>
-                        <Typography level="body-xs" sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
-                          {trainer.email}
+                        <Typography fontWeight="medium">{tr.name}</Typography>
+                        <Typography level="body-xs" sx={{ color: "rgba(255,255,255,0.7)" }}>
+                          {tr.email}
                         </Typography>
                       </div>
                     </Box>
                   </td>
                   <td>
-                    <Typography level="body-sm" sx={{ color: "rgba(255, 255, 255, 0.9)" }}>
-                      {formatPhoneNumber(trainer.phone_number || "")}
+                    <Typography level="body-sm">
+                      {formatPhoneNumber(tr.phone_number)}
                     </Typography>
                   </td>
                   <td>
-                    <Typography level="body-sm" sx={{ color: "rgba(255, 255, 255, 0.9)" }}>
-                      ₹{trainer.salary}
-                    </Typography>
+                    <Typography level="body-sm">₹{tr.salary}</Typography>
                   </td>
                   <td>
-                    <Typography level="body-sm" sx={{ color: "rgba(255, 255, 255, 0.9)" }}>
-                      {new Date(trainer.joined_date).toLocaleDateString()}
+                    <Typography level="body-sm">
+                      {new Date(tr.joined_date).toLocaleDateString()}
                     </Typography>
                   </td>
                   <td>
                     <Chip
                       variant="soft"
                       size="sm"
-                      startDecorator={trainer.is_blocked ? <BlockIcon /> : null}
+                      startDecorator={tr.is_blocked ? <BlockIcon /> : null}
                       sx={{
-                        bgcolor: trainer.is_blocked ? "rgba(180, 40, 40, 0.3)" : "rgba(40, 120, 40, 0.3)",
-                        color: trainer.is_blocked ? "#ffa0a0" : "#a0ffa0",
+                        bgcolor: tr.is_blocked
+                          ? "rgba(180,40,40,0.3)"
+                          : "rgba(40,120,40,0.3)",
+                        color: tr.is_blocked ? "#ffa0a0" : "#a0ffa0",
                       }}
                     >
-                      {trainer.is_blocked ? "Blocked" : "Active"}
+                      {tr.is_blocked ? "Blocked" : "Active"}
                     </Chip>
                   </td>
                   <td>
@@ -418,9 +388,7 @@ export default function TrainerTable() {
                       <Tooltip title="View Details">
                         <IconButton
                           size="sm"
-                          variant="plain"
-                          color="neutral"
-                          onClick={() => trainer.id && typeof trainer.id === "number" && handleViewTrainer(trainer.id)}
+                          onClick={() => handleViewTrainer(tr.id)}
                           sx={{ color: "#fff" }}
                         >
                           <VisibilityIcon />
@@ -429,24 +397,23 @@ export default function TrainerTable() {
                       <Tooltip title="Edit Trainer">
                         <IconButton
                           size="sm"
-                          variant="plain"
-                          color="neutral"
-                          onClick={() => handleEditTrainer(trainer.id)}
+                          onClick={() => handleEditTrainer(tr.id)}
                           sx={{ color: "#fff" }}
                         >
                           <EditIcon />
                         </IconButton>
                       </Tooltip>
+
+                      {/* Dropdown with more actions */}
                       <Tooltip title="More Actions">
                         <Dropdown>
                           <MenuButton
                             slots={{ root: IconButton }}
                             slotProps={{
                               root: {
-                                variant: "plain",
-                                color: "neutral",
                                 size: "sm",
                                 sx: { color: "#fff" },
+                                variant: "plain",
                               },
                             }}
                           >
@@ -455,17 +422,17 @@ export default function TrainerTable() {
                           <Menu
                             size="sm"
                             sx={{
-                              minWidth: 140,
-                              bgcolor: "rgba(30, 30, 30, 0.95)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              "& .MuiMenuItem-root": {
-                                color: "#fff",
-                                "&:hover": { bgcolor: "rgba(60, 60, 60, 0.7)" },
-                              },
+                              minWidth: 160,
+                              bgcolor: "rgba(30,30,30,0.95)",
+                              border: "1px solid rgba(255,255,255,0.1)",
                             }}
                           >
-                            <MenuItem onClick={() => handleBlockTrainer(trainer.id)} color="danger">
-                              {trainer.is_blocked ? "Unblock Trainer" : "Block Trainer"}
+                            <MenuItem onClick={() => handleSalaryHistory(tr.id)}>
+                              <ReceiptLongIcon fontSize="small" sx={{ mr: 1 }} />
+                              Salary history
+                            </MenuItem>
+                            <MenuItem onClick={() => handleBlockTrainer(tr.id)} color="danger">
+                              {tr.is_blocked ? "Unblock Trainer" : "Block Trainer"}
                             </MenuItem>
                           </Menu>
                         </Dropdown>
@@ -477,24 +444,24 @@ export default function TrainerTable() {
           </tbody>
         </Table>
 
-        {/* Mobile List View */}
+        {/* ───────────────── Card list (mobile) ────────────────────── */}
         <Box sx={{ display: { xs: "block", md: "none" } }}>
-          {filteredTrainers.map((trainer: { id: boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | Promise<React.AwaitedReactNode> | React.Key | null | undefined; name: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; email: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; salary: string | number | bigint | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode> | null | undefined; is_blocked: any; }) => (
-            <Card key={String(trainer.id)} sx={{ my: 1 }}>
+          {filteredTrainers.map((tr) => (
+            <Card key={tr.id} sx={{ my: 1 }}>
               <CardContent>
                 <Typography level="body-sm">
-                  #{trainer.id} - {trainer.name}
+                  #{tr.id} — {tr.name}
                 </Typography>
-                <Typography level="body-xs">{trainer.email}</Typography>
-                <Typography level="body-sm">₹{trainer.salary}</Typography>
+                <Typography level="body-xs">{tr.email}</Typography>
+                <Typography level="body-sm">₹{tr.salary}</Typography>
                 <Chip size="sm" variant="soft">
-                  {trainer.is_blocked ? "Blocked" : "Active"}
+                  {tr.is_blocked ? "Blocked" : "Active"}
                 </Chip>
                 <Stack direction="row" spacing={1} mt={1}>
                   <Tooltip title="View">
                     <IconButton
                       size="sm"
-                      onClick={() => typeof trainer.id === "number" && handleViewTrainer(trainer.id)}
+                      onClick={() => handleViewTrainer(tr.id)}
                       sx={{ color: "#fff" }}
                     >
                       <VisibilityIcon />
@@ -503,10 +470,19 @@ export default function TrainerTable() {
                   <Tooltip title="Edit">
                     <IconButton
                       size="sm"
-                      onClick={() =>  typeof trainer.id === "number" && handleEditTrainer(trainer.id)}
+                      onClick={() => handleEditTrainer(tr.id)}
                       sx={{ color: "#fff" }}
                     >
                       <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Salary history">
+                    <IconButton
+                      size="sm"
+                      onClick={() => handleSalaryHistory(tr.id)}
+                      sx={{ color: "#fff" }}
+                    >
+                      <ReceiptLongIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
                 </Stack>
@@ -516,73 +492,50 @@ export default function TrainerTable() {
         </Box>
       </Sheet>
 
-      {/* Pagination Controls */}
+      {/* ─── Pagination controls ───────────────────────────────────── */}
       <Box
         sx={{
           pt: 2,
-          gap: 1,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
         }}
       >
-        <Typography level="body-sm" sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
-          Showing {Math.min(filteredTrainers.length, (page + 1) * rowsPerPage)} of {filteredTrainers.length} trainers
+        <Typography level="body-sm" sx={{ color: "rgba(255,255,255,0.7)" }}>
+          Showing {Math.min(filteredTrainers.length, (page + 1) * rowsPerPage)} of{" "}
+          {filteredTrainers.length} trainers
         </Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             size="sm"
             variant="outlined"
-            color="neutral"
             startDecorator={<KeyboardArrowLeftIcon />}
             disabled={page === 0}
             onClick={() => setPage(page - 1)}
-            sx={{
-              color: "#fff",
-              borderColor: "rgba(255, 255, 255, 0.3)",
-              "&:hover": { bgcolor: "rgba(40, 40, 40, 0.8)" },
-              "&.Mui-disabled": {
-                color: "rgba(255, 255, 255, 0.3)",
-                borderColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
           >
             Previous
           </Button>
           <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
-            {Array.from({ length: Math.ceil(filteredTrainers.length / rowsPerPage) }, (_, i) => (
-              <IconButton
-                key={i}
-                size="sm"
-                variant={page === i ? "outlined" : "plain"}
-                color="neutral"
-                onClick={() => setPage(i)}
-                sx={{
-                  color: "#fff",
-                  borderColor: page === i ? "rgba(255, 255, 255, 0.5)" : "transparent",
-                  "&:hover": { bgcolor: "rgba(40, 40, 40, 0.8)" },
-                }}
-              >
-                {i + 1}
-              </IconButton>
-            ))}
+            {Array.from(
+              { length: Math.ceil(filteredTrainers.length / rowsPerPage) },
+              (_, i) => (
+                <IconButton
+                  key={i}
+                  size="sm"
+                  variant={page === i ? "outlined" : "plain"}
+                  onClick={() => setPage(i)}
+                >
+                  {i + 1}
+                </IconButton>
+              )
+            )}
           </Box>
           <Button
             size="sm"
             variant="outlined"
-            color="neutral"
             endDecorator={<KeyboardArrowRightIcon />}
             disabled={page >= Math.ceil(filteredTrainers.length / rowsPerPage) - 1}
             onClick={() => setPage(page + 1)}
-            sx={{
-              color: "#fff",
-              borderColor: "rgba(255, 255, 255, 0.3)",
-              "&:hover": { bgcolor: "rgba(40, 40, 40, 0.8)" },
-              "&.Mui-disabled": {
-                color: "rgba(255, 255, 255, 0.3)",
-                borderColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
           >
             Next
           </Button>

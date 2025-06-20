@@ -1,8 +1,12 @@
-"use client"
+"use client";
 
-import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/src/store/store";
+import { fetchExpenseBreakdown } from "@/src/features/reports/expenseBreakdownSlice";
 
+import { TrendingUp } from "lucide-react";
+import { BarChart, Bar, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -10,90 +14,89 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
-  ChartConfig,
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
 
-const chartData = [
-  { month: "January", rent: 10000, salaries: 12000, utilities: 8000 },
-  { month: "February", rent: 10000, salaries: 14000, utilities: 9000 },
-  { month: "March", rent: 10000, salaries: 13000, utilities: 8500 },
-  { month: "April", rent: 10000, salaries: 15000, utilities: 9200 },
-  { month: "May", rent: 10000, salaries: 14500, utilities: 9100 },
-  { month: "June", rent: 10000, salaries: 16000, utilities: 9500 },
-]
+type Props = {
+  startDate: Date;
+  endDate: Date;
+};
 
-const chartConfig = {
-  rent: {
-    label: "Rent",
-    color: "hsl(var(--chart-1))",
-  },
-  salaries: {
-    label: "Salaries",
-    color: "hsl(var(--chart-2))",
-  },
-  utilities: {
-    label: "Utilities",
-    color: "hsl(var(--chart-3))",
-  },
-} satisfies ChartConfig
+export function ExpenseChart({ startDate, endDate }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { data, loading } = useSelector((state: RootState) => state.expenseBreakdown);
 
-export function ExpenseChart() {
+  useEffect(() => {
+    if (startDate && endDate) {
+      dispatch(
+        fetchExpenseBreakdown({
+          startDate: startDate.toISOString().split("T")[0],
+          endDate: endDate.toISOString().split("T")[0],
+        })
+      );
+    }
+  }, [startDate, endDate, dispatch]);
+
+  // Dynamic chart config from categories
+  const chartConfig = data.reduce((acc: any, item, index) => {
+    const key = item.category;
+    acc[key] = {
+      label: key.charAt(0).toUpperCase() + key.slice(1),
+      color: `hsl(var(--chart-${index + 1}))`,
+    };
+    return acc;
+  }, {});
+
+  // Convert to Recharts format (1-row stacked bar)
+  const chartData = [
+    data.reduce(
+      (acc, item) => ({ ...acc, [item.category]: item.total }),
+      { name: "Expenses" }
+    ),
+  ];
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Monthly Expenses</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Expenses Overview</CardTitle>
+        <CardDescription>
+          {startDate.toLocaleDateString()} – {endDate.toLocaleDateString()}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={chartData}>
+          <BarChart data={chartData} height={300}>
             <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="month"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
-            />
-            <YAxis tickLine={false} axisLine={false} />
-            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} />
+            <YAxis axisLine={false} tickLine={false} />
+            <ChartTooltip content={<ChartTooltipContent />} />
             <ChartLegend content={<ChartLegendContent />} />
-            <Bar
-              dataKey="rent"
-              stackId="a"
-              fill="var(--color-rent)"
-              radius={[0, 0, 4, 4]}
-            />
-            <Bar
-              dataKey="salaries"
-              stackId="a"
-              fill="var(--color-salaries)"
-              radius={[0, 0, 4, 4]}
-            />
-            <Bar
-              dataKey="utilities"
-              stackId="a"
-              fill="var(--color-utilities)"
-              radius={[4, 4, 0, 0]}
-            />
+            {Object.keys(chartConfig).map((key) => (
+              <Bar
+                key={key}
+                dataKey={key}
+                stackId="a"
+                fill={`var(--color-${key})`}
+                radius={[4, 4, 0, 0]}
+              />
+            ))}
           </BarChart>
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium leading-none">
-          Expenses increased by 8% this month <TrendingUp className="h-4 w-4" />
+          Category-wise distribution <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing category-wise expenses for the last 6 months
+          Showing expenses by category for selected range
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }

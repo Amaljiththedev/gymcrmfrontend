@@ -1,43 +1,57 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/src/store/store";
+import { fetchExpenseTrends } from "@/src/features/expensereports/expenseTrendsSlice";
+
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { TrendingUp } from "lucide-react";
 
-const expenseData = [
-  { month: "Jan", expenses: 45000 },
-  { month: "Feb", expenses: 38000 },
-  { month: "Mar", expenses: 50000 },
-  { month: "Apr", expenses: 47000 },
-  { month: "May", expenses: 52000 },
-  { month: "Jun", expenses: 48000 },
-];
+type Props = {
+  startDate: Date;
+  endDate: Date;
+};
 
-const chartConfig = {
-  expenses: {
-    label: "Expenses",
-    color: "hsl(var(--chart-1))",
-  },
-} satisfies ChartConfig;
+export function ExpenseTrendsChart({ startDate, endDate }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { data: expenseData, loading } = useSelector(
+    (state: RootState) => state.expenseTrends
+  );
 
-export function ExpenseTrendsChart() {
+  useEffect(() => {
+    if (startDate && endDate) {
+      dispatch(fetchExpenseTrends({
+        startDate: startDate.toISOString().split("T")[0],
+        endDate: endDate.toISOString().split("T")[0],
+      }));
+    }
+  }, [dispatch, startDate, endDate]);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>📈 Expense Trends</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig}>
+        <ChartContainer config={{
+          expenses: { label: "Expenses", color: "hsl(var(--chart-1))" }
+        }}>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={expenseData} margin={{ left: 12, right: 12 }}>
               <CartesianGrid vertical={false} strokeOpacity={0.2} />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-              />
+              <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
               <YAxis hide />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Area
@@ -58,7 +72,7 @@ export function ExpenseTrendsChart() {
             <div className="flex items-center gap-2 font-medium leading-none">
               Expenses increased by 5.2% this month <TrendingUp className="h-4 w-4" />
             </div>
-            <div className="text-muted-foreground">January - June 2024</div>
+            <div className="text-muted-foreground">Data from last 6 months</div>
           </div>
         </div>
       </CardFooter>

@@ -1,8 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/src/store/store";
+import { fetchPlanDistribution } from "@/src/features/membershipreports/planDistributionSlice";
 
-import { TrendingUp } from "lucide-react"
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts"
+import { TrendingUp } from "lucide-react";
+import {
+  PolarAngleAxis,
+  PolarGrid,
+  Radar,
+  RadarChart,
+} from "recharts";
 
 import {
   Card,
@@ -11,63 +20,72 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
-const chartData = [
-  { plan: "Basic", members: 300 },
-  { plan: "Standard", members: 450 },
-  { plan: "Premium", members: 250 },
-  { plan: "VIP", members: 120 },
-]
+} from "@/components/ui/chart";
 
+// Chart config for style
 const chartConfig = {
-  desktop: {
-    label: "members",
+  members: {
+    label: "Members",
     color: "hsl(var(--chart-1))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 export function PlanDistributionChart() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { data, loading } = useSelector((state: RootState) => state.planDistribution);
+
+  useEffect(() => {
+    dispatch(fetchPlanDistribution());
+  }, [dispatch]);
+
   return (
     <Card>
-      <CardHeader className="items-center">
+      <CardHeader className="items-center pb-4">
         <CardTitle>📊 Plan Distribution</CardTitle>
-        <CardDescription>Membership distribution across different plans</CardDescription>
+        <CardDescription>
+          Showing current plan usage among active members
+        </CardDescription>
       </CardHeader>
+
       <CardContent className="pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
-        >
-          <RadarChart data={chartData}>
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <PolarAngleAxis dataKey="plan" />
-            <PolarGrid />
-            <Radar
-              dataKey="members-pui8ytrfedswqa   b "
-              fill="var(--color-desktop)"
-              fillOpacity={0.6}
-              dot={{
-                r: 4,
-                fillOpacity: 1,
-              }}
-            />
-          </RadarChart>
-        </ChartContainer>
+        {loading ? (
+          <div className="text-sm text-muted-foreground text-center">
+            Loading chart...
+          </div>
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="mx-auto aspect-square max-h-[250px]"
+          >
+            <RadarChart data={data}>
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <PolarAngleAxis dataKey="plan" />
+              <PolarGrid />
+              <Radar
+                dataKey="members"
+                fill="var(--color-members)"
+                fillOpacity={0.6}
+                dot={{ r: 3 }}
+              />
+            </RadarChart>
+          </ChartContainer>
+        )}
       </CardContent>
+
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">
           Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
         </div>
-        <div className="flex items-center gap-2 leading-none text-muted-foreground">
-          January - June 2024
+        <div className="text-muted-foreground">
+          Based on currently active members
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }

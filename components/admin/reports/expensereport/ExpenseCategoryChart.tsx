@@ -1,6 +1,10 @@
 "use client";
 
-import * as React from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/src/store/store";
+import { fetchExpenseCategoryChart } from "@/src/features/expensereports/expenseCategorySlice";
+
 import { Pie, PieChart, Cell, Label, ResponsiveContainer } from "recharts";
 import { TrendingUp } from "lucide-react";
 import {
@@ -17,24 +21,37 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-const expenseData = [
-  { category: "Salaries", amount: 50000, fill: "hsl(var(--chart-1))" },
-  { category: "Rent", amount: 30000, fill: "hsl(var(--chart-2))" },
-  { category: "Utilities", amount: 15000, fill: "hsl(var(--chart-3))" },
-  { category: "Miscellaneous", amount: 25000, fill: "hsl(var(--chart-4))" },
-];
+type Props = {
+  startDate: Date;
+  endDate: Date;
+};
 
-// ✅ FIX: Convert expenseData into a valid ChartConfig object
-const chartConfig: ChartConfig = expenseData.reduce((acc, item, index) => {
-  acc[item.category] = {
-    label: item.category,
-    color: item.fill,
-  };
-  return acc;
-}, {} as ChartConfig);
+export function ExpenseCategoryChart({ startDate, endDate }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { data: expenseData, loading } = useSelector(
+    (state: RootState) => state.expenseCategory
+  );
 
-export function ExpenseCategoryChart() {
+  useEffect(() => {
+    if (startDate && endDate) {
+      dispatch(
+        fetchExpenseCategoryChart({
+          startDate: startDate.toISOString().split("T")[0],
+          endDate: endDate.toISOString().split("T")[0],
+        })
+      );
+    }
+  }, [dispatch, startDate, endDate]);
+
   const totalExpenses = expenseData.reduce((acc, curr) => acc + curr.amount, 0);
+
+  const chartConfig: ChartConfig = expenseData.reduce((acc, item, index) => {
+    acc[item.category] = {
+      label: item.category,
+      color: `hsl(var(--chart-${(index % 5) + 1}))`, // random chart color
+    };
+    return acc;
+  }, {} as ChartConfig);
 
   return (
     <Card className="flex flex-col w-full max-w-3xl mx-auto shadow-lg p-6">
@@ -50,12 +67,12 @@ export function ExpenseCategoryChart() {
                 data={expenseData}
                 dataKey="amount"
                 nameKey="category"
-                innerRadius={90} // Bigger Donut
+                innerRadius={90}
                 outerRadius={140}
                 strokeWidth={6}
               >
                 {expenseData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                  <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${(index % 5) + 1}))`} />
                 ))}
                 <Label
                   content={({ viewBox }) => {
@@ -71,7 +88,7 @@ export function ExpenseCategoryChart() {
                             ₹{totalExpenses.toLocaleString()}
                           </tspan>
                           <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 30} className="fill-white text-lg">
-                            Total Expenses
+                            Total
                           </tspan>
                         </text>
                       );

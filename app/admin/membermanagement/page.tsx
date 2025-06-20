@@ -31,21 +31,6 @@ export default function Memberlist() {
       </Box>
 
       {/* Page Header */}
-      <Box
-        sx={{
-          display: "flex",
-          mb: 2,
-          gap: 1,
-          flexDirection: { xs: "column", sm: "row" },
-          alignItems: { xs: "start", sm: "center" },
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-        }}
-      >
-        <Button color="primary" startDecorator={<DownloadRoundedIcon />} size="sm">
-          Download PDF
-        </Button>
-      </Box>
 
       {/* Member Table */}
       <MemberTable />

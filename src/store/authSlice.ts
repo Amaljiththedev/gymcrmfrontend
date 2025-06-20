@@ -5,6 +5,10 @@ export interface UserProfile {
   email?: string;
   username?: string;
   role: 'manager' | 'staff';
+  id: number;
+  first_name: string;
+  last_name: string;
+  profile_picture: string | null;
 }
 
 interface AuthState {

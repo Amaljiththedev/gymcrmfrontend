@@ -32,7 +32,6 @@ import { AppDispatch, RootState } from '@/src/store/store';
 import { logoutManager } from '@/src/store/authSlice';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { extendTheme } from '@mui/joy/styles';
 
 function Toggler(props: {
   defaultExpanded?: boolean;
@@ -41,6 +40,7 @@ function Toggler(props: {
 }) {
   const { defaultExpanded = false, renderToggle, children } = props;
   const [open, setOpen] = React.useState(defaultExpanded);
+  
   return (
     <>
       {renderToggle({ open, setOpen })}
@@ -48,8 +48,12 @@ function Toggler(props: {
         sx={{
           display: 'grid',
           gridTemplateRows: open ? '1fr' : '0fr',
-          transition: '0.2s ease',
-          '& > *': { overflow: 'hidden' },
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '& > *': { 
+            overflow: 'hidden',
+            transition: 'opacity 0.2s ease',
+            opacity: open ? 1 : 0,
+          },
         }}
       >
         {children}
@@ -58,38 +62,9 @@ function Toggler(props: {
   );
 }
 
-// Define dark theme (using MUI Joy's extendTheme)
-const darkTheme = extendTheme({
-  colorSchemes: {
-    dark: {
-      palette: {
-        background: {
-          body: "#000",
-          surface: "rgba(0, 0, 0, 0.8)",
-          level1: "rgba(20, 20, 20, 0.9)",
-          level2: "rgba(35, 35, 35, 0.8)",
-        },
-        primary: {
-          softColor: "#fff",
-          softBg: "rgba(60, 60, 60, 0.5)",
-        },
-        neutral: {
-          outlinedBg: "rgba(45, 45, 45, 0.6)",
-          outlinedColor: "#fff",
-          plainColor: "#fff",
-          plainHoverBg: "rgba(60, 60, 60, 0.5)",
-        },
-        text: {
-          primary: "#fff",
-          secondary: "rgba(255, 255, 255, 0.7)",
-        },
-      },
-    },
-  },
-});
-
 export default function Sidebar() {
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [hoveredItem, setHoveredItem] = React.useState<string>('');
   const searchQueryLower = searchQuery.toLowerCase();
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -184,33 +159,84 @@ export default function Sidebar() {
       id: 'settings',
       label: 'Settings',
       icon: <SettingsRoundedIcon />,
-      items: [
-        { label: 'Profile Settings', id: 'profilesettings', href: '/admin/settings/profile' },
-        { label: 'System Settings', id: 'systemsettings', href: '/admin/settings/system' },
-      ],
+      items: [],
       href: '/admin/settings',
     },
   ];
 
-  // Example button styles using !important
-  const buttonStyles = {
-    backgroundColor: 'black !important',
-    color: '#fff !important',
+  // Apple-inspired button styles
+  const getButtonStyles = (itemId: string, isNested = false) => ({
+    borderRadius: '12px',
+    minHeight: isNested ? '36px' : '44px',
+    padding: isNested ? '8px 16px' : '12px 16px',
+    margin: '2px 0',
+    backgroundColor: 'transparent',
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: isNested ? '14px' : '15px',
+    fontWeight: isNested ? 500 : 600,
+    letterSpacing: '-0.01em',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid transparent',
+    
     '&:hover': {
-      backgroundColor: 'black !important',
-      color: '#fff !important',
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      color: '#ffffff',
+      transform: 'translateY(-1px)',
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
     },
+    
     '&:active': {
-      backgroundColor: 'black !important',
-      color: '#fff !important',
+      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+      transform: 'translateY(0px)',
+      transition: 'all 0.1s ease',
     },
-    '&:focus': {
-      backgroundColor: 'black !important',
-      color: '#fff !important',
+    
+    '&:focus-visible': {
+      outline: '2px solid rgba(255, 255, 255, 0.3)',
+      outlineOffset: '2px',
+    },
+    
+    // Active state styling
+    ...(hoveredItem === itemId && {
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      border: '1px solid rgba(255, 255, 255, 0.15)',
+    }),
+  });
+
+  // Search input styles
+  const searchInputStyles = {
+    borderRadius: '12px',
+    height: '44px',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    fontSize: '15px',
+    fontWeight: 500,
+    letterSpacing: '-0.01em',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    backdropFilter: 'blur(20px)',
+    
+    '& input': { 
+      color: 'rgba(255, 255, 255, 0.9)',
+      '&::placeholder': {
+        color: 'rgba(255, 255, 255, 0.5)',
+      },
+    },
+    
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+    },
+    
+    '&:focus-within': {
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      boxShadow: '0 0 0 4px rgba(255, 255, 255, 0.1)',
     },
   };
 
-  // Logout handler using Redux thunk; waits 3 sec before redirecting
+  // Logout handler
   const handleLogout = async () => {
     try {
       await dispatch(logoutManager()).unwrap();
@@ -232,54 +258,83 @@ export default function Sidebar() {
           xs: 'translateX(calc(100% * (var(--SideNavigation-slideIn, 0) - 1)))',
           md: 'none',
         },
-        transition: 'transform 0.4s, width 0.4s',
+        transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         zIndex: 10000,
         height: '100dvh',
         width: 'var(--Sidebar-width)',
         top: 0,
-        p: 2,
+        p: 3,
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
-        gap: 2,
-        borderRight: '1px solid',
-        borderColor: 'divider',
-        backgroundColor: 'black',
-        color: '#fff',
+        gap: 3,
+        background: 'linear-gradient(180deg, #000000 0%, #0a0a0a 100%)',
+        borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+        backdropFilter: 'blur(40px)',
+        WebkitBackdropFilter: 'blur(40px)',
       }}
     >
       <GlobalStyles
         styles={(theme) => ({
           ':root': {
-            '--Sidebar-width': '260px',
+            '--Sidebar-width': '320px',
             [theme.breakpoints.up('lg')]: {
-              '--Sidebar-width': '280px',
+              '--Sidebar-width': '360px',
             },
           },
         })}
       />
-      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-        <Typography level="title-lg" sx={{ flexGrow: 1, color: '#fff' }}>
-          Admin
+      
+      {/* Header */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 2, 
+        alignItems: 'center',
+        paddingBottom: 1,
+      }}>
+        <Typography 
+          level="title-lg" 
+          sx={{ 
+            flexGrow: 1, 
+            color: '#ffffff',
+            fontSize: '20px',
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+          }}
+        >
+          Admin Panel
         </Typography>
-        <IconButton variant="plain" sx={{ display: { md: 'none' } }} onClick={() => closeSidebar()}>
-          <CloseRoundedIcon sx={{ color: '#fff' }} />
+        <IconButton 
+          variant="plain" 
+          sx={{ 
+            display: { md: 'none' },
+            borderRadius: '10px',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            }
+          }} 
+          onClick={() => closeSidebar()}
+        >
+          <CloseRoundedIcon sx={{ color: 'rgba(255, 255, 255, 0.7)' }} />
         </IconButton>
       </Box>
 
+      {/* Search Input */}
       <Input
         size="sm"
-        startDecorator={<SearchRoundedIcon sx={{ color: '#fff' }} />}
-        placeholder="Search"
+        startDecorator={
+          <SearchRoundedIcon sx={{ 
+            color: 'rgba(255, 255, 255, 0.5)',
+            fontSize: '18px'
+          }} />
+        }
+        placeholder="Search navigation..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        sx={{
-          backgroundColor: 'transparent',
-          color: '#fff',
-          '& input': { color: '#fff' },
-        }}
+        sx={searchInputStyles}
       />
 
+      {/* Navigation List */}
       <Box
         sx={{
           minHeight: 0,
@@ -287,15 +342,35 @@ export default function Sidebar() {
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
-          [`& .${listItemButtonClasses.root}`]: { gap: 1.5, color: '#fff' },
+          paddingRight: '2px',
+          
+          // Custom scrollbar
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: '3px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: 'rgba(255, 255, 255, 0.3)',
+          },
+          
+          [`& .${listItemButtonClasses.root}`]: { 
+            gap: 2, 
+            color: 'rgba(255, 255, 255, 0.9)',
+          },
         }}
       >
         <List
           size="sm"
           sx={{
             gap: 1,
-            '--List-nestedInsetStart': '30px',
-            '--ListItem-radius': (theme) => theme.vars.radius.sm,
+            '--List-nestedInsetStart': '20px',
+            '--ListItem-radius': '12px',
           }}
         >
           {sections.map((section) => {
@@ -314,43 +389,107 @@ export default function Sidebar() {
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'space-between',
+                          gap: 1,
                         }}
                       >
-                        <ListItemButton component="a" href={section.href} sx={buttonStyles}>
-                          {section.icon}
+                        <ListItemButton 
+                          component="a" 
+                          href={section.href} 
+                          sx={{
+                            ...getButtonStyles(section.id),
+                            flex: 1,
+                          }}
+                          onMouseEnter={() => setHoveredItem(section.id)}
+                          onMouseLeave={() => setHoveredItem('')}
+                        >
+                          <Box sx={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+                            {section.icon}
+                          </Box>
                           <ListItemContent>
-                            <Typography level="title-sm" sx={{ color: '#fff' }}>
+                            <Typography 
+                              level="title-sm" 
+                              sx={{ 
+                                color: 'inherit',
+                                fontSize: 'inherit',
+                                fontWeight: 'inherit',
+                              }}
+                            >
                               {section.label}
                             </Typography>
                           </ListItemContent>
                         </ListItemButton>
-                        <IconButton onClick={() => setOpen(!open)} sx={buttonStyles}>
+                        <IconButton 
+                          onClick={() => setOpen(!open)}
+                          sx={{
+                            borderRadius: '8px',
+                            width: '32px',
+                            height: '32px',
+                            minHeight: '32px',
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            
+                            '&:hover': {
+                              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                              color: 'rgba(255, 255, 255, 0.9)',
+                            },
+                          }}
+                        >
                           <KeyboardArrowDownIcon
                             sx={{
                               transform: open ? 'rotate(180deg)' : 'none',
-                              color: '#fff',
+                              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                              fontSize: '20px',
                             }}
                           />
                         </IconButton>
                       </Box>
                     )}
                   >
-                    <List sx={{ gap: 0.5 }}>
+                    <List sx={{ gap: 0.5, paddingTop: 1 }}>
                       {filteredItems.map((item) => (
                         <ListItem key={item.id}>
-                          <ListItemButton component="a" href={item.href} sx={buttonStyles}>
-                            {item.label}
+                          <ListItemButton 
+                            component="a" 
+                            href={item.href} 
+                            sx={getButtonStyles(item.id, true)}
+                            onMouseEnter={() => setHoveredItem(item.id)}
+                            onMouseLeave={() => setHoveredItem('')}
+                          >
+                            <Typography 
+                              level="body-sm" 
+                              sx={{ 
+                                color: 'inherit',
+                                fontSize: 'inherit',
+                                fontWeight: 'inherit',
+                              }}
+                            >
+                              {item.label}
+                            </Typography>
                           </ListItemButton>
                         </ListItem>
                       ))}
                     </List>
                   </Toggler>
                 ) : (
-                  <ListItemButton component="a" href={section.href} sx={buttonStyles}>
-                    {section.icon}
+                  <ListItemButton 
+                    component="a" 
+                    href={section.href} 
+                    sx={getButtonStyles(section.id)}
+                    onMouseEnter={() => setHoveredItem(section.id)}
+                    onMouseLeave={() => setHoveredItem('')}
+                  >
+                    <Box sx={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+                      {section.icon}
+                    </Box>
                     <ListItemContent>
-                      <Typography level="title-sm" sx={{ color: '#fff' }}>
+                      <Typography 
+                        level="title-sm" 
+                        sx={{ 
+                          color: 'inherit',
+                          fontSize: 'inherit',
+                          fontWeight: 'inherit',
+                        }}
+                      >
                         {section.label}
                       </Typography>
                     </ListItemContent>
@@ -362,33 +501,92 @@ export default function Sidebar() {
         </List>
       </Box>
 
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)' }} />
-      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+      {/* Divider */}
+      <Divider sx={{ 
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        margin: '8px 0',
+      }} />
+      
+      {/* User Profile Section */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 2, 
+        alignItems: 'center',
+        padding: '12px 16px',
+        borderRadius: '12px',
+        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        
+        '&:hover': {
+          backgroundColor: 'rgba(255, 255, 255, 0.06)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+        },
+      }}>
         <Avatar
           variant="outlined"
           size="sm"
-          src="/path-to-your-avatar.jpg"
-          sx={{ borderColor: 'rgba(255,255,255,0.3)' }}
+          src={user?.profile_picture ? `${process.env.NEXT_PUBLIC_API_URL}${user.profile_picture}` : "/default-avatar.png"}
+          sx={{
+            borderColor: 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            width: '36px',
+            height: '36px',
+          }}
         />
         <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography level="title-sm" sx={{ color: '#fff' }}>
-            {user?.username || "Admin User"}
+          <Typography 
+            level="title-sm" 
+            sx={{ 
+              color: '#ffffff',
+              fontSize: '14px',
+              fontWeight: 600,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {user?.first_name} {user?.last_name}
           </Typography>
-          <Typography level="body-xs" sx={{ color: '#fff' }}>
+          <Typography 
+            level="body-xs" 
+            sx={{ 
+              color: 'rgba(255, 255, 255, 0.6)',
+              fontSize: '12px',
+              fontWeight: 500,
+            }}
+          >
             {user?.email || "admin@gym.com"}
           </Typography>
         </Box>
         <IconButton
           size="sm"
           variant="plain"
-          color="neutral"
-          sx={buttonStyles}
           onClick={handleLogout}
+          sx={{
+            borderRadius: '8px',
+            width: '32px',
+            height: '32px',
+            minHeight: '32px',
+            color: 'rgba(255, 255, 255, 0.6)',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              color: 'rgba(255, 255, 255, 0.9)',
+              transform: 'scale(1.05)',
+            },
+          }}
         >
-          <LogoutRoundedIcon sx={{ color: '#fff' }} />
+          <LogoutRoundedIcon sx={{ fontSize: '18px' }} />
         </IconButton>
       </Box>
-      <ToastContainer />
+      
+      <ToastContainer 
+        position="top-right"
+        theme="dark"
+        style={{
+          fontSize: '14px',
+        }}
+      />
     </Sheet>
   );
 }

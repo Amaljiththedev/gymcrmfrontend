@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Download, User, Calendar, Phone, TrendingUp, DollarSign, Activity } from "lucide-react";
+import { Download, User, Calendar, Phone, TrendingUp, DollarSign, Activity, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 
 // ---------------------------
 // Type Definitions
@@ -39,6 +39,7 @@ interface Member {
   is_fully_paid: boolean;
   days_present: number;
   photo?: string;
+  biometric_id?: string;
 }
 
 // ---------------------------
@@ -68,7 +69,6 @@ export default function MemberView() {
         setLoading(false);
       }
     };
-
     fetchMember();
   }, [memberId]);
 
@@ -94,26 +94,59 @@ export default function MemberView() {
     return Math.min(100, Math.round((member.days_present / daysPassed) * 100));
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "blocked":
+        return <AlertCircle className="h-4 w-4" />;
+      case "expired":
+        return <Clock className="h-4 w-4" />;
+      default:
+        return <CheckCircle2 className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "blocked":
+        return "bg-red-500/10 text-red-400 border-red-500/20";
+      case "expired":
+        return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
+      default:
+        return "bg-green-500/10 text-green-400 border-green-500/20";
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-black">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-red-500" />
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-white/10 rounded-full"></div>
+          <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin absolute top-0"></div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-black min-h-screen">
-        <h3 className="text-2xl text-red-500">{error}</h3>
+      <div className="flex items-center justify-center h-screen bg-black">
+        <div className="text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+          <h3 className="text-xl font-medium text-white">Something went wrong</h3>
+          <p className="text-gray-400 max-w-md">{error}</p>
+        </div>
       </div>
     );
   }
 
   if (!member) {
     return (
-      <div className="p-4 bg-black min-h-screen">
-        <h3 className="text-2xl text-red-500">Member not found</h3>
+      <div className="flex items-center justify-center h-screen bg-black">
+        <div className="text-center space-y-4">
+          <User className="h-12 w-12 text-gray-500 mx-auto" />
+          <h3 className="text-xl font-medium text-white">Member not found</h3>
+          <p className="text-gray-400">The requested member could not be located.</p>
+        </div>
       </div>
     );
   }
@@ -123,212 +156,323 @@ export default function MemberView() {
   const attendanceRate = calculateAttendanceRate();
 
   return (
-    <div className="container mx-auto py-6 px-4 min-h-screen bg-black text-white space-y-6">
-      {/* Header with Invoice Download */}
-      <div className="flex flex-col md:flex-row items-center justify-between">
-        <h1 className="text-3xl font-bold">{fullName}'s Profile</h1>
-        <Button 
-          variant="outline" 
-          className="mt-4 md:mt-0 border border-white/20 hover:border-white/40"
-          onClick={() => alert("Downloading Invoice...")}
-        >
-          <Download className="mr-2 h-4 w-4" /> Download Invoice
-        </Button>
+    <div className="min-h-screen bg-black">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 to-transparent"></div>
+        <div className="relative px-6 pt-20 pb-16">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row items-start justify-between mb-12">
+              <div className="flex items-center space-x-6 mb-6 lg:mb-0">
+                {/* Profile Image */}
+                <div className="relative group">
+                  {member.photo ? (
+                    <img
+                      src={member.photo}
+                      alt={fullName}
+                      className="w-24 h-24 lg:w-32 lg:h-32 rounded-3xl object-cover border border-white/10 shadow-2xl transition-transform group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-3xl bg-gradient-to-br from-red-500/20 to-gray-500/20 border border-white/10 flex items-center justify-center shadow-2xl transition-transform group-hover:scale-105">
+                      <User className="h-12 w-12 lg:h-16 lg:w-16 text-red-400" />
+                    </div>
+                  )}
+                  <div className="absolute -bottom-2 -right-2">
+                    <div className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium border backdrop-blur-xl ${getStatusColor(member.membership_status)}`}>
+                      {getStatusIcon(member.membership_status)}
+                      <span className="capitalize">{member.membership_status}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Member Info */}
+                <div className="space-y-2">
+                  <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent tracking-tight">
+                    {fullName}
+                  </h1>
+                  <div className="flex items-center space-x-4 text-gray-400">
+                    <span className="text-sm font-medium">ID #{member.id}</span>
+                    <span className="w-1 h-1 bg-gray-500 rounded-full"></span>
+                    <span className="text-sm">{member.email}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Download Button */}
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-white backdrop-blur-xl transition-all duration-300 rounded-2xl px-6 py-3 font-medium"
+                onClick={() => alert("Downloading Invoice...")}
+              >
+                <Download className="mr-2 h-5 w-5" /> 
+                Download Invoice
+              </Button>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              {/* Membership Progress */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-red-500/20 rounded-xl">
+                      <Calendar className="h-5 w-5 text-red-400" />
+                    </div>
+                    <span className="text-gray-300 font-medium">Membership</span>
+                  </div>
+                  <span className="text-2xl font-bold text-white">{membershipProgress}%</span>
+                </div>
+                <div className="relative h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${membershipProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  {formatDate(member.membership_start)} - {formatDate(member.membership_end)}
+                </p>
+              </div>
+
+              {/* Attendance */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-500/20 rounded-xl">
+                      <Activity className="h-5 w-5 text-green-400" />
+                    </div>
+                    <span className="text-gray-300 font-medium">Attendance</span>
+                  </div>
+                  <span className="text-2xl font-bold text-white">{attendanceRate}%</span>
+                </div>
+                <div className="relative h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${attendanceRate}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-2">{member.days_present} days present</p>
+              </div>
+
+              {/* Payment */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-yellow-500/20 rounded-xl">
+                      <DollarSign className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <span className="text-gray-300 font-medium">Payment</span>
+                  </div>
+                  <span className="text-2xl font-bold text-white">
+                    {Math.round((Number(member.amount_paid) / member.membership_plan.price) * 100)}%
+                  </span>
+                </div>
+                <div className="relative h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-full transition-all duration-1000 ease-out"
+                    style={{
+                      width: `${(Number(member.amount_paid) / member.membership_plan.price) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  ₹{member.amount_paid} of ₹{member.membership_plan.price}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Separator className="border-white/20" />
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Profile Card */}
-        <Card className="col-span-1 bg-transparent shadow-none border border-white/20 backdrop-blur-sm">
-          <CardHeader className="flex flex-col items-center">
-            {member.photo ? (
-              <img
-                src={member.photo}
-                alt={fullName}
-                className="w-24 h-24 rounded-full border-2 border-white/20"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
-                <User className="h-10 w-10 text-red-500" />
-              </div>
-            )}
-            <CardTitle className="mt-4 text-center text-white bg-clip-text bg-gradient-to-r from-red-500 to-gray-500">
-              {fullName}
-            </CardTitle>
-            <p className="text-sm text-gray-300">ID: #{member.id}</p>
-            <div className="mt-2">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  member.membership_status === "blocked"
-                    ? "bg-red-800"
-                    : member.membership_status === "expired"
-                    ? "bg-yellow-800"
-                    : "bg-green-800"
-                }`}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 pb-20">
+        <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden">
+          <Tabs defaultValue="personal" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-white/5 p-2 rounded-none border-b border-white/10">
+              <TabsTrigger 
+                value="personal" 
+                className="data-[state=active]:bg-red-500 data-[state=active]:text-white rounded-xl font-medium transition-all duration-300"
               >
-                {member.membership_status}
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-gray-300">Membership Progress</p>
-              <div className="relative w-full h-3 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-500 to-gray-600 transition-all duration-500 rounded-full"
-                  style={{ width: `${membershipProgress}%` }}
-                />
-              </div>
-              <p className="text-xs mt-1">{membershipProgress}%</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-300">Attendance</p>
-              <div className="relative w-full h-3 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-gray-600 to-green-500 transition-all duration-500 rounded-full"
-                  style={{ width: `${attendanceRate}%` }}
-                />
-              </div>
-              <p className="text-xs mt-1">{attendanceRate}%</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-300">Payments</p>
-              <div className="relative w-full h-3 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-yellow-500 to-yellow-300 transition-all duration-500 rounded-full"
-                  style={{
-                    width: `${
-                      (Number(member.amount_paid) / member.membership_plan.price) *
-                      100
-                    }%`,
-                  }}
-                />
-              </div>
-              <p className="text-xs mt-1">
-                ₹{member.amount_paid} / ₹{member.membership_plan.price}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Main Content */}
-        <div className="col-span-1 md:col-span-3">
-          <Card className="bg-transparent shadow-none border border-white/20 backdrop-blur-sm">
-            <Tabs defaultValue="personal">
-              <TabsList className="grid w-full grid-cols-3 border-b border-white/20">
-                <TabsTrigger value="personal" className="data-[state=active]:bg-red-700 data-[state=active]:text-white">
-                  Personal
-                </TabsTrigger>
-                <TabsTrigger value="membership" className="data-[state=active]:bg-red-700 data-[state=active]:text-white">
-                  Membership
-                </TabsTrigger>
-                <TabsTrigger value="fitness" className="data-[state=active]:bg-red-700 data-[state=active]:text-white">
-                  Fitness
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="personal" className="space-y-4 p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-red-500" />
+                Personal Info
+              </TabsTrigger>
+              <TabsTrigger 
+                value="membership" 
+                className="data-[state=active]:bg-red-500 data-[state=active]:text-white rounded-xl font-medium transition-all duration-300"
+              >
+                Membership
+              </TabsTrigger>
+              <TabsTrigger 
+                value="fitness" 
+                className="data-[state=active]:bg-red-500 data-[state=active]:text-white rounded-xl font-medium transition-all duration-300"
+              >
+                Fitness
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="personal" className="p-8 space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <div className="p-3 bg-red-500/20 rounded-xl">
+                      <Calendar className="h-6 w-6 text-red-400" />
+                    </div>
                     <div>
-                      <p className="text-sm text-gray-300">Date of Birth</p>
-                      <p className="text-sm font-medium">{formatDate(member.dob)}</p>
+                      <p className="text-sm text-gray-400 font-medium">Date of Birth</p>
+                      <p className="text-lg font-semibold text-white">{formatDate(member.dob)}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-5 w-5 text-red-500" />
+                  
+                  <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <div className="p-3 bg-blue-500/20 rounded-xl">
+                      <Phone className="h-6 w-6 text-blue-400" />
+                    </div>
                     <div>
-                      <p className="text-sm text-gray-300">Phone</p>
-                      <p className="text-sm font-medium">{member.phone || "N/A"}</p>
+                      <p className="text-sm text-gray-400 font-medium">Phone Number</p>
+                      <p className="text-lg font-semibold text-white">{member.phone || "Not provided"}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-red-500" />
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <div className="p-3 bg-green-500/20 rounded-xl">
+                      <TrendingUp className="h-6 w-6 text-green-400" />
+                    </div>
                     <div>
-                      <p className="text-sm text-gray-300">Height</p>
-                      <p className="text-sm font-medium">
-                        {member.height ? `${member.height} cm` : "N/A"}
+                      <p className="text-sm text-gray-400 font-medium">Height</p>
+                      <p className="text-lg font-semibold text-white">
+                        {member.height ? `${member.height} cm` : "Not recorded"}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-red-500" />
-                    <div>
-                      <p className="text-sm text-gray-300">Address</p>
-                      <p className="text-sm font-medium">{member.address || "N/A"}</p>
+                  
+                  <div className="flex items-start space-x-4 p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <div className="p-3 bg-purple-500/20 rounded-xl">
+                      <User className="h-6 w-6 text-purple-400" />
                     </div>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="membership" className="space-y-4 p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5 text-red-500" />
-                      <div>
-                        <p className="text-sm text-gray-300">Membership Period</p>
-                        <p className="text-sm font-medium">
-                          {formatDate(member.membership_start)} - {formatDate(member.membership_end)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-5 w-5 text-red-500" />
-                      <div>
-                        <p className="text-sm text-gray-300">Payment Status</p>
-                        <p className="text-sm font-medium">
-                          {member.is_fully_paid ? "Fully Paid" : "Pending"} (₹{member.amount_paid} / ₹{member.membership_plan.price})
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Activity className="h-5 w-5 text-red-500" />
-                      <div>
-                        <p className="text-sm text-gray-300">Current Plan</p>
-                        <p className="text-sm font-medium">
-                          {member.membership_plan.name} ({member.membership_plan.duration_days} days)
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-5 w-5 text-red-500" />
-                      <div>
-                        <p className="text-sm text-gray-300">Plan Status</p>
-                        <p className="text-sm font-medium">
-                          {member.membership_plan.is_locked ? "Locked" : "Unlocked"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="fitness" className="space-y-4 p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-red-500" />
-                    <div>
-                      <p className="text-sm text-gray-300">Days Present</p>
-                      <p className="text-sm font-medium">{member.days_present} days</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-red-500" />
-                    <div>
-                      <p className="text-sm text-gray-300">BMI</p>
-                      <p className="text-sm font-medium">
-                        {member.weight && member.height
-                          ? (member.weight / ((member.height / 100) ** 2)).toFixed(2)
-                          : "N/A"}
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-400 font-medium">Address</p>
+                      <p className="text-lg font-semibold text-white leading-relaxed">
+                        {member.address || "Not provided"}
                       </p>
                     </div>
                   </div>
                 </div>
-              </TabsContent>
-            </Tabs>
-          </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="membership" className="p-8 space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="p-2 bg-red-500/20 rounded-xl">
+                        <Calendar className="h-5 w-5 text-red-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">Membership Period</h3>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-gray-300">
+                        <span className="text-gray-400">Start:</span> {formatDate(member.membership_start)}
+                      </p>
+                      <p className="text-gray-300">
+                        <span className="text-gray-400">End:</span> {formatDate(member.membership_end)}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="p-2 bg-yellow-500/20 rounded-xl">
+                        <DollarSign className="h-5 w-5 text-yellow-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">Payment Status</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Amount Paid</span>
+                        <span className="text-white font-semibold">₹{member.amount_paid}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Total Amount</span>
+                        <span className="text-white font-semibold">₹{member.membership_plan.price}</span>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                        <span className="text-gray-400">Status</span>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${member.is_fully_paid ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                          {member.is_fully_paid ? "Fully Paid" : "Pending"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="p-2 bg-blue-500/20 rounded-xl">
+                        <Activity className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">Current Plan</h3>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xl font-bold text-white">{member.membership_plan.name}</p>
+                      <p className="text-gray-400">{member.membership_plan.duration_days} days duration</p>
+                      <div className="flex items-center space-x-2 pt-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${member.membership_plan.is_locked ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
+                          {member.membership_plan.is_locked ? "Locked" : "Active"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="fitness" className="p-8 space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="p-2 bg-green-500/20 rounded-xl">
+                      <Activity className="h-5 w-5 text-green-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white">Attendance</h3>
+                  </div>
+                  <p className="text-3xl font-bold text-white mb-2">{member.days_present}</p>
+                  <p className="text-gray-400">days present</p>
+                </div>
+                
+                <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="p-2 bg-blue-500/20 rounded-xl">
+                      <TrendingUp className="h-5 w-5 text-blue-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white">Weight</h3>
+                  </div>
+                  <p className="text-3xl font-bold text-white mb-2">
+                    {member.weight ? `${member.weight}` : "—"}
+                  </p>
+                  <p className="text-gray-400">kg</p>
+                </div>
+                
+                <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="p-2 bg-purple-500/20 rounded-xl">
+                      <Activity className="h-5 w-5 text-purple-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white">BMI</h3>
+                  </div>
+                  <p className="text-3xl font-bold text-white mb-2">
+                    {member.weight && member.height
+                      ? (member.weight / ((member.height / 100) ** 2)).toFixed(1)
+                      : "—"}
+                  </p>
+                  <p className="text-gray-400">body mass index</p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

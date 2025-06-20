@@ -1,7 +1,12 @@
-"use client"
+"use client";
 
-import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/src/store/store";
+import { fetchRenewalsSignups } from "@/src/features/membershipreports/renewalsSignupsSlice";
+
+import { TrendingUp } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 
 import {
   Card,
@@ -10,7 +15,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -18,37 +23,48 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
-const chartData = [
-  { month: "January", renewals: 80, signups: 50 },
-  { month: "February", renewals: 90, signups: 70 },
-  { month: "March", renewals: 100, signups: 90 },
-  { month: "April", renewals: 120, signups: 110 },
-  { month: "May", renewals: 140, signups: 100 },
-  { month: "June", renewals: 130, signups: 120 },
-]
+} from "@/components/ui/chart";
+
+type Props = {
+  startDate: Date;
+  endDate: Date;
+};
 
 const chartConfig = {
-  desktop: {
-    label: "renewals",
+  renewals: {
+    label: "Renewals",
     color: "hsl(var(--chart-1))",
   },
-  mobile: {
-    label: "signups",
+  signups: {
+    label: "New Signups",
     color: "hsl(var(--chart-5))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
-export function RenewalsSignupsChart() {
+export function RenewalsSignupsChart({ startDate, endDate }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { data, loading } = useSelector((state: RootState) => state.renewalsSignups);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      dispatch(
+        fetchRenewalsSignups({
+          startDate: startDate.toISOString().split("T")[0],
+          endDate: endDate.toISOString().split("T")[0],
+        })
+      );
+    }
+  }, [dispatch, startDate, endDate]);
+
   return (
     <Card>
       <CardHeader>
-      <CardTitle>📊 Renewals vs New Signups</CardTitle>
-      <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>📊 Renewals vs New Signups</CardTitle>
+        <CardDescription>Last 6 Months</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={chartData}>
+          <BarChart data={data} margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="month"
@@ -59,18 +75,8 @@ export function RenewalsSignupsChart() {
             />
             <ChartTooltip content={<ChartTooltipContent hideLabel />} />
             <ChartLegend content={<ChartLegendContent />} />
-            <Bar
-              dataKey="renewals"
-              stackId="a"
-              fill="var(--color-desktop)"
-              radius={[0, 0, 4, 4]}
-            />
-            <Bar
-              dataKey="signups"
-              stackId="a"
-              fill="var(--color-mobile)"
-              radius={[4, 4, 0, 0]}
-            />
+            <Bar dataKey="renewals" stackId="a" fill="var(--color-renewals)" radius={[0, 0, 4, 4]} />
+            <Bar dataKey="signups" stackId="a" fill="var(--color-signups)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ChartContainer>
       </CardContent>
@@ -79,9 +85,9 @@ export function RenewalsSignupsChart() {
           Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          Showing renewals vs new signups
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import MainDashboard from '@/components/admin/dashboard/dashboard'
+import MainDashboard from '@/components/admin/dashboard/Dashboard'
 import React from 'react'
 
 

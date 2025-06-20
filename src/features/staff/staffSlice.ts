@@ -1,12 +1,16 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
+/* ------------------------------------------------------------------ */
+/*  src/features/staff/staffSlice.ts                                   */
+/* ------------------------------------------------------------------ */
 
-// Set the base API URL and include credentials
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import axios from "axios";
+
+/* 📌 API setup ------------------------------------------------------ */
 const API_BASE_URL = "http://localhost:8000/api";
 axios.defaults.baseURL = API_BASE_URL;
 axios.defaults.withCredentials = true;
 
-// Define the Staff interface (updated to include photo)
+/* 📦 Types ---------------------------------------------------------- */
 export interface Staff {
   id: number;
   email: string;
@@ -16,16 +20,37 @@ export interface Staff {
   address: string;
   department: string;
   salary: string;
-  salary_due_date: string;  // Ensure this is a string
-  salary_credited_day: number;
+  salary_credited_date: string;
+  salary_due_date: string;
+  photo: string;
   role: string;
-  photo: string; // URL of the staff photo returned by the API
 }
 
-// Define the state interface for the staff slice
+export interface SuperStaffFormInput {
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  address: string;
+  department: string;
+  salary: string;
+  salary_credited_date: string;
+  salary_due_date: string;
+  photo: File;
+  password: string;
+}
+
+export const toSuperStaffFormData = (input: SuperStaffFormInput): FormData => {
+  const formData = new FormData();
+  Object.entries(input).forEach(([k, v]) => formData.append(k, v as any));
+  return formData;
+};
+
+/* 🧠 State ---------------------------------------------------------- */
 interface StaffState {
   all: Staff[];
   superStaff: Staff[];
+  regularStaff: Staff[];
   detail: Staff | null;
   loading: boolean;
   error: string | null;
@@ -35,10 +60,10 @@ interface StaffState {
   addError: string | null;
 }
 
-// Initial state
 const initialState: StaffState = {
   all: [],
   superStaff: [],
+  regularStaff: [],
   detail: null,
   loading: false,
   error: null,
@@ -48,231 +73,222 @@ const initialState: StaffState = {
   addError: null,
 };
 
-// Helper function to extract error message
-const getErrorMessage = (error: any) => {
-  const data = error.response?.data;
-  if (data && Object.keys(data).length === 0) {
-    return error.message;
-  }
-  return data || error.message;
+/* 🔁 Utility -------------------------------------------------------- */
+const getErrorMessage = (err: any) => {
+  const data = err.response?.data;
+  return data && Object.keys(data).length === 0 ? err.message : data || err.message;
 };
 
-// Async thunk for fetching all staff members
-export const fetchAllStaff = createAsyncThunk<Staff[], void>(
-  'staff/fetchAllStaff',
+/* ✅ Thunks --------------------------------------------------------- */
+export const fetchAllStaff = createAsyncThunk<Staff[]>(
+  "staff/fetchAllStaff",
   async (_, thunkAPI) => {
     try {
-      const response = await axios.get<Staff[]>('/staff/all-staff/');
-      console.log("All Staff Data:", response.data);
-      return response.data;
-    } catch (error: any) {
-      const errorMsg = getErrorMessage(error);
-      console.error("Error fetching all staff:", errorMsg);
-      return thunkAPI.rejectWithValue(errorMsg);
+      const res = await axios.get<Staff[]>("/staff/");
+      return res.data;
+    } catch (err: any) {
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
 
-// Async thunk for fetching super staff
-export const fetchSuperstaff = createAsyncThunk<Staff[], void>(
-  'staff/fetchSuperstaff',
+export const fetchSuperStaff = createAsyncThunk<Staff[]>(
+  "staff/fetchSuperStaff",
   async (_, thunkAPI) => {
     try {
-      const response = await axios.get<Staff[]>('/staff/super-staff/');
-      console.log("Super Staff Data:", response.data);
-      return response.data;
-    } catch (error: any) {
-      const errorMsg = getErrorMessage(error);
-      console.error("Error fetching super staff:", errorMsg);
-      return thunkAPI.rejectWithValue(errorMsg);
+      const res = await axios.get<Staff[]>("/super-staff/");
+      return res.data;
+    } catch (err: any) {
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
 
-// Async thunk for fetching regular staff
-export const fetchRegularStaff = createAsyncThunk<Staff[], void>(
-  'staff/fetchRegularStaff',
+export const fetchRegularStaff = createAsyncThunk<Staff[]>(
+  "staff/fetchRegularStaff",
   async (_, thunkAPI) => {
     try {
-      const response = await axios.get<Staff[]>('/staff/regular-staff/');
-      console.log("Regular Staff Data:", response.data);
-      return response.data;
-    } catch (error: any) {
-      const errorMsg = getErrorMessage(error);
-      console.error("Error fetching regular staff:", errorMsg);
-      return thunkAPI.rejectWithValue(errorMsg);
+      const res = await axios.get<Staff[]>("/regular-staff/");
+      return res.data;
+    } catch (err: any) {
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
 
-// Async thunk for fetching a single staff member's details
+/* 🔥  FIXED ENDPOINT =>  /staff/<id>/ ------------------------------ */
 export const fetchStaffDetail = createAsyncThunk<Staff, number>(
-  'staff/fetchStaffDetail',
+  "staff/fetchStaffDetail",
   async (id, thunkAPI) => {
     try {
-      const response = await axios.get<Staff>(`/staff/staff-detail/${id}/`);
-      return response.data;
-    } catch (error: any) {
-      const errorMsg = getErrorMessage(error);
-      return thunkAPI.rejectWithValue(errorMsg);
+      const res = await axios.get<Staff>(`/staff/${id}/`);
+      return res.data;
+    } catch (err: any) {
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
 
-// Async thunk for updating a staff member
-export const updateStaff = createAsyncThunk<Staff, { id: number; staffData: Partial<Staff> }>(
-  'staff/updateStaff',
-  async ({ id, staffData }, thunkAPI) => {
-    try {
-      const response = await axios.patch<Staff>(`/staff/staff-detail/${id}/`, staffData);
-      return response.data;
-    } catch (error: any) {
-      const errorMsg = getErrorMessage(error);
-      return thunkAPI.rejectWithValue(errorMsg);
-    }
+export const updateStaff = createAsyncThunk<
+  Staff,
+  { id: number; staffData: Partial<Staff> }
+>("staff/updateStaff", async ({ id, staffData }, thunkAPI) => {
+  try {
+    const res = await axios.patch<Staff>(`/staff/${id}/`, staffData);
+    return res.data;
+  } catch (err: any) {
+    return thunkAPI.rejectWithValue(getErrorMessage(err));
   }
-);
+});
 
-// Async thunk for adding Regular Staff (expects a plain object)
-export const addRegularStaff = createAsyncThunk<Staff, Omit<Staff, 'id' | 'role'>>(
-  'staff/addRegularStaff',
-  async (staffData, thunkAPI) => {
-    try {
-      const response = await axios.post<Staff>('/staff/regular-staff/', staffData);
-      return response.data;
-    } catch (error: any) {
-      const errorMsg = getErrorMessage(error);
-      return thunkAPI.rejectWithValue(errorMsg);
-    }
+export const addRegularStaff = createAsyncThunk<
+  Staff,
+  Omit<Staff, "id" | "role">
+>("staff/addRegularStaff", async (data, thunkAPI) => {
+  try {
+    const res = await axios.post<Staff>("/regular-staff/", data);
+    return res.data;
+  } catch (err: any) {
+    return thunkAPI.rejectWithValue(getErrorMessage(err));
   }
-);
+});
 
-// Async thunk for adding Super Staff (requires password)
-// Now updated to accept a FormData instance so that files and text fields (including photo) are supported.
 export const addSuperStaff = createAsyncThunk<Staff, FormData>(
-  'staff/addSuperStaff',
+  "staff/addSuperStaff",
   async (formData, thunkAPI) => {
     try {
-      const response = await axios.post<Staff>('/staff/super-staff/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const res = await axios.post<Staff>("/super-staff/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      return response.data;
-    } catch (error: any) {
-      const errorMsg = getErrorMessage(error);
-      return thunkAPI.rejectWithValue(errorMsg);
+      return res.data;
+    } catch (err: any) {
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
 
-// Create the staff slice
+/* 🧩 Slice --------------------------------------------------------- */
 const staffSlice = createSlice({
-  name: 'staff',
+  name: "staff",
   initialState,
   reducers: {
-    // Add synchronous reducers if needed.
+    resetErrors: (s) => {
+      s.error = s.addError = s.updateError = null;
+    },
+    clearDetail: (s) => {
+      s.detail = null;
+    },
   },
   extraReducers: (builder) => {
-    // Handle fetchAllStaff
-    builder.addCase(fetchAllStaff.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchAllStaff.fulfilled, (state, action: PayloadAction<Staff[]>) => {
-      state.loading = false;
-      state.all = action.payload;
-    });
-    builder.addCase(fetchAllStaff.rejected, (state, action: PayloadAction<any>) => {
-      state.loading = false;
-      state.error = action.payload;
-    });
+    builder
+      /* ----- All -------------------------------------------------- */
+      .addCase(fetchAllStaff.pending, (s) => {
+        s.loading = true;
+        s.error = null;
+      })
+      .addCase(fetchAllStaff.fulfilled, (s, a: PayloadAction<Staff[]>) => {
+        s.loading = false;
+        s.all = a.payload;
+      })
+      .addCase(fetchAllStaff.rejected, (s, a: PayloadAction<any>) => {
+        s.loading = false;
+        s.error = a.payload;
+      })
 
-    // Handle fetchSuperstaff
-    builder.addCase(fetchSuperstaff.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchSuperstaff.fulfilled, (state, action: PayloadAction<Staff[]>) => {
-      state.loading = false;
-      state.superStaff = action.payload;
-      console.log("Updated State with Super Staff:", state.superStaff);
-    });
-    builder.addCase(fetchSuperstaff.rejected, (state, action: PayloadAction<any>) => {
-      state.loading = false;
-      state.error = action.payload;
-    });
+      /* ----- Super ------------------------------------------------ */
+      .addCase(fetchSuperStaff.pending, (s) => {
+        s.loading = true;
+        s.error = null;
+      })
+      .addCase(fetchSuperStaff.fulfilled, (s, a: PayloadAction<Staff[]>) => {
+        s.loading = false;
+        s.superStaff = a.payload;
+      })
+      .addCase(fetchSuperStaff.rejected, (s, a: PayloadAction<any>) => {
+        s.loading = false;
+        s.error = a.payload;
+      })
 
-    // Handle fetchRegularStaff
-    builder.addCase(fetchRegularStaff.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchRegularStaff.fulfilled, (state, action: PayloadAction<Staff[]>) => {
-      state.loading = false;
-      state.all = action.payload;
-      console.log("Updated State with Regular Staff:", state.all);
-    });
-    builder.addCase(fetchRegularStaff.rejected, (state, action: PayloadAction<any>) => {
-      state.loading = false;
-      state.error = action.payload;
-    });
+      /* ----- Regular ---------------------------------------------- */
+      .addCase(fetchRegularStaff.pending, (s) => {
+        s.loading = true;
+        s.error = null;
+      })
+      .addCase(fetchRegularStaff.fulfilled, (s, a: PayloadAction<Staff[]>) => {
+        s.loading = false;
+        s.regularStaff = a.payload;
+      })
+      .addCase(fetchRegularStaff.rejected, (s, a: PayloadAction<any>) => {
+        s.loading = false;
+        s.error = a.payload;
+      })
 
-    // Handle fetchStaffDetail
-    builder.addCase(fetchStaffDetail.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-      state.detail = null;
-    });
-    builder.addCase(fetchStaffDetail.fulfilled, (state, action: PayloadAction<Staff>) => {
-      state.loading = false;
-      state.detail = action.payload;
-    });
-    builder.addCase(fetchStaffDetail.rejected, (state, action: PayloadAction<any>) => {
-      state.loading = false;
-      state.error = action.payload;
-    });
+      /* ----- Detail ----------------------------------------------- */
+      .addCase(fetchStaffDetail.pending, (s) => {
+        s.loading = true;
+        s.detail = null;
+      })
+      .addCase(fetchStaffDetail.fulfilled, (s, a: PayloadAction<Staff>) => {
+        s.loading = false;
+        s.detail = a.payload;
+      })
+      .addCase(fetchStaffDetail.rejected, (s, a: PayloadAction<any>) => {
+        s.loading = false;
+        s.error = a.payload;
+      })
 
-    // Handle updateStaff
-    builder.addCase(updateStaff.pending, (state) => {
-      state.updateLoading = true;
-      state.updateError = null;
-    });
-    builder.addCase(updateStaff.fulfilled, (state, action: PayloadAction<Staff>) => {
-      state.updateLoading = false;
-      state.detail = action.payload;
-    });
-    builder.addCase(updateStaff.rejected, (state, action: PayloadAction<any>) => {
-      state.updateLoading = false;
-      state.updateError = action.payload;
-    });
+      /* ----- Update  (sync lists) --------------------------------- */
+      .addCase(updateStaff.pending, (s) => {
+        s.updateLoading = true;
+        s.updateError = null;
+      })
+      .addCase(updateStaff.fulfilled, (s, a: PayloadAction<Staff>) => {
+        s.updateLoading = false;
+        s.detail = a.payload;
 
-    // Handle addRegularStaff
-    builder.addCase(addRegularStaff.pending, (state) => {
-      state.addLoading = true;
-      state.addError = null;
-    });
-    builder.addCase(addRegularStaff.fulfilled, (state, action: PayloadAction<Staff>) => {
-      state.addLoading = false;
-      state.all.push(action.payload);
-    });
-    builder.addCase(addRegularStaff.rejected, (state, action: PayloadAction<any>) => {
-      state.addLoading = false;
-      state.addError = action.payload;
-    });
+        const replace = (list: Staff[]) => {
+          const idx = list.findIndex((x) => x.id === a.payload.id);
+          if (idx !== -1) list[idx] = a.payload;
+        };
+        replace(s.all);
+        replace(s.superStaff);
+        replace(s.regularStaff);
+      })
+      .addCase(updateStaff.rejected, (s, a: PayloadAction<any>) => {
+        s.updateLoading = false;
+        s.updateError = a.payload;
+      })
 
-    // Handle addSuperStaff
-    builder.addCase(addSuperStaff.pending, (state) => {
-      state.addLoading = true;
-      state.addError = null;
-    });
-    builder.addCase(addSuperStaff.fulfilled, (state, action: PayloadAction<Staff>) => {
-      state.addLoading = false;
-      state.superStaff.push(action.payload);
-    });
-    builder.addCase(addSuperStaff.rejected, (state, action: PayloadAction<any>) => {
-      state.addLoading = false;
-      state.addError = action.payload;
-    });
+      /* ----- Add regular ------------------------------------------ */
+      .addCase(addRegularStaff.pending, (s) => {
+        s.addLoading = true;
+        s.addError = null;
+      })
+      .addCase(addRegularStaff.fulfilled, (s, a: PayloadAction<Staff>) => {
+        s.addLoading = false;
+        s.regularStaff.push(a.payload);
+      })
+      .addCase(addRegularStaff.rejected, (s, a: PayloadAction<any>) => {
+        s.addLoading = false;
+        s.addError = a.payload;
+      })
+
+      /* ----- Add super -------------------------------------------- */
+      .addCase(addSuperStaff.pending, (s) => {
+        s.addLoading = true;
+        s.addError = null;
+      })
+      .addCase(addSuperStaff.fulfilled, (s, a: PayloadAction<Staff>) => {
+        s.addLoading = false;
+        s.superStaff.push(a.payload);
+      })
+      .addCase(addSuperStaff.rejected, (s, a: PayloadAction<any>) => {
+        s.addLoading = false;
+        s.addError = a.payload;
+      });
   },
 });
 
+/* 📤 Exports -------------------------------------------------------- */
+export const { resetErrors, clearDetail } = staffSlice.actions;
 export default staffSlice.reducer;

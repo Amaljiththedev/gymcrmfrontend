@@ -1,18 +1,14 @@
 "use client";
 
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/src/store/store";
+import { fetchAgeGenderBreakdown } from "@/src/features/memberdemographics/ageGenderBreakdownSlice";
+
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { TrendingUp } from "lucide-react";
-
-const genderData = [
-  { category: "Teen Boys", count: 150 },
-  { category: "Teen Girls", count: 120 },
-  { category: "Men 50+", count: 100 },
-  { category: "Women 50+", count: 140 },
-  { category: "Young Men (20-49)", count: 300 },
-  { category: "Young Women (20-49)", count: 280 },
-];
 
 const chartConfig = {
   count: {
@@ -22,6 +18,24 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function AgeGenderBreakdownChart() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { data: genderData, loading } = useSelector(
+    (state: RootState) => state.ageGenderBreakdown
+  );
+
+  useEffect(() => {
+    const today = new Date();
+    const past = new Date();
+    past.setDate(today.getDate() - 30);
+
+    dispatch(
+      fetchAgeGenderBreakdown({
+        startDate: past.toISOString().split("T")[0],
+        endDate: today.toISOString().split("T")[0],
+      })
+    );
+  }, [dispatch]);
+
   return (
     <Card>
       <CardHeader>
@@ -46,6 +60,10 @@ export function AgeGenderBreakdownChart() {
             <Bar dataKey="count" fill="hsl(var(--chart-1))" radius={5} />
           </BarChart>
         </ChartContainer>
+
+        {loading && (
+          <div className="text-center text-muted-foreground mt-4">Loading Chart...</div>
+        )}
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">
@@ -55,4 +73,3 @@ export function AgeGenderBreakdownChart() {
     </Card>
   );
 }
-

@@ -103,7 +103,7 @@ const headCells = [
 export default function RegularStaffPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { all: staff, loading, error } = useSelector((state: RootState) => state.staff);
+  const { regularStaff: staff, loading, error } = useSelector((state: RootState) => state.staff);
   const [order, setOrder] = useState<Order>("desc");
   const [orderBy, setOrderBy] = useState<SortKey>("first_name");
   const [page, setPage] = useState<number>(0);

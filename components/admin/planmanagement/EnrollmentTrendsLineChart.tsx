@@ -1,5 +1,10 @@
 "use client";
 
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/src/store/store";
+import { fetchEnrollmentChart } from "@/src/features/reports/enrollmentChartSlice";
+
 import { TrendingUp } from "lucide-react";
 import {
   CartesianGrid,
@@ -9,6 +14,7 @@ import {
   YAxis,
   ResponsiveContainer,
 } from "recharts";
+
 import {
   Card,
   CardContent,
@@ -24,30 +30,43 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-// Updated dummy data for total enrollment trends (sum of desktop and mobile)
-const chartData = [
-  { month: "January", total: 240 },   // 150 + 90
-  { month: "February", total: 280 },  // 180 + 100
-  { month: "March", total: 310 },     // 200 + 110
-  { month: "April", total: 350 },     // 220 + 130
-  { month: "May", total: 330 },       // 210 + 120
-  { month: "June", total: 390 },      // 250 + 140
-];
+type Props = {
+  startDate: Date;
+  endDate: Date;
+};
 
-// Chart configuration for theming and labeling
-const chartConfig = {
-  total: {
-    label: "Total Enrollments",
-    color: "hsl(var(--chart-1))", // This sets CSS variable --color-total
-  },
-} satisfies ChartConfig;
+export function EnrollmentTrendsLineChart({ startDate, endDate }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { data, loading } = useSelector((state: RootState) => state.enrollmentChart);
 
-export function EnrollmentTrendsLineChart() {
+  useEffect(() => {
+    if (startDate && endDate) {
+      const start = startDate.toISOString().split("T")[0];
+      const end = endDate.toISOString().split("T")[0];
+      dispatch(fetchEnrollmentChart({ start, end }));
+    }
+  }, [startDate, endDate, dispatch]);
+
+  const chartConfig = {
+    total: {
+      label: "Total Enrollments",
+      color: "hsl(var(--chart-1))",
+    },
+  } satisfies ChartConfig;
+
+  // Rename `enrollments` to `total` to match chartConfig
+  const chartData = data.map((d) => ({
+    month: d.month,
+    total: d.enrollments,
+  }));
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>📈 Enrollment Trends Line Chart</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardDescription>
+          {startDate.toLocaleDateString()} – {endDate.toLocaleDateString()}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -70,7 +89,7 @@ export function EnrollmentTrendsLineChart() {
                 dataKey="total"
                 type="monotone"
                 stroke="var(--color-total)"
-                strokeWidth={4} // Increased for a stronger line
+                strokeWidth={4}
                 dot={{ fill: "var(--color-total)", r: 4 }}
                 activeDot={{ r: 8 }}
               />
@@ -80,11 +99,11 @@ export function EnrollmentTrendsLineChart() {
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month{" "}
+          {loading ? "Loading..." : "Trending up by 5.2% this month"}
           <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          Showing total enrollments for the selected range
         </div>
       </CardFooter>
     </Card>

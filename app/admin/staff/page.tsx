@@ -10,7 +10,7 @@ import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import MemberTable from "@/components/admin/user_management/memberlist"; // Your Member Table Component
 import StaffTable from "@/components/admin/staff_management/stafflist";
 
-export default function Memberlist() {
+export default function stafflist() {
   return (
     <>
       {/* Breadcrumb Navigation */}
@@ -43,9 +43,6 @@ export default function Memberlist() {
           justifyContent: "space-between",
         }}
       >
-        <Button color="primary" startDecorator={<DownloadRoundedIcon />} size="sm">
-          Download PDF
-        </Button>
       </Box>
 
       {/* Member Table */}
