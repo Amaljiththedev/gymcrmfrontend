@@ -49,94 +49,131 @@ import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import BlockIcon from "@mui/icons-material/Block";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
-import { Mail, Phone, Badge } from "@mui/icons-material";
+import CloseIcon from "@mui/icons-material/Close";
+import { Mail, Phone, Badge, CalendarToday, Work } from "@mui/icons-material";
 
-// Apple-inspired dark theme
+// Enhanced Apple-inspired theme with improved colors and animations
 const appleTheme = extendTheme({
   colorSchemes: {
     dark: {
       palette: {
         background: {
           body: "#000000",
-          surface: "rgba(28, 28, 30, 0.98)",
-          level1: "rgba(44, 44, 46, 0.95)",
-          level2: "rgba(58, 58, 60, 0.9)",
+          surface: "rgba(28, 28, 30, 0.95)",
+          level1: "rgba(44, 44, 46, 0.98)",
+          level2: "rgba(58, 58, 60, 0.95)",
+          level3: "rgba(72, 72, 74, 0.90)",
         },
         primary: {
           solidBg: "#007AFF",
           solidHoverBg: "#0056CC",
           solidColor: "#FFFFFF",
-          softBg: "rgba(0, 122, 255, 0.15)",
-          softColor: "#007AFF",
-          softHoverBg: "rgba(0, 122, 255, 0.25)",
+          softBg: "rgba(0, 122, 255, 0.12)",
+          softColor: "#64B5F6",
+          softHoverBg: "rgba(0, 122, 255, 0.20)",
+          plainColor: "#007AFF",
+          plainHoverBg: "rgba(0, 122, 255, 0.08)",
         },
         neutral: {
           50: "#FAFAFA",
           100: "#F5F5F7",
           200: "#E5E5EA",
-          800: "#2C2C2E",
+          300: "#D1D1D6",
+          400: "#C7C7CC",
+          500: "#AEAEB2",
+          600: "#8E8E93",
+          700: "#636366",
+          800: "#48484A",
           900: "#1C1C1E",
           outlinedBg: "rgba(44, 44, 46, 0.8)",
           outlinedColor: "#F2F2F7",
-          outlinedBorder: "rgba(84, 84, 88, 0.6)",
+          outlinedBorder: "rgba(84, 84, 88, 0.4)",
           plainColor: "#F2F2F7",
-          plainHoverBg: "rgba(72, 72, 74, 0.3)",
+          plainHoverBg: "rgba(72, 72, 74, 0.25)",
         },
         text: {
           primary: "#F2F2F7",
-          secondary: "rgba(235, 235, 245, 0.6)",
-          tertiary: "rgba(235, 235, 245, 0.3)",
+          secondary: "rgba(235, 235, 245, 0.68)",
+          tertiary: "rgba(235, 235, 245, 0.38)",
         },
-        divider: "rgba(84, 84, 88, 0.6)",
+        divider: "rgba(84, 84, 88, 0.4)",
+        success: {
+          solidBg: "#34C759",
+          softBg: "rgba(52, 199, 89, 0.12)",
+          softColor: "#34C759",
+        },
+        danger: {
+          solidBg: "#FF3B30",
+          softBg: "rgba(255, 59, 48, 0.12)",
+          softColor: "#FF453A",
+        },
+        warning: {
+          solidBg: "#FF9500",
+          softBg: "rgba(255, 149, 0, 0.12)",
+          softColor: "#FF9F0A",
+        },
       },
     },
   },
   typography: {
     h1: {
       fontWeight: 700,
-      letterSpacing: "-0.02em",
+      letterSpacing: "-0.025em",
+      fontSize: "2.5rem",
     },
     h2: {
       fontWeight: 600,
-      letterSpacing: "-0.01em",
+      letterSpacing: "-0.02em",
+      fontSize: "2rem",
     },
     h3: {
       fontWeight: 600,
-      letterSpacing: "-0.01em",
+      letterSpacing: "-0.015em",
+      fontSize: "1.5rem",
     },
     h4: {
       fontWeight: 600,
+      letterSpacing: "-0.01em",
+      fontSize: "1.25rem",
+    },
+    "body-lg": {
+      fontWeight: 400,
       letterSpacing: "-0.005em",
+      fontSize: "1.125rem",
     },
     "body-md": {
       fontWeight: 400,
       letterSpacing: "-0.003em",
+      fontSize: "1rem",
     },
     "body-sm": {
       fontWeight: 400,
       letterSpacing: "-0.002em",
+      fontSize: "0.875rem",
     },
     "body-xs": {
       fontWeight: 400,
       letterSpacing: "-0.001em",
+      fontSize: "0.75rem",
     },
   },
   fontFamily: {
-    body: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif",
+    body: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif",
+    display: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif",
   },
   radius: {
     xs: "6px",
     sm: "8px",
     md: "12px",
     lg: "16px",
-    xl: "20px",
+    xl: "24px",
   },
   shadow: {
-    xs: "0 1px 2px rgba(0, 0, 0, 0.12)",
-    sm: "0 2px 8px rgba(0, 0, 0, 0.16)",
-    md: "0 4px 16px rgba(0, 0, 0, 0.24)",
-    lg: "0 8px 32px rgba(0, 0, 0, 0.32)",
-    xl: "0 16px 64px rgba(0, 0, 0, 0.48)",
+    xs: "0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)",
+    sm: "0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23)",
+    md: "0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23)",
+    lg: "0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22)",
+    xl: "0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22)",
   },
 });
 
@@ -203,11 +240,12 @@ export default function StaffTable() {
     setSelectedStaff(staff || null);
     setIsViewModalOpen(true);
   };
+  
   const handleEdit = (id: number) => router.push(`/admin/staff/edit/${id}`);
   const handleSalaryHistory = (id: number) => router.push(`/admin/staff/salary-history/${id}`);
   const handleBlock = (id: number) => console.log("Block/Unblock", id);
 
-  // Render filter controls with Apple styling
+  // Enhanced filter controls with better Apple styling
   const renderFilters = () => (
     <FormControl size="sm">
       <FormLabel sx={{ 
@@ -215,7 +253,8 @@ export default function StaffTable() {
         fontSize: "13px", 
         fontWeight: 500,
         mb: 0.5,
-        textTransform: "none" 
+        textTransform: "none",
+        letterSpacing: "-0.01em"
       }}>
         Role
       </FormLabel>
@@ -224,24 +263,31 @@ export default function StaffTable() {
         value={roleFilter}
         onChange={(e, val) => setRoleFilter(val || "all")}
         sx={{
-          minWidth: 120,
+          minWidth: 140,
           bgcolor: "background.level1",
           border: "1px solid",
           borderColor: "neutral.outlinedBorder",
-          borderRadius: "8px",
+          borderRadius: "10px",
           color: "text.primary",
           fontSize: "14px",
           fontWeight: 400,
-          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+          backdropFilter: "blur(20px)",
+          transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
           "&:hover": { 
-            borderColor: "neutral.200",
-            bgcolor: "rgba(58, 58, 60, 0.8)"
+            borderColor: "neutral.300",
+            bgcolor: "background.level2",
+            transform: "translateY(-1px)",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)"
           },
           "&:focus-within": {
             borderColor: "primary.solidBg",
-            boxShadow: "0 0 0 3px rgba(0, 122, 255, 0.1)",
+            boxShadow: "0 0 0 4px rgba(0, 122, 255, 0.12)",
+            transform: "translateY(-1px)",
           },
-          "& .MuiSelect-indicator": { color: "text.secondary" },
+          "& .MuiSelect-indicator": { 
+            color: "text.secondary",
+            transition: "color 0.2s ease"
+          },
         }}
       >
         <Option value="all">All Roles</Option>
@@ -253,38 +299,50 @@ export default function StaffTable() {
 
   return (
     <CssVarsProvider theme={appleTheme} defaultMode="dark">
-      <Box sx={{ maxWidth: "100%", mx: "auto", p: { xs: 2, sm: 3 } }}>
-        {/* Header Section */}
-        <Box sx={{ mb: 4 }}>
+      <Box sx={{ 
+        maxWidth: "100%", 
+        mx: "auto", 
+        p: { xs: 2, sm: 3, md: 4 },
+        minHeight: "100vh",
+        bgcolor: "background.body"
+      }}>
+        {/* Enhanced Header Section */}
+        <Box sx={{ mb: 5 }}>
           <Typography level="h2" sx={{ 
             color: "text.primary", 
-            mb: 1,
-            fontSize: { xs: "24px", sm: "28px" },
+            mb: 1.5,
+            fontSize: { xs: "28px", sm: "32px", md: "36px" },
             fontWeight: 700,
-            letterSpacing: "-0.02em"
+            letterSpacing: "-0.025em",
+            background: "linear-gradient(135deg, #F2F2F7 0%, rgba(235, 235, 245, 0.8) 100%)",
+            backgroundClip: "text",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent"
           }}>
             Staff Directory
           </Typography>
-          <Typography level="body-md" sx={{ 
+          <Typography level="body-lg" sx={{ 
             color: "text.secondary",
-            fontSize: "16px"
+            fontSize: "17px",
+            fontWeight: 400,
+            letterSpacing: "-0.01em"
           }}>
             Manage your team members and their information
           </Typography>
         </Box>
 
-        {/* Mobile Search & Filter */}
+        {/* Enhanced Mobile Search & Filter */}
         <Sheet
           sx={{
             display: { xs: "flex", sm: "none" },
-            mb: 3,
+            mb: 4,
             gap: 2,
             bgcolor: "transparent",
             boxShadow: "none",
           }}
         >
           <Input
-            size="md"
+            size="lg"
             placeholder="Search staff..."
             startDecorator={<SearchIcon sx={{ color: "text.secondary", fontSize: "20px" }} />}
             sx={{
@@ -292,18 +350,22 @@ export default function StaffTable() {
               bgcolor: "background.level1",
               border: "1px solid",
               borderColor: "neutral.outlinedBorder",
-              borderRadius: "12px",
+              borderRadius: "14px",
               color: "text.primary",
               fontSize: "16px",
-              py: 1.5,
-              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+              py: 2,
+              backdropFilter: "blur(20px)",
+              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
               "&:hover": { 
-                borderColor: "neutral.200",
-                bgcolor: "rgba(58, 58, 60, 0.8)"
+                borderColor: "neutral.300",
+                bgcolor: "background.level2",
+                transform: "translateY(-1px)",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)"
               },
               "&:focus-within": {
                 borderColor: "primary.solidBg",
-                boxShadow: "0 0 0 3px rgba(0, 122, 255, 0.1)",
+                boxShadow: "0 0 0 4px rgba(0, 122, 255, 0.12)",
+                transform: "translateY(-1px)",
               },
               "& .MuiInput-input::placeholder": { 
                 color: "text.tertiary",
@@ -314,66 +376,93 @@ export default function StaffTable() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Button
-            size="md"
+            size="lg"
             variant="outlined"
             startDecorator={<FilterAltIcon />}
             onClick={() => setIsFilterOpen(true)}
             sx={{ 
-              borderRadius: "12px",
+              borderRadius: "14px",
               borderColor: "neutral.outlinedBorder",
               color: "text.primary",
               bgcolor: "background.level1",
-              minWidth: "48px",
-              px: 2,
+              backdropFilter: "blur(20px)",
+              minWidth: "52px",
+              px: 2.5,
+              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
               "&:hover": { 
-                bgcolor: "rgba(58, 58, 60, 0.8)",
-                borderColor: "neutral.200"
+                bgcolor: "background.level2",
+                borderColor: "neutral.300",
+                transform: "translateY(-1px)",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)"
               }
             }}
           >
             Filter
           </Button>
 
-          {/* Mobile Filter Modal */}
+          {/* Enhanced Mobile Filter Modal */}
           <Modal open={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
             <ModalDialog
               layout="center"
               sx={{
-                bgcolor: "background.surface",
-                backdropFilter: "blur(20px)",
-                borderRadius: "16px",
-                p: 3,
-                minWidth: "320px",
-                maxWidth: "400px",
+                bgcolor: "rgba(28, 28, 30, 0.95)",
+                backdropFilter: "blur(40px)",
+                borderRadius: "20px",
+                border: "1px solid",
+                borderColor: "rgba(84, 84, 88, 0.3)",
+                p: 4,
+                minWidth: "340px",
+                maxWidth: "420px",
+                boxShadow: "0 20px 40px rgba(0, 0, 0, 0.4)",
+                animation: "modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                "@keyframes modalSlideIn": {
+                  "0%": {
+                    opacity: 0,
+                    transform: "translateY(20px) scale(0.95)"
+                  },
+                  "100%": {
+                    opacity: 1,
+                    transform: "translateY(0) scale(1)"
+                  }
+                }
               }}
             >
               <ModalClose sx={{ 
                 color: "text.secondary",
-                "&:hover": { bgcolor: "rgba(72, 72, 74, 0.3)" }
+                "&:hover": { 
+                  bgcolor: "rgba(72, 72, 74, 0.3)",
+                  color: "text.primary"
+                }
               }} />
               <Typography level="h3" sx={{ 
                 color: "text.primary",
                 mb: 3,
-                fontSize: "20px",
-                fontWeight: 600
+                fontSize: "22px",
+                fontWeight: 600,
+                letterSpacing: "-0.015em"
               }}>
                 Filter Staff
               </Typography>
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 4 }}>
                 {renderFilters()}
               </Box>
               <Button
                 fullWidth
-                size="md"
+                size="lg"
                 onClick={() => setIsFilterOpen(false)}
                 sx={{ 
                   bgcolor: "primary.solidBg",
                   color: "primary.solidColor",
-                  borderRadius: "8px",
-                  py: 1.5,
+                  borderRadius: "12px",
+                  py: 2,
                   fontSize: "16px",
-                  fontWeight: 500,
-                  "&:hover": { bgcolor: "primary.solidHoverBg" }
+                  fontWeight: 600,
+                  transition: "all 0.2s ease",
+                  "&:hover": { 
+                    bgcolor: "primary.solidHoverBg",
+                    transform: "translateY(-1px)",
+                    boxShadow: "0 6px 16px rgba(0, 122, 255, 0.3)"
+                  }
                 }}
               >
                 Apply Filters
@@ -382,27 +471,28 @@ export default function StaffTable() {
           </Modal>
         </Sheet>
 
-        {/* Desktop Search & Filter */}
+        {/* Enhanced Desktop Search & Filter */}
         <Box
           sx={{
             display: { xs: "none", sm: "flex" },
-            gap: 3,
-            mb: 4,
+            gap: 4,
+            mb: 5,
             alignItems: "flex-end",
           }}
         >
-          <FormControl sx={{ flex: 1, maxWidth: "400px" }}>
+          <FormControl sx={{ flex: 1, maxWidth: "450px" }}>
             <FormLabel sx={{ 
               color: "text.secondary", 
-              fontSize: "13px", 
+              fontSize: "14px", 
               fontWeight: 500,
-              mb: 0.5,
-              textTransform: "none" 
+              mb: 1,
+              textTransform: "none",
+              letterSpacing: "-0.01em"
             }}>
               Search
             </FormLabel>
             <Input
-              size="md"
+              size="lg"
               placeholder="Search by name, email, or phone"
               startDecorator={<SearchIcon sx={{ color: "text.secondary", fontSize: "20px" }} />}
               value={searchTerm}
@@ -411,22 +501,26 @@ export default function StaffTable() {
                 bgcolor: "background.level1",
                 border: "1px solid",
                 borderColor: "neutral.outlinedBorder",
-                borderRadius: "8px",
+                borderRadius: "12px",
                 color: "text.primary",
-                fontSize: "14px",
-                py: 1.2,
-                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                fontSize: "15px",
+                py: 1.8,
+                backdropFilter: "blur(20px)",
+                transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": { 
-                  borderColor: "neutral.200",
-                  bgcolor: "rgba(58, 58, 60, 0.8)"
+                  borderColor: "neutral.300",
+                  bgcolor: "background.level2",
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)"
                 },
                 "&:focus-within": {
                   borderColor: "primary.solidBg",
-                  boxShadow: "0 0 0 3px rgba(0, 122, 255, 0.1)",
+                  boxShadow: "0 0 0 4px rgba(0, 122, 255, 0.12)",
+                  transform: "translateY(-1px)",
                 },
                 "& .MuiInput-input::placeholder": { 
                   color: "text.tertiary",
-                  fontSize: "14px"
+                  fontSize: "15px"
                 },
               }}
             />
@@ -434,20 +528,24 @@ export default function StaffTable() {
           {renderFilters()}
         </Box>
 
-        {/* Table Container */}
+        {/* Enhanced Table Container */}
         <Sheet
           variant="outlined"
           sx={{
             overflow: "hidden",
-            bgcolor: "background.surface",
-            backdropFilter: "blur(20px)",
+            bgcolor: "rgba(28, 28, 30, 0.95)",
+            backdropFilter: "blur(40px)",
             border: "1px solid",
-            borderColor: "neutral.outlinedBorder",
-            borderRadius: "16px",
-            boxShadow: "0 4px 32px rgba(0, 0, 0, 0.24)",
+            borderColor: "rgba(84, 84, 88, 0.3)",
+            borderRadius: "20px",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.25)",
+            transition: "all 0.3s ease",
+            "&:hover": {
+              boxShadow: "0 12px 40px rgba(0, 0, 0, 0.3)"
+            }
           }}
         >
-          {/* Desktop Table */}
+          {/* Enhanced Desktop Table */}
           <Table
             hoverRow
             stickyHeader
@@ -455,9 +553,9 @@ export default function StaffTable() {
               display: { xs: "none", md: "table" },
               "--TableCell-headBackground": "rgba(28, 28, 30, 0.98)",
               "--Table-headerUnderlineThickness": "1px",
-              "--TableRow-hoverBackground": "rgba(72, 72, 74, 0.2)",
+              "--TableRow-hoverBackground": "rgba(72, 72, 74, 0.15)",
               "--TableCell-paddingX": "24px",
-              "--TableCell-paddingY": "16px",
+              "--TableCell-paddingY": "20px",
               "& thead th": { 
                 color: "text.secondary",
                 fontWeight: 600,
@@ -465,17 +563,21 @@ export default function StaffTable() {
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 borderBottom: "1px solid",
-                borderColor: "divider",
-                py: 2,
+                borderColor: "rgba(84, 84, 88, 0.3)",
+                py: 3,
+                backdropFilter: "blur(20px)",
               },
               "& tbody td": { 
-                borderColor: "divider",
+                borderColor: "rgba(84, 84, 88, 0.2)",
                 color: "text.primary",
-                fontSize: "14px",
-                py: 2,
+                fontSize: "15px",
+                py: 3,
               },
               "& tbody tr": {
-                transition: "background-color 0.15s ease",
+                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                "&:hover": {
+                  transform: "translateY(-1px)",
+                }
               }
             }}
           >
@@ -499,7 +601,7 @@ export default function StaffTable() {
                             <ArrowDropDownIcon 
                               sx={{ 
                                 transform: order === "asc" ? "rotate(180deg)" : "rotate(0deg)",
-                                transition: "transform 0.2s ease"
+                                transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
                               }} 
                             />
                           ) : null
@@ -513,6 +615,7 @@ export default function StaffTable() {
                           letterSpacing: "0.05em",
                           p: 0,
                           minHeight: "auto",
+                          transition: "all 0.2s ease",
                           "&:hover": { 
                             bgcolor: "rgba(72, 72, 74, 0.2)",
                             color: "text.primary"
@@ -534,42 +637,71 @@ export default function StaffTable() {
                 .map((s) => (
                   <tr key={s.id}>
                     <td>
-                      <Typography level="body-md" sx={{ color: "text.secondary", fontWeight: 500 }}>
+                      <Typography level="body-md" sx={{ 
+                        color: "text.secondary", 
+                        fontWeight: 500,
+                        fontFamily: "monospace",
+                        fontSize: "14px"
+                      }}>
                         #{s.id}
                       </Typography>
                     </td>
                     <td>
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" spacing={3} alignItems="center">
                         <Avatar 
                           src={s.photo} 
                           sx={{ 
-                            width: 40, 
-                            height: 40,
+                            width: 44, 
+                            height: 44,
                             bgcolor: "primary.softBg",
-                            color: "primary.softColor",
+                            color: "primary.solidBg",
                             fontSize: "16px",
-                            fontWeight: 600
+                            fontWeight: 600,
+                            border: "2px solid",
+                            borderColor: "rgba(0, 122, 255, 0.2)",
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              transform: "scale(1.05)",
+                              borderColor: "primary.solidBg"
+                            }
                           }}
                         >
                           {!s.photo && s.first_name[0]}
                         </Avatar>
                         <Box>
-                          <Typography level="body-md" sx={{ fontWeight: 500, color: "text.primary" }}>
+                          <Typography level="body-md" sx={{ 
+                            fontWeight: 600, 
+                            color: "text.primary",
+                            fontSize: "15px",
+                            letterSpacing: "-0.01em"
+                          }}>
                             {s.first_name} {s.last_name}
                           </Typography>
-                          <Typography level="body-sm" sx={{ color: "text.secondary", mt: 0.25 }}>
+                          <Typography level="body-sm" sx={{ 
+                            color: "text.secondary", 
+                            mt: 0.5,
+                            fontSize: "13px"
+                          }}>
                             {s.email}
                           </Typography>
                         </Box>
                       </Stack>
                     </td>
                     <td>
-                      <Typography level="body-md" sx={{ color: "text.primary" }}>
+                      <Typography level="body-md" sx={{ 
+                        color: "text.primary",
+                        fontFamily: "monospace",
+                        fontSize: "14px"
+                      }}>
                         {s.phone_number}
                       </Typography>
                     </td>
                     <td>
-                      <Typography level="body-md" sx={{ fontWeight: 600, color: "text.primary" }}>
+                      <Typography level="body-md" sx={{ 
+                        fontWeight: 600, 
+                        color: "success.solidBg",
+                        fontSize: "15px"
+                      }}>
                         ₹{s.salary?.toLocaleString()}
                       </Typography>
                     </td>
@@ -579,11 +711,18 @@ export default function StaffTable() {
                         color="primary"
                         sx={{
                           bgcolor: "primary.softBg",
-                          color: "primary.softColor",
+                          color: "primary.solidBg",
                           fontSize: "12px",
                           fontWeight: 500,
-                          borderRadius: "6px",
-                          textTransform: "capitalize"
+                          borderRadius: "8px",
+                          textTransform: "capitalize",
+                          border: "1px solid",
+                          borderColor: "rgba(0, 122, 255, 0.2)",
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            bgcolor: "primary.softHoverBg",
+                            borderColor: "primary.solidBg"
+                          }
                         }}
                       >
                         {s.role?.replace('staff', ' Staff')}
@@ -599,10 +738,12 @@ export default function StaffTable() {
                             sx={{
                               color: "text.secondary",
                               bgcolor: "transparent",
-                              borderRadius: "6px",
+                              borderRadius: "8px",
+                              transition: "all 0.2s ease",
                               "&:hover": { 
-                                bgcolor: "rgba(72, 72, 74, 0.3)",
-                                color: "text.primary"
+                                bgcolor: "primary.softBg",
+                                color: "primary.solidBg",
+                                transform: "scale(1.1)"
                               }
                             }}
                           >
@@ -617,10 +758,12 @@ export default function StaffTable() {
                             sx={{
                               color: "text.secondary",
                               bgcolor: "transparent",
-                              borderRadius: "6px",
+                              borderRadius: "8px",
+                              transition: "all 0.2s ease",
                               "&:hover": { 
-                                bgcolor: "rgba(72, 72, 74, 0.3)",
-                                color: "text.primary"
+                                bgcolor: "warning.softBg",
+                                color: "warning.solidBg",
+                                transform: "scale(1.1)"
                               }
                             }}
                           >
@@ -637,10 +780,12 @@ export default function StaffTable() {
                                 sx: {
                                   color: "text.secondary",
                                   bgcolor: "transparent",
-                                  borderRadius: "6px",
-                                  "&:hover": { 
-                                    bgcolor: "rgba(72, 72, 74, 0.3)",
-                                    color: "text.primary"
+                                  borderRadius: "8px",
+                                  transition: "all 0.2s ease",
+                                  "&:hover": {
+                                    bgcolor: "neutral.800",
+                                    color: "primary.solidBg",
+                                    transform: "scale(1.1)"
                                   }
                                 }
                               }
@@ -648,34 +793,12 @@ export default function StaffTable() {
                           >
                             <MoreHorizRoundedIcon fontSize="small" />
                           </MenuButton>
-                          <Menu
-                            sx={{
-                              bgcolor: "background.surface",
-                              backdropFilter: "blur(20px)",
-                              border: "1px solid",
-                              borderColor: "neutral.outlinedBorder",
-                              borderRadius: "8px",
-                              py: 1,
-                              "& .MuiMenuItem-root": {
-                                borderRadius: "4px",
-                                mx: 1,
-                                fontSize: "14px",
-                                "&:hover": {
-                                  bgcolor: "rgba(72, 72, 74, 0.3)"
-                                }
-                              }
-                            }}
-                          >
+                          <Menu>
                             <MenuItem onClick={() => handleSalaryHistory(s.id)}>
-                              <CurrencyRupeeIcon fontSize="small" sx={{ mr: 1 }} />
-                              Salary History
+                              <CurrencyRupeeIcon sx={{ fontSize: 18, mr: 1 }} /> Salary History
                             </MenuItem>
-                            <MenuItem 
-                              onClick={() => handleBlock(s.id)}
-                              sx={{ color: "#FF3B30" }}
-                            >
-                              <BlockIcon fontSize="small" sx={{ mr: 1 }} />
-                              Block Staff
+                            <MenuItem onClick={() => handleBlock(s.id)}>
+                              <BlockIcon sx={{ fontSize: 18, mr: 1 }} /> Block/Unblock
                             </MenuItem>
                           </Menu>
                         </Dropdown>
@@ -685,318 +808,8 @@ export default function StaffTable() {
                 ))}
             </tbody>
           </Table>
-
-          {/* Mobile Card List */}
-          <Box sx={{ display: { xs: "block", md: "none" }, p: 2 }}>
-            {filteredStaff
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((s) => (
-              <Card 
-                key={s.id} 
-                sx={{ 
-                  mb: 2,
-                  bgcolor: "background.level1",
-                  border: "1px solid",
-                  borderColor: "neutral.outlinedBorder",
-                  borderRadius: "12px",
-                  boxShadow: "none",
-                  transition: "all 0.2s ease",
-                  "&:hover": {
-                    borderColor: "neutral.200",
-                    bgcolor: "rgba(58, 58, 60, 0.8)"
-                  }
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Stack direction="row" spacing={3} alignItems="flex-start">
-                    <Avatar 
-                      src={s.photo} 
-                      sx={{ 
-                        width: 48, 
-                        height: 48,
-                        bgcolor: "primary.softBg",
-                        color: "primary.softColor",
-                        fontSize: "18px",
-                        fontWeight: 600
-                      }}
-                    >
-                      {!s.photo && s.first_name[0]}
-                    </Avatar>
-                    <Box sx={{ flex: 1 }}>
-                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                        <Box>
-                          <Typography level="body-md" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5 }}>
-                            {s.first_name} {s.last_name}
-                          </Typography>
-                          <Typography level="body-sm" sx={{ color: "text.secondary" }}>
-                            #{s.id}
-                          </Typography>
-                        </Box>
-                        <Chip 
-                          variant="soft" 
-                          color="primary"
-                          size="sm"
-                          sx={{
-                            bgcolor: "primary.softBg",
-                            color: "primary.softColor",
-                            fontSize: "11px",
-                            fontWeight: 500,
-                            borderRadius: "6px",
-                            textTransform: "capitalize"
-                          }}
-                        >
-                          {s.role?.replace('staff', ' Staff')}
-                        </Chip>
-                      </Stack>
-                      
-                      <Box sx={{ mb: 2 }}>
-                        <Typography level="body-sm" sx={{ color: "text.secondary", mb: 0.5 }}>
-                          {s.email}
-                        </Typography>
-                        <Typography level="body-sm" sx={{ color: "text.secondary", mb: 0.5 }}>
-                          {s.phone_number}
-                        </Typography>
-                        <Typography level="body-sm" sx={{ fontWeight: 600, color: "text.primary" }}>
-                          ₹{s.salary?.toLocaleString()}
-                        </Typography>
-                      </Box>
-
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          size="sm"
-                          variant="soft"
-                          startDecorator={<VisibilityIcon fontSize="small" />}
-                          onClick={() => handleView(s.id)}
-                          sx={{
-                            bgcolor: "primary.softBg",
-                            color: "primary.softColor",
-                            fontSize: "13px",
-                            borderRadius: "6px",
-                            "&:hover": { bgcolor: "primary.softHoverBg" }
-                          }}
-                        >
-                          View
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outlined"
-                          startDecorator={<EditIcon fontSize="small" />}
-                          onClick={() => handleEdit(s.id)}
-                          sx={{
-                            borderColor: "neutral.outlinedBorder",
-                            color: "text.primary",
-                            fontSize: "13px",
-                            borderRadius: "6px",
-                            "&:hover": { 
-                              bgcolor: "rgba(72, 72, 74, 0.3)",
-                              borderColor: "neutral.200"
-                            }
-                          }}
-                        >
-                          Edit
-                        </Button>
-                      </Stack>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
+          {/* You can add a pagination component here if needed */}
         </Sheet>
-
-        {/* Staff Detail Modal */}
-        <Modal open={isViewModalOpen} onClose={() => setIsViewModalOpen(false)}>
-          <ModalDialog
-            sx={{
-              minWidth: 380,
-              maxWidth: 440,
-              borderRadius: "24px",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
-              p: 0,
-              overflow: "hidden",
-              bgcolor: "background.level1"
-            }}
-          >
-            {/* Profile Header */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                py: 4,
-                px: 3,
-                bgcolor: "primary.softBg",
-                borderBottom: "1px solid",
-                borderColor: "divider"
-              }}
-            >
-              <Avatar
-                src={selectedStaff?.photo}
-                sx={{
-                  width: 72,
-                  height: 72,
-                  mb: 2,
-                  fontSize: 32,
-                  bgcolor: "primary.solidBg",
-                  color: "primary.solidColor"
-                }}
-              >
-                {selectedStaff?.first_name?.[0]}
-              </Avatar>
-              <Typography level="h3" sx={{ fontWeight: 700, fontSize: 22, color: "text.primary" }}>
-                {selectedStaff?.first_name} {selectedStaff?.last_name}
-              </Typography>
-              <Typography level="body-md" sx={{ color: "text.secondary", fontSize: 15 }}>
-                {selectedStaff?.role}
-              </Typography>
-            </Box>
-
-            {/* Details Section */}
-            <Box sx={{ px: 4, py: 3 }}>
-              <Stack spacing={2}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Mail sx={{ color: "primary.solidBg" }} fontSize="small" />
-                  <Typography level="body-md" sx={{ color: "text.primary" }}>
-                    {selectedStaff?.email}
-                  </Typography>
-                </Stack>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Phone sx={{ color: "primary.solidBg" }} fontSize="small" />
-                  <Typography level="body-md" sx={{ color: "text.primary" }}>
-                    {selectedStaff?.phone_number}
-                  </Typography>
-                </Stack>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <CurrencyRupeeIcon sx={{ color: "primary.solidBg" }} fontSize="small" />
-                  <Typography level="body-md" sx={{ color: "text.primary" }}>
-                    ₹{selectedStaff?.salary?.toLocaleString()}
-                  </Typography>
-                </Stack>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Badge sx={{ color: "primary.solidBg" }} fontSize="small" />
-                  <Typography level="body-md" sx={{ color: "text.primary" }}>
-                    Staff ID: #{selectedStaff?.id}
-                  </Typography>
-                </Stack>
-              </Stack>
-            </Box>
-
-            <Divider sx={{ my: 1, bgcolor: "divider" }} />
-
-            {/* Action Buttons */}
-            <Stack direction="row" spacing={2} sx={{ px: 4, pb: 4 }}>
-              <Button
-                fullWidth
-                variant="soft"
-                color="primary"
-                startDecorator={<EditIcon />}
-                onClick={() => {
-                  setIsViewModalOpen(false);
-                  handleEdit(selectedStaff?.id || 0);
-                }}
-                sx={{
-                  borderRadius: "8px",
-                  fontWeight: 500
-                }}
-              >
-                Edit Details
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                startDecorator={<CurrencyRupeeIcon />}
-                onClick={() => {
-                  setIsViewModalOpen(false);
-                  handleSalaryHistory(selectedStaff?.id || 0);
-                }}
-                sx={{
-                  borderRadius: "8px",
-                  fontWeight: 500
-                }}
-              >
-                Salary History
-              </Button>
-            </Stack>
-          </ModalDialog>
-        </Modal>
-
-        {/* Pagination */}
-        <Box
-          sx={{
-            mt: 4,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            px: 1,
-          }}
-        >
-          <Button
-            size="md"
-            variant="outlined"
-            startDecorator={<KeyboardArrowLeftIcon />}
-            disabled={page === 0}
-            onClick={() => setPage(page - 1)}
-            sx={{
-              borderColor: "neutral.outlinedBorder",
-              color: "text.primary",
-              bgcolor: "background.level1",
-              borderRadius: "8px",
-              px: 3,
-              py: 1.5,
-              fontSize: "14px",
-              fontWeight: 500,
-              transition: "all 0.2s ease",
-              "&:hover": { 
-                bgcolor: "rgba(58, 58, 60, 0.8)",
-                borderColor: "neutral.200"
-              },
-              "&:disabled": {
-                color: "text.tertiary",
-                borderColor: "rgba(84, 84, 88, 0.3)",
-                bgcolor: "transparent"
-              }
-            }}
-          >
-            Previous
-          </Button>
-          
-          <Typography level="body-sm" sx={{ 
-            color: "text.secondary",
-            fontSize: "13px"
-          }}>
-            Page {page + 1} of {Math.ceil(filteredStaff.length / rowsPerPage)}
-          </Typography>
-          
-          <Button
-            size="md"
-            variant="outlined"
-            endDecorator={<KeyboardArrowRightIcon />}
-            disabled={page >= Math.ceil(filteredStaff.length / rowsPerPage) - 1}
-            onClick={() => setPage(page + 1)}
-            sx={{
-              borderColor: "neutral.outlinedBorder",
-              color: "text.primary",
-              bgcolor: "background.level1",
-              borderRadius: "8px",
-              px: 3,
-              py: 1.5,
-              fontSize: "14px",
-              fontWeight: 500,
-              transition: "all 0.2s ease",
-              "&:hover": { 
-                bgcolor: "rgba(58, 58, 60, 0.8)",
-                borderColor: "neutral.200"
-              },
-              "&:disabled": {
-                color: "text.tertiary",
-                borderColor: "rgba(84, 84, 88, 0.3)",
-                bgcolor: "transparent"
-              }
-            }}
-          >
-            Next
-          </Button>
-        </Box>
       </Box>
     </CssVarsProvider>
   );

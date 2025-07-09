@@ -31,6 +31,8 @@ import {
   extendTheme,
   Stack,
   Tooltip,
+  Card,
+  CardContent,
 } from "@mui/joy";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import SearchIcon from "@mui/icons-material/Search";
@@ -44,34 +46,86 @@ import { Member } from "@/src/features/members/memberSlice";
 import { ColorPaletteProp } from "@mui/joy/styles";
 
 // ---------------------------------------------------------------------
-// Dark Theme Configuration
+// Apple-inspired theme
 // ---------------------------------------------------------------------
-const darkTheme = extendTheme({
+const appleTheme = extendTheme({
   colorSchemes: {
     dark: {
       palette: {
         background: {
-          body: "#000",
-          surface: "rgba(0, 0, 0, 0.8)",
-          level1: "rgba(20, 20, 20, 0.9)",
-          level2: "rgba(35, 35, 35, 0.8)",
+          body: "#000000",
+          surface: "rgba(28, 28, 30, 0.98)",
+          level1: "rgba(44, 44, 46, 0.95)",
+          level2: "rgba(58, 58, 60, 0.9)",
         },
         primary: {
-          softColor: "#fff",
-          softBg: "rgba(60, 60, 60, 0.5)",
+          50: "#e3f2fd",
+          100: "#bbdefb",
+          200: "#90caf9",
+          300: "#64b5f6",
+          400: "#42a5f5",
+          500: "#007AFF",
+          600: "#1976d2",
+          700: "#1565c0",
+          800: "#0d47a1",
+          900: "#0a3d62",
+          plainColor: "#007AFF",
+          solidBg: "#007AFF",
+          solidHoverBg: "#0056CC",
         },
         neutral: {
-          outlinedBg: "rgba(45, 45, 45, 0.6)",
-          outlinedColor: "#fff",
-          plainColor: "#fff",
-          plainHoverBg: "rgba(60, 60, 60, 0.5)",
+          50: "#fafafa",
+          100: "#f5f5f5",
+          200: "#eeeeee",
+          300: "#e0e0e0",
+          400: "#bdbdbd",
+          500: "#9e9e9e",
+          600: "#757575",
+          700: "#616161",
+          800: "#424242",
+          900: "#1c1c1e",
+          plainColor: "rgba(255, 255, 255, 0.86)",
+          outlinedBg: "rgba(44, 44, 46, 0.8)",
+          outlinedColor: "rgba(255, 255, 255, 0.86)",
+          outlinedBorder: "rgba(99, 99, 102, 0.4)",
+          plainHoverBg: "rgba(99, 99, 102, 0.16)",
         },
         text: {
-          primary: "#fff",
-          secondary: "rgba(255, 255, 255, 0.7)",
+          primary: "rgba(255, 255, 255, 0.92)",
+          secondary: "rgba(235, 235, 245, 0.6)",
+          tertiary: "rgba(235, 235, 245, 0.3)",
+        },
+        success: {
+          solidBg: "#30D158",
+          plainColor: "#30D158",
+        },
+        warning: {
+          solidBg: "#FF9F0A",
+          plainColor: "#FF9F0A",
+        },
+        danger: {
+          solidBg: "#FF453A",
+          plainColor: "#FF453A",
         },
       },
     },
+  },
+  fontFamily: {
+    body: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif",
+  },
+  radius: {
+    xs: "6px",
+    sm: "8px",
+    md: "12px",
+    lg: "16px",
+    xl: "20px",
+  },
+  shadow: {
+    xs: "0 1px 3px rgba(0, 0, 0, 0.2)",
+    sm: "0 2px 8px rgba(0, 0, 0, 0.15)",
+    md: "0 4px 16px rgba(0, 0, 0, 0.1)",
+    lg: "0 8px 32px rgba(0, 0, 0, 0.08)",
+    xl: "0 12px 48px rgba(0, 0, 0, 0.06)",
   },
 });
 
@@ -171,51 +225,61 @@ export default function IncompletePaymentMembersTable() {
   };
 
   const renderFilters = () => (
-    <Stack spacing={2} direction={{ xs: "column", sm: "row" }} alignItems="flex-start">
-      <FormControl size="sm" sx={{ minWidth: 120 }}>
-        <FormLabel sx={{ color: "rgba(255,255,255,0.7)", textAlign: "left" }}>Payment</FormLabel>
+    <>
+      <FormControl size="sm" sx={{ minWidth: 140 }}>
+        <FormLabel sx={{ color: "text.secondary", fontSize: "13px", fontWeight: 500, letterSpacing: "-0.08px" }}>Payment</FormLabel>
         <Select
           size="sm"
           value={amountFilter}
-          onChange={(e) => setAmountFilter((e?.target as HTMLSelectElement).value)}
-          placeholder="Filter by payment"
+          onChange={(e, newValue) => setAmountFilter(newValue || "all")}
+          placeholder="All Payments"
           sx={{
-            color: "#fff",
-            bgcolor: "rgba(30,30,30,0.8)",
-            "& .MuiSelect-indicator": { color: "#fff" },
-            "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
+            bgcolor: "rgba(44, 44, 46, 0.6)",
+            border: "1px solid rgba(99, 99, 102, 0.3)",
+            borderRadius: "8px",
+            color: "text.primary",
+            fontSize: "14px",
+            fontWeight: 400,
+            backdropFilter: "blur(20px)",
+            "&:hover": { bgcolor: "rgba(44, 44, 46, 0.8)", borderColor: "rgba(99, 99, 102, 0.5)" },
+            "&:focus-within": { borderColor: "primary.500", boxShadow: "0 0 0 2px rgba(0, 122, 255, 0.2)" }
           }}
         >
-          <Option value="all">All</Option>
-          <Option value="paid">Paid</Option>
-          <Option value="unpaid">Unpaid</Option>
+          <Option value="all">All Payments</Option>
+          <Option value="paid">Fully Paid</Option>
+          <Option value="unpaid">Outstanding</Option>
         </Select>
       </FormControl>
-      <FormControl size="sm" sx={{ minWidth: 120 }}>
-        <FormLabel sx={{ color: "rgba(255,255,255,0.7)", textAlign: "left" }}>Plan</FormLabel>
+      <FormControl size="sm" sx={{ minWidth: 140 }}>
+        <FormLabel sx={{ color: "text.secondary", fontSize: "13px", fontWeight: 500, letterSpacing: "-0.08px" }}>Plan</FormLabel>
         <Select
           size="sm"
           value={planFilter}
-          onChange={(e) => setPlanFilter((e?.target as HTMLSelectElement).value)}
-          placeholder="Filter by plan"
+          onChange={(e, newValue) => setPlanFilter(newValue || "all")}
+          placeholder="All Plans"
           sx={{
-            color: "#fff",
-            bgcolor: "rgba(30,30,30,0.8)",
-            "& .MuiSelect-indicator": { color: "#fff" },
-            "&:hover": { bgcolor: "rgba(40,40,40,0.8)" },
+            bgcolor: "rgba(44, 44, 46, 0.6)",
+            border: "1px solid rgba(99, 99, 102, 0.3)",
+            borderRadius: "8px",
+            color: "text.primary",
+            fontSize: "14px",
+            fontWeight: 400,
+            backdropFilter: "blur(20px)",
+            "&:hover": { bgcolor: "rgba(44, 44, 46, 0.8)", borderColor: "rgba(99, 99, 102, 0.5)" },
+            "&:focus-within": { borderColor: "primary.500", boxShadow: "0 0 0 2px rgba(0, 122, 255, 0.2)" }
           }}
         >
-          <Option value="all">All</Option>
+          <Option value="all">All Plans</Option>
           <Option value="Basic">Basic</Option>
           <Option value="Premium">Premium</Option>
           <Option value="Gold">Gold</Option>
         </Select>
       </FormControl>
-    </Stack>
+    </>
   );
 
   return (
-    <CssVarsProvider theme={darkTheme} defaultMode="dark">
+    <CssVarsProvider theme={appleTheme} defaultMode="dark">
       <Sheet sx={{ p: 2, borderRadius: "sm", bgcolor: "transparent" }}>
         {/* Mobile Search and Filters */}
         <Sheet

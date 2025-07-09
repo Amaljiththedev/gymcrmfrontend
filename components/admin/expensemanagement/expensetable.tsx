@@ -7,7 +7,7 @@ import { RootState, AppDispatch } from "@/src/store/store";
 import {
   fetchExpenses,
   fetchExpenseMeta,
-  exportExpenses, // Import the new export thunk
+  exportExpenses,
   Expense,
   Choice,
 } from "@/src/features/expense/expenseSlice";
@@ -34,6 +34,8 @@ import {
   Typography,
   Divider,
   extendTheme,
+  Avatar,
+  Badge,
 } from "@mui/joy";
 import {
   FilterAlt as FilterAltIcon,
@@ -45,33 +47,157 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Download as DownloadIcon,
+  TrendingUp as TrendingUpIcon,
+  Receipt as ReceiptIcon,
+  Category as CategoryIcon,
+  DateRange as DateRangeIcon,
+  Clear as ClearIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 
-// ────── Theme ──────
-const darkTheme = extendTheme({
+// ────── Enhanced Apple Theme ──────
+const appleProTheme = extendTheme({
   colorSchemes: {
     dark: {
       palette: {
-        background: { body: "#000", level1: "rgba(20,20,20,0.9)" },
-        text: { primary: "#fff", secondary: "rgba(255,255,255,0.7)" },
+        background: {
+          body: "#000000",
+          surface: "rgba(28, 28, 30, 0.95)",
+          level1: "rgba(44, 44, 46, 0.9)",
+          level2: "rgba(58, 58, 60, 0.85)",
+          level3: "rgba(72, 72, 74, 0.8)",
+        },
+        primary: {
+          50: "#e6f3ff",
+          100: "#b3d9ff",
+          200: "#80bfff",
+          300: "#4da6ff",
+          400: "#1a8cff",
+          500: "#007AFF",
+          600: "#0056b3",
+          700: "#004085",
+          800: "#002952",
+          900: "#001f3f",
+          plainColor: "#007AFF",
+          solidBg: "#007AFF",
+          solidHoverBg: "#0056CC",
+          solidActiveBg: "#004499",
+        },
+        neutral: {
+          50: "#ffffff",
+          100: "#f5f5f7",
+          200: "#e5e5ea",
+          300: "#d1d1d6",
+          400: "#c7c7cc",
+          500: "#aeaeb2",
+          600: "#8e8e93",
+          700: "#636366",
+          800: "#48484a",
+          900: "#1c1c1e",
+          plainColor: "rgba(255, 255, 255, 0.9)",
+          outlinedBg: "rgba(44, 44, 46, 0.6)",
+          outlinedColor: "rgba(255, 255, 255, 0.9)",
+          outlinedBorder: "rgba(99, 99, 102, 0.3)",
+          plainHoverBg: "rgba(99, 99, 102, 0.12)",
+        },
+        text: {
+          primary: "rgba(255, 255, 255, 0.95)",
+          secondary: "rgba(235, 235, 245, 0.65)",
+          tertiary: "rgba(235, 235, 245, 0.35)",
+        },
+        success: {
+          solidBg: "#30D158",
+          plainColor: "#30D158",
+          50: "#e6f9ea",
+          500: "#30D158",
+        },
+        warning: {
+          solidBg: "#FF9F0A",
+          plainColor: "#FF9F0A",
+          50: "#fff5e6",
+          500: "#FF9F0A",
+        },
+        danger: {
+          solidBg: "#FF453A",
+          plainColor: "#FF453A",
+          50: "#ffe6e6",
+          500: "#FF453A",
+        },
       },
     },
+  },
+  fontFamily: {
+    body: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif",
+    display: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  },
+  fontSize: {
+    xs: "0.75rem",   // 12px
+    sm: "0.8125rem", // 13px
+    md: "0.9375rem", // 15px
+    lg: "1.0625rem", // 17px
+    xl: "1.25rem",   // 20px
+  },
+  fontWeight: {
+    xs: 300,
+    sm: 400,
+    md: 500,
+    lg: 600,
+    xl: 700,
+  },
+  radius: {
+    xs: "4px",
+    sm: "6px",
+    md: "8px",
+    lg: "12px",
+    xl: "16px",
+  },
+  shadow: {
+    xs: "0 1px 2px rgba(0, 0, 0, 0.05)",
+    sm: "0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
+    md: "0 4px 8px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08)",
+    lg: "0 8px 16px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)",
+    xl: "0 16px 32px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15)",
   },
 });
 
 // ────── Sort Helpers ──────
 type Order = "asc" | "desc";
-type SortKey =
-  | "id"
-  | "title"
-  | "amount"
-  | "category"
-  | "expense_source"
-  | "date";
+type SortKey = "id" | "title" | "amount" | "category" | "expense_source" | "date";
+
 const sortFn = (ord: Order, key: SortKey) =>
   ord === "desc"
     ? (a: Expense, b: Expense) => ((b as any)[key] > (a as any)[key] ? 1 : -1)
     : (a: Expense, b: Expense) => ((a as any)[key] > (b as any)[key] ? 1 : -1);
+
+// ────── Utility Functions ──────
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const getCategoryColor = (category: string) => {
+  const colors: { [key: string]: string } = {
+    'equipment': 'primary',
+    'maintenance': 'warning',
+    'utilities': 'success',
+    'marketing': 'danger',
+    'staff': 'neutral',
+    'default': 'neutral'
+  };
+  return colors[category.toLowerCase()] || colors.default;
+};
 
 // ────── Component ──────
 export default function ExpenseTable() {
@@ -92,7 +218,7 @@ export default function ExpenseTable() {
   const [order, setOrder] = useState<Order>("desc");
   const [orderBy, setOrderBy] = useState<SortKey>("date");
   const [page, setPage] = useState(0);
-  const [rowsPerPage] = useState(10);
+  const [rowsPerPage] = useState(12);
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -104,7 +230,11 @@ export default function ExpenseTable() {
 
   // Set quick month filter into start & end dates
   useEffect(() => {
-    if (quick === "all") return;
+    if (quick === "all") {
+      setStart("");
+      setEnd("");
+      return;
+    }
     const today = new Date();
     const base =
       quick === "this"
@@ -118,7 +248,7 @@ export default function ExpenseTable() {
     );
   }, [quick]);
 
-  // Filter and sort expenses based on the state parameters
+  // Filter and sort expenses
   const filtered = useMemo(() => {
     return expenses
       .filter((e) => {
@@ -133,7 +263,7 @@ export default function ExpenseTable() {
       .sort(sortFn(order, orderBy));
   }, [expenses, search, start, end, categoryFilter, sourceFilter, order, orderBy]);
 
-  // New export handler that dispatches the export thunk with filter parameters
+  // Export handler
   const handleExport = () => {
     const params = {
       category: categoryFilter !== "all" ? categoryFilter : undefined,
@@ -146,6 +276,7 @@ export default function ExpenseTable() {
     dispatch(exportExpenses(params));
   };
 
+  // Clear all filters
   const clearAll = () => {
     setSearch("");
     setCategoryFilter("all");
@@ -153,25 +284,50 @@ export default function ExpenseTable() {
     setQuick("all");
     setStart("");
     setEnd("");
+    setPage(0);
   };
 
-  const X = () => (
-    <Box component="span" sx={{ ml: 0.5, fontSize: 12, cursor: "pointer" }}>
-      ×
-    </Box>
-  );
+  // Active filter count
+  const activeFilters = [
+    categoryFilter !== "all",
+    sourceFilter !== "all",
+    search.trim() !== "",
+    start !== "",
+    end !== "",
+  ].filter(Boolean).length;
+
+  // Calculate totals
+  const totalAmount = filtered.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const monthlyAverage = filtered.length > 0 ? totalAmount / Math.max(1, new Set(filtered.map(e => e.date.slice(0, 7))).size) : 0;
 
   // Reusable Filters Component
-  const Filters = () => (
-    <>
-      <FormControl size="sm">
-        <FormLabel>Category</FormLabel>
+  const Filters = ({ isMobile = false }) => (
+    <Stack spacing={isMobile ? 3 : 2} sx={{ width: '100%' }}>
+      <FormControl size={isMobile ? "md" : "sm"}>
+        <FormLabel sx={{ 
+          color: "text.secondary", 
+          fontSize: isMobile ? "15px" : "13px",
+          fontWeight: 500,
+          mb: 1
+        }}>
+          Category
+        </FormLabel>
         <Select
-          size="sm"
+          size={isMobile ? "md" : "sm"}
           value={categoryFilter}
           onChange={(_, v) => setCategoryFilter(v ?? "all")}
+          startDecorator={<CategoryIcon sx={{ fontSize: "18px" }} />}
+          sx={{
+            bgcolor: "rgba(44, 44, 46, 0.6)",
+            border: "1px solid rgba(99, 99, 102, 0.3)",
+            borderRadius: isMobile ? "12px" : "8px",
+            "&:hover": {
+              bgcolor: "rgba(44, 44, 46, 0.8)",
+              borderColor: "rgba(99, 99, 102, 0.5)"
+            }
+          }}
         >
-          <Option value="all">All</Option>
+          <Option value="all">All Categories</Option>
           {categories.map((c: Choice) => (
             <Option key={c.value} value={c.value}>
               {c.label}
@@ -180,14 +336,31 @@ export default function ExpenseTable() {
         </Select>
       </FormControl>
 
-      <FormControl size="sm">
-        <FormLabel>Source</FormLabel>
+      <FormControl size={isMobile ? "md" : "sm"}>
+        <FormLabel sx={{ 
+          color: "text.secondary", 
+          fontSize: isMobile ? "15px" : "13px",
+          fontWeight: 500,
+          mb: 1
+        }}>
+          Source
+        </FormLabel>
         <Select
-          size="sm"
+          size={isMobile ? "md" : "sm"}
           value={sourceFilter}
           onChange={(_, v) => setSourceFilter(v ?? "all")}
+          startDecorator={<ReceiptIcon sx={{ fontSize: "18px" }} />}
+          sx={{
+            bgcolor: "rgba(44, 44, 46, 0.6)",
+            border: "1px solid rgba(99, 99, 102, 0.3)",
+            borderRadius: isMobile ? "12px" : "8px",
+            "&:hover": {
+              bgcolor: "rgba(44, 44, 46, 0.8)",
+              borderColor: "rgba(99, 99, 102, 0.5)"
+            }
+          }}
         >
-          <Option value="all">All</Option>
+          <Option value="all">All Sources</Option>
           {sources.map((s: Choice) => (
             <Option key={s.value} value={s.value}>
               {s.label}
@@ -196,291 +369,531 @@ export default function ExpenseTable() {
         </Select>
       </FormControl>
 
-      <FormControl size="sm">
-        <FormLabel>Quick month</FormLabel>
+      <FormControl size={isMobile ? "md" : "sm"}>
+        <FormLabel sx={{ 
+          color: "text.secondary", 
+          fontSize: isMobile ? "15px" : "13px",
+          fontWeight: 500,
+          mb: 1
+        }}>
+          Time Period
+        </FormLabel>
         <Select
-          size="sm"
+          size={isMobile ? "md" : "sm"}
           value={quick}
           onChange={(_, v) => setQuick((v ?? "all") as any)}
+          startDecorator={<DateRangeIcon sx={{ fontSize: "18px" }} />}
+          sx={{
+            bgcolor: "rgba(44, 44, 46, 0.6)",
+            border: "1px solid rgba(99, 99, 102, 0.3)",
+            borderRadius: isMobile ? "12px" : "8px",
+            "&:hover": {
+              bgcolor: "rgba(44, 44, 46, 0.8)",
+              borderColor: "rgba(99, 99, 102, 0.5)"
+            }
+          }}
         >
-          <Option value="all">Any</Option>
-          <Option value="this">This month</Option>
-          <Option value="last">Last month</Option>
+          <Option value="all">All Time</Option>
+          <Option value="this">This Month</Option>
+          <Option value="last">Last Month</Option>
         </Select>
       </FormControl>
 
-      <Stack direction="row" spacing={1}>
-        <Input
-          type="date"
-          size="sm"
-          value={start}
-          onChange={(e) => setStart(e.target.value)}
-        />
-        <Input
-          type="date"
-          size="sm"
-          value={end}
-          onChange={(e) => setEnd(e.target.value)}
-        />
+      <Stack direction={isMobile ? "column" : "row"} spacing={isMobile ? 2 : 1}>
+        <FormControl sx={{ flex: 1 }}>
+          <FormLabel sx={{ 
+            color: "text.secondary", 
+            fontSize: isMobile ? "15px" : "13px",
+            fontWeight: 500,
+            mb: 1
+          }}>
+            From
+          </FormLabel>
+          <Input
+            type="date"
+            size={isMobile ? "md" : "sm"}
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+            sx={{
+              bgcolor: "rgba(44, 44, 46, 0.6)",
+              border: "1px solid rgba(99, 99, 102, 0.3)",
+              borderRadius: isMobile ? "12px" : "8px",
+              "&:hover": {
+                bgcolor: "rgba(44, 44, 46, 0.8)",
+                borderColor: "rgba(99, 99, 102, 0.5)"
+              }
+            }}
+          />
+        </FormControl>
+        <FormControl sx={{ flex: 1 }}>
+          <FormLabel sx={{ 
+            color: "text.secondary", 
+            fontSize: isMobile ? "15px" : "13px",
+            fontWeight: 500,
+            mb: 1
+          }}>
+            To
+          </FormLabel>
+          <Input
+            type="date"
+            size={isMobile ? "md" : "sm"}
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+            sx={{
+              bgcolor: "rgba(44, 44, 46, 0.6)",
+              border: "1px solid rgba(99, 99, 102, 0.3)",
+              borderRadius: isMobile ? "12px" : "8px",
+              "&:hover": {
+                bgcolor: "rgba(44, 44, 46, 0.8)",
+                borderColor: "rgba(99, 99, 102, 0.5)"
+              }
+            }}
+          />
+        </FormControl>
       </Stack>
-    </>
+
+      {activeFilters > 0 && (
+        <Button
+          size={isMobile ? "md" : "sm"}
+          variant="soft"
+          color="neutral"
+          startDecorator={<ClearIcon />}
+          onClick={clearAll}
+          sx={{
+            bgcolor: "rgba(99, 99, 102, 0.2)",
+            color: "text.secondary",
+            borderRadius: isMobile ? "12px" : "8px",
+            "&:hover": {
+              bgcolor: "rgba(99, 99, 102, 0.3)",
+              color: "text.primary"
+            }
+          }}
+        >
+          Clear All Filters
+        </Button>
+      )}
+    </Stack>
   );
 
   // ────── Render ──────
   return (
-    <CssVarsProvider theme={darkTheme} defaultMode="dark">
-      {/* Mobile Filters */}
-      <Sheet
-        sx={{
-          display: { xs: "flex", sm: "none" },
-          my: 1,
-          gap: 1,
-          bgcolor: "transparent",
-        }}
-      >
-        <Input
-          size="sm"
-          placeholder="Search expenses…"
-          startDecorator={<SearchIcon />}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ flexGrow: 1 }}
-        />
-        <IconButton size="sm" variant="outlined" onClick={() => setFilterOpen(true)}>
-          <FilterAltIcon />
-        </IconButton>
-        <Modal open={filterOpen} onClose={() => setFilterOpen(false)}>
-          <ModalDialog layout="fullscreen">
-            <ModalClose />
-            <Typography level="h2">Filters</Typography>
-            <Divider sx={{ my: 2 }} />
-            <Stack spacing={2}>
-              <Filters />
-              <Button onClick={() => setFilterOpen(false)}>Apply</Button>
-            </Stack>
-          </ModalDialog>
-        </Modal>
-      </Sheet>
-
-      {/* Desktop / Tablet Filters */}
-      <Box
-        sx={{
-          display: { xs: "none", sm: "flex" },
-          flexWrap: "wrap",
-          gap: 1.5,
-          mb: 1,
-          "& > *": { minWidth: { xs: 120, md: 160 } },
-        }}
-      >
-        <FormControl size="sm" sx={{ flex: 1 }}>
-          <FormLabel>Search</FormLabel>
-          <Input
-            size="sm"
-            placeholder="Title, description…"
-            startDecorator={<SearchIcon />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </FormControl>
-        <Filters />
-        <Button
-          size="sm"
-          variant="solid"
-          color="danger"
-          startDecorator={<DownloadIcon />}
-          onClick={handleExport}
-          sx={{ alignSelf: "end" }}
-        >
-          Excel
-        </Button>
-      </Box>
-
-      {/* Active Chips */}
-      <Stack direction="row" spacing={1} mb={1} flexWrap="wrap">
-        {categoryFilter !== "all" && (
-          <Chip onClick={() => setCategoryFilter("all")} endDecorator={<X />}>
-            Category: {categoryFilter}
-          </Chip>
-        )}
-        {sourceFilter !== "all" && (
-          <Chip onClick={() => setSourceFilter("all")} endDecorator={<X />}>
-            Source: {sourceFilter}
-          </Chip>
-        )}
-        {quick !== "all" && (
-          <Chip onClick={() => setQuick("all")} endDecorator={<X />}>
-            {quick === "this" ? "This month" : "Last month"}
-          </Chip>
-        )}
-        {(start || end) && (
-          <Chip
-            onClick={() => {
-              setStart("");
-              setEnd("");
-              setQuick("all");
+    <CssVarsProvider theme={appleProTheme} defaultMode="dark">
+      <Box sx={{
+        minHeight: "100vh",
+        bgcolor: "background.body",
+        p: { xs: 2, sm: 3, md: 4 },
+        fontFamily: "body"
+      }}>
+        {/* Header Section */}
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            level="h1"
+            sx={{
+              fontSize: { xs: "28px", sm: "32px", md: "40px" },
+              fontWeight: 700,
+              color: "text.primary",
+              mb: 1,
+              letterSpacing: "-0.025em",
+              fontFamily: "display"
             }}
-            endDecorator={<X />}
           >
-            {start || "…"} – {end || "…"}
-          </Chip>
-        )}
-        {search && (
-          <Chip onClick={() => setSearch("")} endDecorator={<X />}>
-            “{search}”
-          </Chip>
-        )}
-        {(categoryFilter !== "all" ||
-          sourceFilter !== "all" ||
-          quick !== "all" ||
-          start ||
-          end ||
-          search) && (
-          <Button size="sm" variant="plain" onClick={clearAll}>
-            Clear All
-          </Button>
-        )}
-      </Stack>
+            Expense Management
+          </Typography>
+          <Typography
+            level="body-lg"
+            sx={{
+              color: "text.secondary",
+              fontSize: { xs: "15px", sm: "17px" },
+              fontWeight: 400,
+              mb: 3
+            }}
+          >
+            Track and manage your business expenses with detailed insights
+          </Typography>
 
-      {/* Table */}
-      <Sheet
-        variant="outlined"
-        sx={{ borderRadius: "sm", overflow: "auto", bgcolor: "rgba(20,20,20,0.6)" }}
-      >
-        <Table
-          stickyHeader
-          hoverRow
-          sx={{
-            display: { xs: "none", md: "table" },
-            "--TableCell-headBackground": "rgba(25,25,25,0.9)",
-            "& thead th": { color: "#fff", fontWeight: "bold" },
-          }}
-        >
-          <thead>
-            <tr>
-              {[
-                { id: "id", label: "ID" },
-                { id: "title", label: "Title" },
-                { id: "amount", label: "Amount" },
-                { id: "category", label: "Category" },
-                { id: "expense_source", label: "Source" },
-                { id: "date", label: "Date" },
-                { id: "actions", label: "Actions", sortable: false },
-              ].map((h) => (
-                <th key={h.id}>
-                  {h.sortable === false ? (
-                    h.label
-                  ) : (
-                    <Button
+          {/* Summary Cards */}
+          <Stack 
+            direction={{ xs: "column", sm: "row" }} 
+            spacing={2}
+            sx={{ mb: 4 }}
+          >
+            <Card sx={{
+              flex: 1,
+              bgcolor: "rgba(44, 44, 46, 0.6)",
+              border: "1px solid rgba(99, 99, 102, 0.2)",
+              borderRadius: "16px",
+              backdropFilter: "blur(20px)",
+              p: 2
+            }}>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Avatar sx={{ 
+                    bgcolor: "primary.500", 
+                    width: 48, 
+                    height: 48 
+                  }}>
+                    <TrendingUpIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography level="body-sm" sx={{ color: "text.secondary", mb: 0.5 }}>
+                      Total Expenses
+                    </Typography>
+                    <Typography level="h3" sx={{ color: "text.primary", fontWeight: 600 }}>
+                      {formatCurrency(totalAmount)}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card sx={{
+              flex: 1,
+              bgcolor: "rgba(44, 44, 46, 0.6)",
+              border: "1px solid rgba(99, 99, 102, 0.2)",
+              borderRadius: "16px",
+              backdropFilter: "blur(20px)",
+              p: 2
+            }}>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Avatar sx={{ 
+                    bgcolor: "success.500", 
+                    width: 48, 
+                    height: 48 
+                  }}>
+                    <ReceiptIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography level="body-sm" sx={{ color: "text.secondary", mb: 0.5 }}>
+                      Total Records
+                    </Typography>
+                    <Typography level="h3" sx={{ color: "text.primary", fontWeight: 600 }}>
+                      {filtered.length}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card sx={{
+              flex: 1,
+              bgcolor: "rgba(44, 44, 46, 0.6)",
+              border: "1px solid rgba(99, 99, 102, 0.2)",
+              borderRadius: "16px",
+              backdropFilter: "blur(20px)",
+              p: 2
+            }}>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Avatar sx={{ 
+                    bgcolor: "warning.500", 
+                    width: 48, 
+                    height: 48 
+                  }}>
+                    <DateRangeIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography level="body-sm" sx={{ color: "text.secondary", mb: 0.5 }}>
+                      Monthly Avg
+                    </Typography>
+                    <Typography level="h3" sx={{ color: "text.primary", fontWeight: 600 }}>
+                      {formatCurrency(monthlyAverage)}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Stack>
+        </Box>
+
+        {/* Search and Filters Section */}
+        <Box sx={{ mb: 4 }}>
+          {/* Mobile Search Bar */}
+          <Box sx={{ display: { xs: "flex", md: "none" }, mb: 3, gap: 2 }}>
+            <Input
+              size="md"
+              placeholder="Search expenses..."
+              startDecorator={<SearchIcon sx={{ color: "text.secondary" }} />}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{
+                flex: 1,
+                bgcolor: "rgba(44, 44, 46, 0.6)",
+                border: "1px solid rgba(99, 99, 102, 0.3)",
+                borderRadius: "12px",
+                fontSize: "16px",
+                "&:hover": {
+                  bgcolor: "rgba(44, 44, 46, 0.8)",
+                  borderColor: "rgba(99, 99, 102, 0.5)"
+                },
+                "&:focus-within": {
+                  borderColor: "primary.500",
+                  boxShadow: "0 0 0 2px rgba(0, 122, 255, 0.2)"
+                }
+              }}
+            />
+            <IconButton
+              size="md"
+              variant="outlined"
+              onClick={() => setFilterOpen(true)}
+              sx={{
+                borderRadius: "12px",
+                bgcolor: "rgba(44, 44, 46, 0.6)",
+                borderColor: "rgba(99, 99, 102, 0.3)",
+                "&:hover": {
+                  bgcolor: "rgba(44, 44, 46, 0.8)",
+                  borderColor: "rgba(99, 99, 102, 0.5)"
+                }
+              }}
+            >
+              <Badge badgeContent={activeFilters} color="primary" size="sm">
+                <FilterAltIcon />
+              </Badge>
+            </IconButton>
+          </Box>
+
+          {/* Desktop Search and Filters */}
+          <Card sx={{
+            display: { xs: "none", md: "block" },
+            bgcolor: "rgba(44, 44, 46, 0.4)",
+            border: "1px solid rgba(99, 99, 102, 0.2)",
+            borderRadius: "20px",
+            backdropFilter: "blur(20px)",
+            p: 3
+          }}>
+            <Stack spacing={3}>
+              {/* Search Row */}
+              <Box sx={{ display: "flex", gap: 3, alignItems: "end" }}>
+                <FormControl sx={{ flex: 1, maxWidth: "400px" }}>
+                  <FormLabel sx={{
+                    color: "text.secondary",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    mb: 1
+                  }}>
+                    Search Expenses
+                  </FormLabel>
+                  <Input
+                    size="md"
+                    placeholder="Search by title, description, category..."
+                    startDecorator={<SearchIcon sx={{ color: "text.secondary" }} />}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    sx={{
+                      bgcolor: "rgba(44, 44, 46, 0.6)",
+                      border: "1px solid rgba(99, 99, 102, 0.3)",
+                      borderRadius: "12px",
+                      fontSize: "15px",
+                      "&:hover": {
+                        bgcolor: "rgba(44, 44, 46, 0.8)",
+                        borderColor: "rgba(99, 99, 102, 0.5)"
+                      },
+                      "&:focus-within": {
+                        borderColor: "primary.500",
+                        boxShadow: "0 0 0 2px rgba(0, 122, 255, 0.2)"
+                      }
+                    }}
+                  />
+                </FormControl>
+                <Button
+                  size="md"
+                  variant="solid"
+                  color="primary"
+                  startDecorator={<DownloadIcon />}
+                  onClick={handleExport}
+                  sx={{
+                    borderRadius: "12px",
+                    px: 3,
+                    fontWeight: 600
+                  }}
+                >
+                  Export Excel
+                </Button>
+              </Box>
+
+              {/* Filters Row */}
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "end" }}>
+                <Filters />
+              </Box>
+
+              {/* Active Filters Display */}
+              {activeFilters > 0 && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                  <Typography level="body-sm" sx={{ color: "text.secondary", mr: 1 }}>
+                    Active filters:
+                  </Typography>
+                  {categoryFilter !== "all" && (
+                    <Chip
+                      variant="soft"
+                      color="primary"
                       size="sm"
-                      variant="plain"
-                      endDecorator={<ArrowDropDownIcon />}
-                      onClick={() => {
-                        setOrderBy(h.id as SortKey);
-                        setOrder(order === "asc" ? "desc" : "asc");
-                      }}
-                      sx={{
-                        color: "#fff",
-                        "& svg": {
-                          transform:
-                            orderBy === h.id && order === "asc"
-                              ? "rotate(180deg)"
-                              : "none",
-                        },
-                      }}
+                      endDecorator={
+                        <CloseIcon 
+                          sx={{ fontSize: "14px", cursor: "pointer" }}
+                          onClick={() => setCategoryFilter("all")}
+                        />
+                      }
                     >
-                      {h.label}
-                    </Button>
+                      Category: {categories.find(c => c.value === categoryFilter)?.label}
+                    </Chip>
                   )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: 32 }}>
-                  Loading…
-                </td>
-              </tr>
-            ) : (
-              filtered
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((e) => (
-                  <tr key={e.id}>
-                    <td>#{e.id}</td>
-                    <td>{e.title}</td>
-                    <td>₹{Number(e.amount).toLocaleString()}</td>
-                    <td>{e.category}</td>
-                    <td>{e.expense_source}</td>
-                    <td>{e.date}</td>
-                    <td>
-                      <Stack direction="row" spacing={1}>
+                  {sourceFilter !== "all" && (
+                    <Chip
+                      variant="soft"
+                      color="primary"  
+                      size="sm"
+                      endDecorator={
+                        <CloseIcon 
+                          sx={{ fontSize: "14px", cursor: "pointer" }}
+                          onClick={() => setSourceFilter("all")}
+                        />
+                      }
+                    >
+                      Source: {sources.find(s => s.value === sourceFilter)?.label}
+                    </Chip>
+                  )}
+                  {search && (
+                    <Chip
+                      variant="soft"
+                      color="primary"
+                      size="sm"
+                      endDecorator={
+                        <CloseIcon 
+                          sx={{ fontSize: "14px", cursor: "pointer" }}
+                          onClick={() => setSearch("")}
+                        />
+                      }
+                    >
+                      Search: {search}
+                    </Chip>
+                  )}
+                </Box>
+              )}
+            </Stack>
+          </Card>
+        </Box>
+
+        {/* Main Table */}
+        <Card sx={{
+          bgcolor: "rgba(44, 44, 46, 0.4)",
+          border: "1px solid rgba(99, 99, 102, 0.2)",
+          borderRadius: "20px",
+          backdropFilter: "blur(20px)",
+          overflow: "hidden",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)"
+        }}>
+          {loading ? (
+            <Box sx={{ 
+              display: "flex", 
+              justifyContent: "center", 
+              alignItems: "center", 
+              minHeight: "400px" 
+            }}>
+              <Typography sx={{ color: "text.secondary" }}>Loading expenses...</Typography>
+            </Box>
+          ) : (
+            <>
+              {/* Desktop Table */}
+              <Table
+                stickyHeader
+                hoverRow
+                sx={{
+                  display: { xs: "none", md: "table" },
+                  "--TableCell-headBackground": "rgba(58, 58, 60, 0.8)",
+                  "--TableCell-paddingY": "20px",
+                  "--TableCell-paddingX": "24px",
+                  "--TableRow-hoverBackground": "rgba(99, 99, 102, 0.06)",
+                  "& thead th": {
+                    color: "text.primary",
+                    fontWeight: 600,
+                    fontSize: 15,
+                  },
+                }}
+              >
+                {/* Table Head */}
+                <thead>
+                  <tr>
+                    <th onClick={() => { setOrderBy('date'); setOrder(orderBy === 'date' && order === 'desc' ? 'asc' : 'desc'); }} style={{ cursor: 'pointer' }}>Date</th>
+                    <th onClick={() => { setOrderBy('title'); setOrder(orderBy === 'title' && order === 'desc' ? 'asc' : 'desc'); }} style={{ cursor: 'pointer' }}>Title</th>
+                    <th>Description</th>
+                    <th onClick={() => { setOrderBy('category'); setOrder(orderBy === 'category' && order === 'desc' ? 'asc' : 'desc'); }} style={{ cursor: 'pointer' }}>Category</th>
+                    <th onClick={() => { setOrderBy('expense_source'); setOrder(orderBy === 'expense_source' && order === 'desc' ? 'asc' : 'desc'); }} style={{ cursor: 'pointer' }}>Source</th>
+                    <th onClick={() => { setOrderBy('amount'); setOrder(orderBy === 'amount' && order === 'desc' ? 'asc' : 'desc'); }} style={{ cursor: 'pointer' }}>Amount</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                {/* Table Body */}
+                <tbody>
+                  {filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((expense) => (
+                    <tr key={expense.id}>
+                      <td>{formatDate(expense.date)}</td>
+                      <td>{expense.title}</td>
+                      <td>{expense.description}</td>
+                      <td>
+                        <Chip 
+                          variant="soft" 
+                          size="sm" 
+                          color={getCategoryColor(expense.category) as 'primary' | 'success' | 'warning' | 'danger' | 'neutral'}
+                          sx={{
+                            textTransform: 'capitalize',
+                            fontWeight: 500,
+                            fontSize: '12px',
+                            borderRadius: '8px',
+                            px: 1.5,
+                            py: 0.5,
+                            border: 'none',
+                          }}
+                        >
+                          {expense.category}
+                        </Chip>
+                      </td>
+                      <td>{expense.expense_source}</td>
+                      <td>{formatCurrency(Number(expense.amount))}</td>
+                      <td>
                         <Tooltip title="View">
-                          <IconButton
-                            size="sm"
-                            variant="plain"
-                            onClick={() => router.push(`/admin/expensemanagement/view/${e.id}`)}
-                          >
-                            <VisibilityIcon />
+                          <IconButton size="sm" onClick={() => router.push(`/admin/expensemanagement/view/${expense.id}`)}>
+                            <VisibilityIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Edit">
-                          <IconButton
-                            size="sm"
-                            variant="plain"
-                            onClick={() => router.push(`/admin/expensemanagement/edit/${e.id}`)}
-                          >
-                            <EditIcon />
+                          <IconButton size="sm" onClick={() => router.push(`/admin/expensemanagement/add?id=${expense.id}`)}>
+                            <EditIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Delete">
-                          <IconButton size="sm" variant="plain" color="danger">
-                            <DeleteIcon />
+                          <IconButton size="sm" color="danger">
+                            <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                      </Stack>
-                    </td>
-                  </tr>
-                ))
-            )}
-          </tbody>
-        </Table>
-
-        {/* Pagination */}
-        <Box
-          sx={{
-            mt: 2,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Typography level="body-sm">
-            Showing {Math.min(filtered.length, (page + 1) * rowsPerPage)} of{" "}
-            {filtered.length} expenses
-          </Typography>
-          <Stack direction="row" spacing={1}>
-            <Button
-              size="sm"
-              variant="outlined"
-              startDecorator={<KeyboardArrowLeftIcon />}
-              disabled={page === 0}
-              onClick={() => setPage(page - 1)}
-            >
-              Prev
-            </Button>
-            <Button
-              size="sm"
-              variant="outlined"
-              endDecorator={<KeyboardArrowRightIcon />}
-              disabled={page >= Math.ceil(filtered.length / rowsPerPage) - 1}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </Button>
-          </Stack>
-        </Box>
-      </Sheet>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              {/* Pagination */}
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end', alignItems: 'center', p: 2 }}>
+                <IconButton disabled={page === 0} onClick={() => setPage(page - 1)}>
+                  <KeyboardArrowLeftIcon />
+                </IconButton>
+                <Typography sx={{ mx: 2 }}>{page + 1} / {Math.ceil(filtered.length / rowsPerPage)}</Typography>
+                <IconButton disabled={page >= Math.ceil(filtered.length / rowsPerPage) - 1} onClick={() => setPage(page + 1)}>
+                  <KeyboardArrowRightIcon />
+                </IconButton>
+              </Box>
+              {/* Mobile Table (optional: can be simplified or omitted) */}
+              {/* Filter Modal for mobile */}
+              <Modal open={filterOpen} onClose={() => setFilterOpen(false)}>
+                <ModalDialog>
+                  <ModalClose />
+                  <Typography level="h4" sx={{ mb: 2 }}>Filters</Typography>
+                  <Filters isMobile />
+                  <Button onClick={() => setFilterOpen(false)} sx={{ mt: 2 }} fullWidth>Apply</Button>
+                </ModalDialog>
+              </Modal>
+            </>
+          )}
+        </Card>
+      </Box>
     </CssVarsProvider>
   );
 }

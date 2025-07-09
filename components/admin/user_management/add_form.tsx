@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import ReactDOM from "react-dom";
 import { 
   User, 
   Mail, 
@@ -20,13 +21,11 @@ import {
   ArrowRight,
   ArrowLeft
 } from "lucide-react";
-
-// Mock data for demonstration
-const mockPlans = [
-  { id: 1, name: "Basic", duration_days: 30, price: 1500 },
-  { id: 2, name: "Premium", duration_days: 90, price: 4000 },
-  { id: 3, name: "Annual", duration_days: 365, price: 15000 },
-];
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/src/store/store";
+import { fetchMembershipPlans } from "@/src/features/membershipPlans/membershipPlanSlice";
+import { createMember } from "@/src/features/members/memberSlice";
+import { useRouter } from "next/navigation";
 
 // Date utility functions
 const formatDate = (date: Date) => {
@@ -69,13 +68,36 @@ function DatePickerWithYearSelection({
   placeholder = "Select date",
   icon: Icon = Calendar
 }: DatePickerWithYearSelectionProps) {
+  const isDOB = label.toLowerCase().includes("birth");
+  const defaultDate = isDOB ? new Date(2000, 0, 1) : new Date();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [currentYear, setCurrentYear] = useState(
-    getYear(field?.value || new Date())
+    getYear(field?.value || defaultDate)
   );
   const [currentMonth, setCurrentMonth] = useState(
-    getMonth(field?.value || new Date())
+    getMonth(field?.value || defaultDate)
   );
+  const calendarRef = useRef<HTMLDivElement>(null);
+  // Click outside handler
+  useEffect(() => {
+    if (!calendarOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
+        setCalendarOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [calendarOpen]);
+  // Keyboard navigation: close on Escape
+  useEffect(() => {
+    if (!calendarOpen) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setCalendarOpen(false);
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [calendarOpen]);
 
   const years = Array.from({ length: toYear - fromYear + 1 }, (_, i) => toYear - i);
   const months = [
@@ -162,6 +184,9 @@ function DatePickerWithYearSelection({
           type="button"
           onClick={() => setCalendarOpen(!calendarOpen)}
           className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-left text-white hover:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          tabIndex={0}
+          aria-haspopup="dialog"
+          aria-expanded={calendarOpen}
         >
           <div className="flex items-center justify-between">
             <span className={field?.value ? "text-white" : "text-gray-400"}>
@@ -171,74 +196,108 @@ function DatePickerWithYearSelection({
           </div>
         </button>
         
-        {calendarOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-600 rounded-xl shadow-2xl z-50 p-4">
-            <div className="flex justify-between items-center mb-4">
-              <button
-                type="button"
-                onClick={() => handleYearChange(currentYear - 1)}
-                disabled={currentYear <= fromYear}
-                className="p-1 hover:bg-gray-700 rounded disabled:opacity-50"
-              >
-                <ChevronDown className="w-4 h-4" />
-              </button>
-              <select
-                value={currentYear}
-                onChange={(e) => handleYearChange(Number(e.target.value))}
-                className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white"
-              >
-                {years.map((year) => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => handleYearChange(currentYear + 1)}
-                disabled={currentYear >= toYear}
-                className="p-1 hover:bg-gray-700 rounded disabled:opacity-50"
-              >
-                <ChevronUp className="w-4 h-4" />
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {months.map((month, index) => (
-                <button
-                  key={month}
-                  type="button"
-                  onClick={() => handleMonthChange(index)}
-                  className={`p-2 text-xs rounded transition-colors ${
-                    currentMonth === index 
-                      ? 'bg-blue-600 text-white' 
-                      : 'hover:bg-gray-700 text-gray-300'
-                  }`}
-                >
-                  {month.slice(0, 3)}
-                </button>
-              ))}
-            </div>
-            
-            <div className="grid grid-cols-7 gap-1 mb-4">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="text-xs text-gray-400 text-center p-1">
-                  {day}
-                </div>
-              ))}
-              {renderCalendarDays()}
-            </div>
-            
-            <button
-              type="button"
-              onClick={() => {
-                const today = new Date();
-                field?.onChange?.(today);
-                setCalendarOpen(false);
-              }}
-              className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+        {typeof window !== 'undefined' && document.body && calendarOpen && ReactDOM.createPortal(
+          <>
+            {/* Modal Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998]"
+              onClick={() => setCalendarOpen(false)}
+              aria-hidden="true"
+            />
+            {/* Modal Calendar Popup */}
+            <div
+              ref={calendarRef}
+              className="fixed left-1/2 top-1/2 z-[9999] -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-600 rounded-xl shadow-2xl p-4 min-w-[320px] w-full max-w-xs sm:max-w-sm"
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
             >
-              Select Today
-            </button>
-          </div>
+              <div className="flex justify-between items-center mb-4">
+                <button
+                  type="button"
+                  onClick={() => handleYearChange(currentYear - 1)}
+                  disabled={currentYear <= fromYear}
+                  className="p-1 hover:bg-gray-700 rounded disabled:opacity-50"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                <select
+                  value={currentYear}
+                  onChange={(e) => handleYearChange(Number(e.target.value))}
+                  className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white"
+                >
+                  {years.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => handleYearChange(currentYear + 1)}
+                  disabled={currentYear >= toYear}
+                  className="p-1 hover:bg-gray-700 rounded disabled:opacity-50"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {months.map((month, index) => (
+                  <button
+                    key={month}
+                    type="button"
+                    onClick={() => handleMonthChange(index)}
+                    className={`p-2 text-xs rounded transition-colors ${
+                      currentMonth === index 
+                        ? 'bg-blue-600 text-white' 
+                        : 'hover:bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    {month.slice(0, 3)}
+                  </button>
+                ))}
+              </div>
+              
+              <div className="grid grid-cols-7 gap-1 mb-4">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                  <div key={day} className="text-xs text-gray-400 text-center p-1">
+                    {day}
+                  </div>
+                ))}
+                {renderCalendarDays()}
+              </div>
+              
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const today = new Date();
+                    field?.onChange?.(today);
+                    setCurrentYear(today.getFullYear());
+                    setCurrentMonth(today.getMonth());
+                    setCalendarOpen(false);
+                  }}
+                  className="flex-1 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                >
+                  Select Today
+                </button>
+                {isDOB && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      field?.onChange?.(null as any);
+                      setCurrentYear(defaultDate.getFullYear());
+                      setCurrentMonth(defaultDate.getMonth());
+                      setCalendarOpen(false);
+                    }}
+                    className="flex-1 p-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          </>,
+          document.body
         )}
       </div>
     </div>
@@ -355,6 +414,15 @@ export default function MemberEnrollmentForm() {
     { title: "Health Data", icon: Weight }
   ];
 
+  const dispatch = useDispatch<AppDispatch>();
+  const { plans, loading: plansLoading, error: plansError } = useSelector((state: RootState) => state.membershipPlans);
+  const memberState = useSelector((state: RootState) => state.members);
+  const router = useRouter();
+
+  useEffect(() => {
+    dispatch(fetchMembershipPlans());
+  }, [dispatch]);
+
   const handleInputChange = (field: string, value: string | Date | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -365,25 +433,75 @@ export default function MemberEnrollmentForm() {
   // Compute expiry date
   const computedExpiryDate = useMemo(() => {
     if (!formData.membershipStart || !formData.selectedPlan) return "";
-    const plan = mockPlans.find(p => String(p.id) === formData.selectedPlan);
+    const plan = plans.find(p => String(p.id) === formData.selectedPlan);
     if (!plan) return "";
     const expiryDate = new Date(formData.membershipStart);
     expiryDate.setDate(expiryDate.getDate() + plan.duration_days);
     return formatDate(expiryDate);
-  }, [formData.membershipStart, formData.selectedPlan]);
+  }, [formData.membershipStart, formData.selectedPlan, plans]);
 
   const computedDurationMonths = useMemo(() => {
     if (!formData.selectedPlan) return "";
-    const plan = mockPlans.find(p => String(p.id) === formData.selectedPlan);
+    const plan = plans.find(p => String(p.id) === formData.selectedPlan);
     if (!plan) return "";
     return Math.ceil(plan.duration_days / 30).toString();
-  }, [formData.selectedPlan]);
+  }, [formData.selectedPlan, plans]);
 
-  const handleSubmit = (e: { preventDefault: () => void; }) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validation logic here
-    console.log("Form submitted:", formData);
-    alert("Member enrolled successfully! 🎉");
+    setErrors({});
+    // Validation (add more as needed)
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.firstName) newErrors.firstName = "First name is required";
+    if (!formData.lastName) newErrors.lastName = "Last name is required";
+    if (!formData.email) newErrors.email = "Email is required";
+    if (!formData.phone) newErrors.phone = "Phone is required";
+    if (!formData.address) newErrors.address = "Address is required";
+    if (!formData.gender) newErrors.gender = "Gender is required";
+    if (!formData.membershipStart) newErrors.membershipStart = "Start date is required";
+    if (!formData.selectedPlan) newErrors.selectedPlan = "Plan is required";
+    if (!formData.initialPayment) newErrors.initialPayment = "Initial payment is required";
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    // Prepare payload for createMember
+    const getDateString = (val: unknown) => {
+      if (!val) return undefined;
+      if (typeof val === 'string') return val;
+      if (val instanceof Date) return val.toISOString();
+      return undefined;
+    };
+    const getDateOnlyString = (val: unknown) => {
+      if (!val) return undefined;
+      if (typeof val === 'string') return val;
+      if (val instanceof Date) return val.toISOString().slice(0, 10);
+      return undefined;
+    };
+    const payload = {
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      gender: formData.gender,
+      membership_start: getDateString(formData.membershipStart) || '',
+      membership_plan: Number(formData.selectedPlan),
+      amount_paid: Number(formData.initialPayment),
+      height: formData.height ? Number(formData.height) : undefined,
+      weight: formData.weight ? Number(formData.weight) : undefined,
+      dob: getDateOnlyString(formData.dob),
+      is_blocked: false,
+      photo: photo || undefined,
+    };
+    try {
+      await dispatch(createMember(payload)).unwrap();
+      // alert("Member enrolled successfully! 🎉");
+      handleReset();
+      router.push("/admin/membermanagement");
+    } catch (err: any) {
+      alert("Failed to enroll member: " + (err?.message || err));
+    }
   };
 
   const handleReset = () => {
@@ -407,7 +525,7 @@ export default function MemberEnrollmentForm() {
   };
 
   return (
-    <div className="min-h-screen  from-black via-slate-900 to-slate-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-slate-900 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -537,7 +655,8 @@ export default function MemberEnrollmentForm() {
                     icon={Calendar}
                     fromYear={new Date().getFullYear()}
                     toYear={new Date().getFullYear() + 2}
-                    placeholder="Select start date" className={undefined} disabledDatesFn={undefined}                  />
+                    placeholder="Select start date"
+                  />
 
                   <Select
                     label="Membership Plan"
@@ -545,7 +664,7 @@ export default function MemberEnrollmentForm() {
                     value={formData.selectedPlan}
                     onChange={(value) => handleInputChange('selectedPlan', value)}
                     placeholder="Select a plan"
-                    options={mockPlans.map(plan => ({
+                    options={plans.map(plan => ({
                       value: String(plan.id),
                       label: `${plan.name} - ${plan.duration_days} days - ₹${plan.price}`
                     }))}
@@ -643,7 +762,7 @@ export default function MemberEnrollmentForm() {
                 </div>
 
                 <DatePickerWithYearSelection
-                    field={{
+                  field={{
                     value: formData.dob,
                     onChange: (value: Date) => handleInputChange('dob', value)
                   }}
@@ -652,8 +771,6 @@ export default function MemberEnrollmentForm() {
                   fromYear={1920}
                   toYear={new Date().getFullYear()}
                   placeholder="Select birth date"
-                  className=""
-                  disabledDatesFn={() => false}
                 />
 
                 {/* BMI Calculator */}
@@ -707,15 +824,17 @@ export default function MemberEnrollmentForm() {
                     type="button"
                     onClick={handleSubmit}
                     className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl transition-all duration-200 flex items-center gap-2 shadow-lg transform hover:scale-105"
+                    disabled={memberState.loading}
                   >
                     <CheckCircle className="w-5 h-5" />
-                    Enroll Member
+                    {memberState.loading ? "Enrolling..." : "Enroll Member"}
                   </button>
                 )}
               </div>
             </div>
           </div>
         </div>
+
 
         {/* Form Summary */}
         {currentStep === 2 && (
@@ -731,8 +850,8 @@ export default function MemberEnrollmentForm() {
               <div className="text-gray-300">
                 <span className="font-medium">Plan:</span> {
                   formData.selectedPlan ? 
-                  mockPlans.find(p => String(p.id) === formData.selectedPlan)?.name : 
-                  'Not selected'
+                    plans.find((p: any) => String(p.id) === formData.selectedPlan)?.name : 
+                    'Not selected'
                 }
               </div>
               <div className="text-gray-300">

@@ -47,33 +47,85 @@ export interface MembershipPlan {
   is_blocked: boolean;
 }
 
-// Create a dark theme
-const darkTheme = extendTheme({
+// Apple-inspired theme with system-like colors
+const appleTheme = extendTheme({
   colorSchemes: {
     dark: {
       palette: {
         background: {
-          body: "#000",
-          surface: "rgba(0, 0, 0, 0.8)",
-          level1: "rgba(20, 20, 20, 0.9)",
-          level2: "rgba(35, 35, 35, 0.8)",
+          body: "#000000",
+          surface: "rgba(28, 28, 30, 0.98)",
+          level1: "rgba(44, 44, 46, 0.95)",
+          level2: "rgba(58, 58, 60, 0.9)",
         },
         primary: {
-          softColor: "#fff",
-          softBg: "rgba(60, 60, 60, 0.5)",
+          50: "#e3f2fd",
+          100: "#bbdefb",
+          200: "#90caf9",
+          300: "#64b5f6",
+          400: "#42a5f5",
+          500: "#007AFF", // Apple blue
+          600: "#1976d2",
+          700: "#1565c0",
+          800: "#0d47a1",
+          900: "#0a3d62",
+          plainColor: "#007AFF",
+          solidBg: "#007AFF",
+          solidHoverBg: "#0056CC",
         },
         neutral: {
-          outlinedBg: "rgba(45, 45, 45, 0.6)",
-          outlinedColor: "#fff",
-          plainColor: "#fff",
-          plainHoverBg: "rgba(60, 60, 60, 0.5)",
+          50: "#fafafa",
+          100: "#f5f5f5",
+          200: "#eeeeee",
+          300: "#e0e0e0",
+          400: "#bdbdbd",
+          500: "#9e9e9e",
+          600: "#757575",
+          700: "#616161",
+          800: "#424242",
+          900: "#1c1c1e",
+          plainColor: "rgba(255, 255, 255, 0.86)",
+          outlinedBg: "rgba(44, 44, 46, 0.8)",
+          outlinedColor: "rgba(255, 255, 255, 0.86)",
+          outlinedBorder: "rgba(99, 99, 102, 0.4)",
+          plainHoverBg: "rgba(99, 99, 102, 0.16)",
         },
         text: {
-          primary: "#fff",
-          secondary: "rgba(255, 255, 255, 0.7)",
+          primary: "rgba(255, 255, 255, 0.92)",
+          secondary: "rgba(235, 235, 245, 0.6)",
+          tertiary: "rgba(235, 235, 245, 0.3)",
+        },
+        success: {
+          solidBg: "#30D158", // Apple green
+          plainColor: "#30D158",
+        },
+        warning: {
+          solidBg: "#FF9F0A", // Apple orange
+          plainColor: "#FF9F0A",
+        },
+        danger: {
+          solidBg: "#FF453A", // Apple red
+          plainColor: "#FF453A",
         },
       },
     },
+  },
+  fontFamily: {
+    body: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif",
+  },
+  radius: {
+    xs: "6px",
+    sm: "8px",
+    md: "12px",
+    lg: "16px",
+    xl: "20px",
+  },
+  shadow: {
+    xs: "0 1px 3px rgba(0, 0, 0, 0.2)",
+    sm: "0 2px 8px rgba(0, 0, 0, 0.15)",
+    md: "0 4px 16px rgba(0, 0, 0, 0.1)",
+    lg: "0 8px 32px rgba(0, 0, 0, 0.08)",
+    xl: "0 12px 48px rgba(0, 0, 0, 0.06)",
   },
 });
 
@@ -138,6 +190,8 @@ const PlanManagementTable: React.FC = () => {
   const [rowsPerPage] = useState<number>(10);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<MembershipPlan | null>(null);
 
   useEffect(() => {
     dispatch(fetchMembershipPlans());
@@ -162,7 +216,9 @@ const PlanManagementTable: React.FC = () => {
   };
 
   const handleViewPlan = (id: number): void => {
-    router.push(`/admin/planmanagement/view/${id}`);
+    const plan = plans.find((p: MembershipPlan) => p.id === id);
+    setSelectedPlan(plan || null);
+    setViewModalOpen(true);
   };
 
   const handleBlockPlan = (id: number): void => {
@@ -171,189 +227,93 @@ const PlanManagementTable: React.FC = () => {
   };
 
   return (
-    <CssVarsProvider theme={darkTheme} defaultMode="dark">
-      {/* Mobile Search & Filters */}
-      <Sheet
-        sx={{
-          display: { xs: "flex", sm: "none" },
-          my: 1,
-          gap: 1,
-          bgcolor: "transparent",
-          boxShadow: "none",
-        }}
-      >
-        <Input
-          size="sm"
-          placeholder="Search plans..."
-          startDecorator={
-            <SearchIcon sx={{ color: "rgba(255, 255, 255, 0.7)" }} />
-          }
-          sx={{ flexGrow: 1 }}
-          value={searchTerm}
-          onChange={handleSearchChange}
-        />
-        <IconButton
-          size="sm"
-          variant="outlined"
-          color="neutral"
-          onClick={() => setIsFilterOpen(true)}
-        >
-          <FilterAltIcon />
-        </IconButton>
-        <Modal open={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
-          <ModalDialog sx={{ bgcolor: "#000", color: "#fff" }}>
-            <ModalClose />
-            <Typography level="h2">Filters</Typography>
-            <Divider />
-            <Button onClick={() => setIsFilterOpen(false)}>
-              Apply Filters
-            </Button>
-          </ModalDialog>
-        </Modal>
-      </Sheet>
-
-      {/* Tablet & Desktop Search */}
-      <Box
-        sx={{
-          display: { xs: "none", sm: "flex" },
-          gap: 1.5,
-          bgcolor: "transparent",
-        }}
-      >
-        <Input
-          size="sm"
-          placeholder="Search plans..."
-          startDecorator={
-            <SearchIcon sx={{ color: "rgba(255, 255, 255, 0.7)" }} />
-          }
-          value={searchTerm}
-          onChange={handleSearchChange}
-          sx={{ flex: 1 }}
-        />
-      </Box>
-
-      {/* Main Content */}
-      <Sheet
-        variant="outlined"
-        sx={{
-          width: "100%",
-          borderRadius: "sm",
-          overflow: "auto",
-          bgcolor: "rgba(20, 20, 20, 0.6)",
-          borderColor: "rgba(255, 255, 255, 0.1)",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-        }}
-      >
-        {/* Table for Desktop & Tablet */}
-        <Table
-          stickyHeader
-          hoverRow
-          sx={{
-            display: { xs: "none", md: "table" },
-            "--TableCell-headBackground": "rgba(25, 25, 25, 0.9)",
-            "--Table-headerUnderlineThickness": "1px",
-            "--TableRow-hoverBackground": "rgba(40, 40, 40, 0.5)",
-            "--TableCell-paddingY": "8px",
-            "--TableCell-paddingX": "12px",
-            color: "#fff",
-            "& thead th": { color: "#fff", fontWeight: "bold" },
-            "& tbody td": {
-              color: "rgba(255, 255, 255, 0.9)",
-              borderColor: "rgba(255, 255, 255, 0.1)",
-            },
-            "& tbody tr:hover td": { color: "#fff" },
-          }}
-        >
-          <thead>
-            <tr>
-              {[
-                { id: "name", label: "Plan Name", sortable: true },
-                { id: "duration_days", label: "Duration (days)", sortable: true },
-                { id: "price", label: "Price", sortable: true },
-                { id: "is_blocked", label: "Status", sortable: true },
-                { id: "actions", label: "Actions", sortable: false },
-              ].map((headCell) => (
-                <th key={headCell.id} style={{ padding: "12px 6px" }}>
-                  {headCell.sortable ? (
-                    <Button
-                      component="button"
-                      onClick={() => handleRequestSort(headCell.id as SortKey)}
-                      endDecorator={<ArrowDropDownIcon />}
-                      sx={{
-                        fontWeight: "lg",
-                        color: "#fff",
-                        bgcolor: "transparent",
-                        "&:hover": { bgcolor: "rgba(40, 40, 40, 0.8)" },
-                        "& svg": {
-                          transition: "0.2s",
-                          transform:
-                            orderBy === headCell.id && order === "asc"
-                              ? "rotate(180deg)"
-                              : "none",
-                        },
-                      }}
-                    >
-                      {headCell.label}
-                    </Button>
-                  ) : (
-                    headCell.label
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filteredPlans
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((plan: MembershipPlan) => (
+    <CssVarsProvider theme={appleTheme} defaultMode="dark">
+      <Box sx={{ minHeight: "100vh", bgcolor: "background.body", p: { xs: 2, sm: 3, md: 4 }, fontFamily: "body" }}>
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Typography level="h1" sx={{ fontSize: { xs: "28px", sm: "32px", md: "36px" }, fontWeight: 700, color: "text.primary", mb: 1, letterSpacing: "-0.025em" }}>
+            Membership Plans
+          </Typography>
+          <Typography level="body-md" sx={{ color: "text.secondary", fontSize: "17px", fontWeight: 400 }}>
+            Manage your gym's membership plans, pricing, and status
+          </Typography>
+        </Box>
+        {/* Mobile Search */}
+        <Sheet sx={{ display: { xs: "flex", sm: "none" }, mb: 3, gap: 2, bgcolor: "transparent" }}>
+          <Input
+            size="md"
+            placeholder="Search plans..."
+            startDecorator={<SearchIcon sx={{ color: "text.secondary", fontSize: "18px" }} />}
+            sx={{ flexGrow: 1, bgcolor: "rgba(44, 44, 46, 0.6)", border: "1px solid rgba(99, 99, 102, 0.3)", borderRadius: "12px", color: "text.primary", fontSize: "16px", backdropFilter: "blur(20px)", "&:hover": { bgcolor: "rgba(44, 44, 46, 0.8)", borderColor: "rgba(99, 99, 102, 0.5)" }, "&:focus-within": { borderColor: "primary.500", boxShadow: "0 0 0 2px rgba(0, 122, 255, 0.2)" }, "& input::placeholder": { color: "text.secondary", opacity: 1 } }}
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+        </Sheet>
+        {/* Desktop Search */}
+        <Box sx={{ display: { xs: "none", sm: "flex" }, mb: 4, p: 3, bgcolor: "rgba(44, 44, 46, 0.4)", borderRadius: "16px", border: "1px solid rgba(99, 99, 102, 0.2)", backdropFilter: "blur(20px)" }}>
+          <FormControl sx={{ flex: 1, maxWidth: { lg: "400px" } }}>
+            <FormLabel sx={{ color: "text.secondary", fontSize: "13px", fontWeight: 500, mb: 1, letterSpacing: "-0.08px" }}>Search Plans</FormLabel>
+            <Input
+              size="md"
+              placeholder="Search by plan name..."
+              startDecorator={<SearchIcon sx={{ color: "text.secondary", fontSize: "18px" }} />}
+              value={searchTerm}
+              onChange={handleSearchChange}
+              sx={{ bgcolor: "rgba(44, 44, 46, 0.6)", border: "1px solid rgba(99, 99, 102, 0.3)", borderRadius: "10px", color: "text.primary", fontSize: "15px", fontWeight: 400, backdropFilter: "blur(20px)", "&:hover": { bgcolor: "rgba(44, 44, 46, 0.8)", borderColor: "rgba(99, 99, 102, 0.5)" }, "&:focus-within": { borderColor: "primary.500", boxShadow: "0 0 0 2px rgba(0, 122, 255, 0.2)" }, "& input::placeholder": { color: "text.secondary", opacity: 1 } }}
+            />
+          </FormControl>
+        </Box>
+        {/* Main Table Container */}
+        <Sheet variant="outlined" sx={{ borderRadius: "16px", bgcolor: "rgba(44, 44, 46, 0.4)", border: "1px solid rgba(99, 99, 102, 0.2)", backdropFilter: "blur(20px)", overflow: "hidden", boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)" }}>
+          {/* Desktop Table */}
+          <Table stickyHeader hoverRow sx={{ display: { xs: "none", md: "table" }, "--TableCell-headBackground": "rgba(58, 58, 60, 0.6)", "--TableCell-paddingY": "16px", "--TableCell-paddingX": "20px", "--TableRow-hoverBackground": "rgba(99, 99, 102, 0.08)", fontSize: "15px", "& thead th": { color: "text.primary", fontWeight: 600, fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.5px", borderBottom: "1px solid rgba(99, 99, 102, 0.2)" }, "& tbody td": { color: "text.primary", borderBottom: "1px solid rgba(99, 99, 102, 0.1)", fontSize: "15px" }, "& tbody tr:hover td": { color: "text.primary" } }}>
+            <thead>
+              <tr>
+                {[{ id: "name", label: "Plan Name", sortable: true }, { id: "duration_days", label: "Duration (days)", sortable: true }, { id: "price", label: "Price", sortable: true }, { id: "is_blocked", label: "Status", sortable: true }, { id: "actions", label: "Actions", sortable: false }].map((headCell) => (
+                  <th key={headCell.id}>
+                    {headCell.sortable ? (
+                      <Button
+                        variant="plain"
+                        onClick={() => handleRequestSort(headCell.id as SortKey)}
+                        endDecorator={orderBy === headCell.id ? (<ArrowDropDownIcon sx={{ transform: order === "asc" ? "rotate(180deg)" : "none", transition: "transform 0.2s", fontSize: "18px" }} />) : null}
+                        sx={{ color: "text.primary", fontWeight: 600, fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.5px", bgcolor: "transparent", "&:hover": { bgcolor: "rgba(99, 99, 102, 0.1)" } }}
+                      >
+                        {headCell.label}
+                      </Button>
+                    ) : (
+                      headCell.label
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPlans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((plan: MembershipPlan) => (
                 <tr key={plan.id}>
                   <td>
-                    <Typography
-                      level="body-sm"
-                      sx={{ color: "rgba(255, 255, 255, 0.9)" }}
-                    >
-                      {plan.name}
-                    </Typography>
+                    <Typography sx={{ color: "text.primary", fontSize: "15px", fontWeight: 500 }}>{plan.name}</Typography>
                   </td>
                   <td>
-                    <Typography
-                      level="body-sm"
-                      sx={{ color: "rgba(255, 255, 255, 0.9)" }}
-                    >
-                      {plan.duration_days}
-                    </Typography>
+                    <Typography sx={{ color: "text.primary", fontSize: "15px", fontWeight: 400 }}>{plan.duration_days}</Typography>
                   </td>
                   <td>
-                    <Typography
-                      level="body-sm"
-                      sx={{ color: "rgba(255, 255, 255, 0.9)" }}
-                    >
-                      ₹{plan.price}
-                    </Typography>
+                    <Typography sx={{ color: "text.primary", fontSize: "15px", fontWeight: 600 }}>₹{plan.price}</Typography>
                   </td>
                   <td>
                     <Chip
                       variant="soft"
                       size="sm"
-                      startDecorator={
-                        planStatusMapping[
-                          plan.is_blocked.toString() as "true" | "false"
-                        ].icon
-                      }
-                      color={
-                        planStatusMapping[
-                          plan.is_blocked.toString() as "true" | "false"
-                        ].color as ColorPaletteProp
-                      }
+                      startDecorator={planStatusMapping[plan.is_blocked.toString() as "true" | "false"].icon}
                       sx={{
-                        bgcolor:
-                          planStatusMapping[
-                            plan.is_blocked.toString() as "true" | "false"
-                          ].bgColor,
-                        color:
-                          planStatusMapping[
-                            plan.is_blocked.toString() as "true" | "false"
-                          ].textColor,
+                        bgcolor: planStatusMapping[plan.is_blocked.toString() as "true" | "false"].bgColor,
+                        color: planStatusMapping[plan.is_blocked.toString() as "true" | "false"].textColor,
+                        fontSize: "12px",
+                        fontWeight: 500,
+                        textTransform: "capitalize",
+                        borderRadius: "8px",
+                        px: 1.5,
+                        py: 0.5,
+                        border: "none"
                       }}
                     >
                       {plan.is_blocked ? "Blocked" : "Active"}
@@ -361,180 +321,147 @@ const PlanManagementTable: React.FC = () => {
                   </td>
                   <td>
                     <Stack direction="row" spacing={1}>
-                      <Tooltip title="View Plan">
+                      <Tooltip title="View Plan" placement="top">
                         <IconButton
                           size="sm"
                           variant="plain"
-                          color="neutral"
                           onClick={() => handleViewPlan(plan.id)}
-                          sx={{ color: "#fff" }}
+                          sx={{ color: "text.secondary", borderRadius: "8px", "&:hover": { bgcolor: "rgba(99, 99, 102, 0.1)", color: "text.primary" } }}
                         >
-                          <VisibilityIcon />
+                          <VisibilityIcon sx={{ fontSize: "18px" }} />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title={plan.is_blocked ? "Unlock Plan" : "Lock Plan"}>
+                      <Tooltip title={plan.is_blocked ? "Unlock Plan" : "Lock Plan"} placement="top">
                         <IconButton
                           size="sm"
                           variant="plain"
-                          color="neutral"
                           onClick={() => handleBlockPlan(plan.id)}
-                          sx={{ color: "#fff" }}
+                          sx={{ color: "text.secondary", borderRadius: "8px", "&:hover": { bgcolor: "rgba(99, 99, 102, 0.1)", color: "text.primary" } }}
                         >
-                          <BlockIcon />
+                          <BlockIcon sx={{ fontSize: "18px" }} />
                         </IconButton>
                       </Tooltip>
                     </Stack>
                   </td>
                 </tr>
               ))}
-          </tbody>
-        </Table>
-
-        {/* Mobile List View */}
-        <Box sx={{ display: { xs: "block", md: "none" } }}>
-          {filteredPlans.map((plan: MembershipPlan) => (
-            <Card key={plan.id} sx={{ my: 1 }}>
-              <CardContent>
-                <Typography level="body-sm">{plan.name}</Typography>
-                <Typography level="body-xs">
-                  Duration: {plan.duration_days} days
-                </Typography>
-                <Typography level="body-xs">Price: ₹{plan.price}</Typography>
-                <Chip
-                  size="sm"
-                  variant="soft"
-                  startDecorator={
-                    planStatusMapping[
-                      plan.is_blocked.toString() as "true" | "false"
-                    ].icon
-                  }
-                  color={
-                    planStatusMapping[
-                      plan.is_blocked.toString() as "true" | "false"
-                    ].color as ColorPaletteProp
-                  }
-                  sx={{
-                    bgcolor:
-                      planStatusMapping[
-                        plan.is_blocked.toString() as "true" | "false"
-                      ].bgColor,
-                    color:
-                      planStatusMapping[
-                        plan.is_blocked.toString() as "true" | "false"
-                      ].textColor,
-                  }}
-                >
-                  {plan.is_blocked ? "Blocked" : "Active"}
-                </Chip>
-                <Stack direction="row" spacing={1} mt={1}>
-                  <Tooltip title="View Plan">
+            </tbody>
+          </Table>
+          {/* Mobile List View */}
+          <Box sx={{ display: { xs: "block", md: "none" }, p: 2 }}>
+            {filteredPlans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((plan: MembershipPlan) => (
+              <Card key={plan.id} sx={{ mb: 2, bgcolor: "rgba(58, 58, 60, 0.6)", border: "1px solid rgba(99, 99, 102, 0.2)", borderRadius: "12px", backdropFilter: "blur(20px)", "&:hover": { bgcolor: "rgba(58, 58, 60, 0.8)", borderColor: "rgba(99, 99, 102, 0.3)" } }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
+                    <Typography sx={{ color: "text.primary", fontSize: "16px", fontWeight: 600, lineHeight: 1.2 }}>{plan.name}</Typography>
+                    <Chip
+                      variant="soft"
+                      size="sm"
+                      startDecorator={planStatusMapping[plan.is_blocked.toString() as "true" | "false"].icon}
+                      sx={{ bgcolor: planStatusMapping[plan.is_blocked.toString() as "true" | "false"].bgColor, color: planStatusMapping[plan.is_blocked.toString() as "true" | "false"].textColor, fontSize: "11px", fontWeight: 500, textTransform: "capitalize", borderRadius: "8px", px: 1.5, py: 0.5, border: "none" }}
+                    >
+                      {plan.is_blocked ? "Blocked" : "Active"}
+                    </Chip>
+                  </Box>
+                  <Typography sx={{ color: "text.secondary", fontSize: "14px", fontWeight: 400, mb: 0.5 }}>Duration: {plan.duration_days} days</Typography>
+                  <Typography sx={{ color: "text.secondary", fontSize: "14px", fontWeight: 400, mb: 1 }}>Price: ₹{plan.price}</Typography>
+                  <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
                     <IconButton
                       size="sm"
+                      variant="soft"
                       onClick={() => handleViewPlan(plan.id)}
-                      sx={{ color: "#fff" }}
+                      sx={{ bgcolor: "rgba(0, 122, 255, 0.15)", color: "primary.500", borderRadius: "8px", "&:hover": { bgcolor: "rgba(0, 122, 255, 0.25)" } }}
                     >
-                      <VisibilityIcon />
+                      <VisibilityIcon sx={{ fontSize: "16px" }} />
                     </IconButton>
-                  </Tooltip>
-                  <Tooltip title={plan.is_blocked ? "Unlock Plan" : "Lock Plan"}>
                     <IconButton
                       size="sm"
+                      variant="soft"
                       onClick={() => handleBlockPlan(plan.id)}
-                      sx={{ color: "#fff" }}
+                      sx={{ bgcolor: "rgba(99, 99, 102, 0.15)", color: "text.secondary", borderRadius: "8px", "&:hover": { bgcolor: "rgba(99, 99, 102, 0.25)", color: "text.primary" } }}
                     >
-                      <BlockIcon />
+                      <BlockIcon sx={{ fontSize: "16px" }} />
                     </IconButton>
-                  </Tooltip>
-                </Stack>
-              </CardContent>
-            </Card>
-          ))}
-        </Box>
-      </Sheet>
-
-      {/* Pagination */}
-      <Box
-        sx={{
-          pt: 2,
-          gap: 1,
-          "& .MuiIconButton-root": { borderRadius: "50%" },
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Typography
-          level="body-sm"
-          sx={{ color: "rgba(255, 255, 255, 0.7)" }}
-        >
-          Showing {Math.min(filteredPlans.length, (page + 1) * rowsPerPage)} of{" "}
-          {filteredPlans.length} plans
-        </Typography>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="sm"
-            variant="outlined"
-            color="neutral"
-            startDecorator={<KeyboardArrowLeftIcon />}
-            disabled={page === 0}
-            onClick={() => setPage(page - 1)}
-            sx={{
-              color: "#fff",
-              borderColor: "rgba(255, 255, 255, 0.3)",
-              "&:hover": { bgcolor: "rgba(40, 40, 40, 0.8)" },
-              "&.Mui-disabled": {
-                color: "rgba(255, 255, 255, 0.3)",
-                borderColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
-          >
-            Previous
-          </Button>
-          <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
-            {Array.from(
-              { length: Math.ceil(filteredPlans.length / rowsPerPage) },
-              (_, i) => (
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        </Sheet>
+        {/* Pagination */}
+        <Box sx={{ mt: 4, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+          <Typography sx={{ color: "text.secondary", fontSize: "14px", fontWeight: 400 }}>
+            Showing {Math.min(filteredPlans.length, (page + 1) * rowsPerPage)} of {filteredPlans.length} plans
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+            <Button
+              size="sm"
+              variant="soft"
+              startDecorator={<KeyboardArrowLeftIcon />}
+              disabled={page === 0}
+              onClick={() => setPage(page - 1)}
+              sx={{ bgcolor: "rgba(44, 44, 46, 0.6)", color: "text.primary", border: "1px solid rgba(99, 99, 102, 0.3)", borderRadius: "8px", fontSize: "14px", fontWeight: 500, "&:hover": { bgcolor: "rgba(44, 44, 46, 0.8)", borderColor: "rgba(99, 99, 102, 0.5)" }, "&.Mui-disabled": { color: "text.tertiary", bgcolor: "rgba(44, 44, 46, 0.3)", borderColor: "rgba(99, 99, 102, 0.1)" } }}
+            >
+              Previous
+            </Button>
+            <Box sx={{ display: { xs: "none", sm: "flex" }, gap: 0.5, mx: 1 }}>
+              {Array.from({ length: Math.ceil(filteredPlans.length / rowsPerPage) }, (_, i) => (
                 <IconButton
                   key={i}
                   size="sm"
-                  variant={page === i ? "outlined" : "plain"}
-                  color="neutral"
+                  variant={page === i ? "soft" : "plain"}
                   onClick={() => setPage(i)}
-                  sx={{
-                    color: "#fff",
-                    borderColor:
-                      page === i ? "rgba(255, 255, 255, 0.5)" : "transparent",
-                    "&:hover": { bgcolor: "rgba(40, 40, 40, 0.8)" },
-                  }}
+                  sx={{ minWidth: 32, height: 32, borderRadius: "8px", fontSize: "14px", fontWeight: 500, color: page === i ? "primary.500" : "text.secondary", bgcolor: page === i ? "rgba(0, 122, 255, 0.15)" : "transparent", "&:hover": { bgcolor: page === i ? "rgba(0, 122, 255, 0.25)" : "rgba(99, 99, 102, 0.1)", color: page === i ? "primary.500" : "text.primary" } }}
                 >
                   {i + 1}
                 </IconButton>
-              )
-            )}
+              ))}
+            </Box>
+            <Button
+              size="sm"
+              variant="soft"
+              endDecorator={<KeyboardArrowRightIcon />}
+              disabled={page >= Math.ceil(filteredPlans.length / rowsPerPage) - 1}
+              onClick={() => setPage(page + 1)}
+              sx={{ bgcolor: "rgba(44, 44, 46, 0.6)", color: "text.primary", border: "1px solid rgba(99, 99, 102, 0.3)", borderRadius: "8px", fontSize: "14px", fontWeight: 500, "&:hover": { bgcolor: "rgba(44, 44, 46, 0.8)", borderColor: "rgba(99, 99, 102, 0.5)" }, "&.Mui-disabled": { color: "text.tertiary", bgcolor: "rgba(44, 44, 46, 0.3)", borderColor: "rgba(99, 99, 102, 0.1)" } }}
+            >
+              Next
+            </Button>
           </Box>
-          <Button
-            size="sm"
-            variant="outlined"
-            color="neutral"
-            endDecorator={<KeyboardArrowRightIcon />}
-            disabled={
-              page >= Math.ceil(filteredPlans.length / rowsPerPage) - 1
-            }
-            onClick={() => setPage(page + 1)}
-            sx={{
-              color: "#fff",
-              borderColor: "rgba(255, 255, 255, 0.3)",
-              "&:hover": { bgcolor: "rgba(40, 40, 40, 0.8)" },
-              "&.Mui-disabled": {
-                color: "rgba(255, 255, 255, 0.3)",
-                borderColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
-          >
-            Next
-          </Button>
         </Box>
       </Box>
+      {/* View Plan Modal */}
+      <Modal open={viewModalOpen} onClose={() => setViewModalOpen(false)}>
+        <ModalDialog sx={{ bgcolor: "background.body", color: "text.primary", borderRadius: "16px", minWidth: 340, maxWidth: 400, p: 0 }}>
+          <Box sx={{ p: 3, borderBottom: "1px solid rgba(99, 99, 102, 0.2)" }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Typography level="h4" sx={{ color: "text.primary", fontSize: "22px", fontWeight: 700 }}>
+                Plan Details
+              </Typography>
+              <ModalClose sx={{ color: "text.secondary", position: "static", "&:hover": { color: "text.primary" } }} />
+            </Box>
+          </Box>
+          {selectedPlan && (
+            <Box sx={{ p: 3 }}>
+              <Typography sx={{ color: "text.secondary", fontSize: "13px", fontWeight: 500, mb: 0.5 }}>Plan Name</Typography>
+              <Typography sx={{ color: "text.primary", fontSize: "18px", fontWeight: 600, mb: 2 }}>{selectedPlan.name}</Typography>
+              <Typography sx={{ color: "text.secondary", fontSize: "13px", fontWeight: 500, mb: 0.5 }}>Duration</Typography>
+              <Typography sx={{ color: "text.primary", fontSize: "16px", fontWeight: 500, mb: 2 }}>{selectedPlan.duration_days} days</Typography>
+              <Typography sx={{ color: "text.secondary", fontSize: "13px", fontWeight: 500, mb: 0.5 }}>Price</Typography>
+              <Typography sx={{ color: "text.primary", fontSize: "16px", fontWeight: 500, mb: 2 }}>₹{selectedPlan.price}</Typography>
+              <Typography sx={{ color: "text.secondary", fontSize: "13px", fontWeight: 500, mb: 0.5 }}>Status</Typography>
+              <Chip
+                variant="soft"
+                size="sm"
+                startDecorator={planStatusMapping[selectedPlan.is_blocked.toString() as "true" | "false"].icon}
+                sx={{ bgcolor: planStatusMapping[selectedPlan.is_blocked.toString() as "true" | "false"].bgColor, color: planStatusMapping[selectedPlan.is_blocked.toString() as "true" | "false"].textColor, fontSize: "13px", fontWeight: 500, textTransform: "capitalize", borderRadius: "8px", px: 1.5, py: 0.5, border: "none", mb: 2 }}
+              >
+                {selectedPlan.is_blocked ? "Blocked" : "Active"}
+              </Chip>
+            </Box>
+          )}
+        </ModalDialog>
+      </Modal>
     </CssVarsProvider>
   );
 };

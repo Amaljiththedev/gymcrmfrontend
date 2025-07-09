@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label2";
 import { Input } from "@/components/ui/input1";
 import { cn } from "@/lib/utils";
 import axios from "axios";
+import { User, CreditCard, CheckCircle, Calendar, CalendarDays } from "lucide-react";
 
 // Helper function to compute expiry date
 const getExpiryDate = (startDateStr: string, durationDays: number): string => {
@@ -19,6 +20,23 @@ const getExpiryDate = (startDateStr: string, durationDays: number): string => {
   const expiryDate = new Date(startDate);
   expiryDate.setDate(expiryDate.getDate() + durationDays);
   return expiryDate.toISOString().slice(0, 10);
+};
+
+// Helper to get icon for plan name
+const getPlanIcon = (planName: string) => {
+  switch (planName.toLowerCase()) {
+    case "premium":
+      return CreditCard;
+    case "basic":
+      return Calendar;
+    default:
+      return User;
+  }
+};
+
+// Helper to format currency
+const formatCurrency = (amount: number) => {
+  return amount?.toLocaleString("en-IN", { style: "currency", currency: "INR" });
 };
 
 export default function EditMemberForm() {
@@ -117,6 +135,11 @@ export default function EditMemberForm() {
     return Math.ceil(plan.duration_days / 30).toString();
   }, [selectedPlan, plans]);
 
+  // Get selected plan data
+  const selectedPlanData = useMemo(() => {
+    return plans.find((p) => String(p.id) === selectedPlan);
+  }, [selectedPlan, plans]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const memberData = new FormData();
@@ -146,235 +169,156 @@ export default function EditMemberForm() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl p-8 bg-black text-white rounded-lg shadow-xl">
-      <h2 className="text-3xl font-bold mb-6 text-center">Edit Member</h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Personal Information */}
-        <section className="space-y-4">
-          <h3 className="text-xl font-semibold border-b pb-2">Personal Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <LabelInputContainer>
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                name="firstName"
-                placeholder="Enter first name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="bg-gray-800 text-white"
-              />
-            </LabelInputContainer>
-            <LabelInputContainer>
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                name="lastName"
-                placeholder="Enter last name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="bg-gray-800 text-white"
-              />
-            </LabelInputContainer>
-          </div>
-          <LabelInputContainer>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="example@mail.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-gray-800 text-white"
-            />
-          </LabelInputContainer>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <LabelInputContainer>
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                name="phone"
-                placeholder="Enter phone number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="bg-gray-800 text-white"
-              />
-            </LabelInputContainer>
-            <LabelInputContainer>
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                name="address"
-                placeholder="Enter address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="bg-gray-800 text-white"
-              />
-            </LabelInputContainer>
-          </div>
-          <LabelInputContainer>
-            <Label htmlFor="gender">Gender</Label>
-            <select
-              id="gender"
-              name="gender"
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              className="bg-gray-800 text-white p-2 rounded border border-gray-700"
-            >
-              <option value="">Select Gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-          </LabelInputContainer>
-        </section>
-
-        {/* Membership Details */}
-        <section className="space-y-4">
-          <h3 className="text-xl font-semibold border-b pb-2">Membership Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <LabelInputContainer>
-              <Label htmlFor="membershipStart">Membership Start</Label>
-              <Input
-                id="membershipStart"
-                name="membershipStart"
-                type="datetime-local"
-                value={membershipStart}
-                onChange={(e) => setMembershipStart(e.target.value)}
-                className="bg-gray-800 text-white"
-              />
-            </LabelInputContainer>
-            <LabelInputContainer>
-              <Label htmlFor="selectedPlan">Membership Plan</Label>
-              <select
-                id="selectedPlan"
-                name="selectedPlan"
-                value={selectedPlan}
-                onChange={(e) => setSelectedPlan(e.target.value)}
-                className="bg-gray-800 text-white p-2 rounded border border-gray-700"
-              >
-                <option value="">Select Plan</option>
-                {plans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name} | {plan.duration_days} days | ₹{plan.price}
-                  </option>
-                ))}
-              </select>
-            </LabelInputContainer>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <LabelInputContainer>
-              <Label>Computed Expiry Date</Label>
-              <Input
-                readOnly
-                value={computedExpiryDate}
-                className="bg-gray-800 text-white"
-              />
-            </LabelInputContainer>
-            <LabelInputContainer>
-              <Label>Duration (months)</Label>
-              <Input
-                readOnly
-                value={computedDurationMonths}
-                className="bg-gray-800 text-white"
-              />
-            </LabelInputContainer>
-          </div>
-          <LabelInputContainer>
-            <Label htmlFor="initialPayment">Initial Payment</Label>
-            <Input
-              id="initialPayment"
-              name="initialPayment"
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={initialPayment}
-              onChange={(e) => setInitialPayment(e.target.value)}
-              className="bg-gray-800 text-white"
-            />
-          </LabelInputContainer>
-          <LabelInputContainer>
-            <Label htmlFor="photo">Photo</Label>
-            <Input
-              id="photo"
-              name="photo"
-              type="file"
-              onChange={(e) =>
-                setPhoto(e.target.files ? e.target.files[0] : null)
-              }
-              className="bg-gray-800 text-white"
-            />
-            {photoPreview && (
-              <img
-                src={photoPreview}
-                alt="Member Photo"
-                className="mt-2 max-w-[200px] rounded"
-              />
-            )}
-          </LabelInputContainer>
-        </section>
-
-        {/* Health Information */}
-        <section className="space-y-4">
-          <h3 className="text-xl font-semibold border-b pb-2">Health Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <LabelInputContainer>
-              <Label htmlFor="height">Height (cm)</Label>
-              <Input
-                id="height"
-                name="height"
-                type="number"
-                step="0.01"
-                placeholder="e.g. 170.00"
-                value={height}
-                onChange={(e) => setHeight(e.target.value)}
-                className="bg-gray-800 text-white"
-              />
-            </LabelInputContainer>
-            <LabelInputContainer>
-              <Label htmlFor="weight">Weight (kg)</Label>
-              <Input
-                id="weight"
-                name="weight"
-                type="number"
-                step="0.01"
-                placeholder="e.g. 65.00"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                className="bg-gray-800 text-white"
-              />
-            </LabelInputContainer>
-          </div>
-          <LabelInputContainer>
-            <Label htmlFor="dob">Date of Birth</Label>
-            <Input
-              id="dob"
-              name="dob"
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              className="bg-gray-800 text-white"
-            />
-          </LabelInputContainer>
-        </section>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <button
-            type="submit"
-            className="w-full h-12 bg-gradient-to-t from-destructive to-destructive/85 text-destructive-foreground border border-zinc-950/25 shadow-md shadow-zinc-950/20 ring-1 ring-inset ring-white/20 transition duration-200 hover:brightness-110 active:brightness-90 dark:border-white/15 dark:ring-transparent"
-          >
-            Update Member
-          </button>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="w-full h-12 bg-gray-700 text-white rounded-md shadow-md transition-colors hover:bg-gray-600 active:bg-gray-500"
-          >
-            Back
-          </button>
+    <div className="min-h-screen bg-gradient-to-br p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Membership Renewal</h1>
+          <p className="text-purple-200">Extend your fitness journey with us</p>
         </div>
-      </form>
+
+        {/* Member Summary Card */}
+        <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-white">
+                  {firstName} {lastName}
+                </h3>
+                <p className="text-purple-200">{email}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-purple-200">Current Plan</div>
+              <div className="text-lg font-semibold text-white">{selectedPlanData?.name || "-"}</div>
+              <div className="text-sm text-red-300">Expires: {computedExpiryDate ? new Date(computedExpiryDate).toLocaleDateString() : "-"}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Form */}
+        <form onSubmit={handleSubmit}>
+          <div className="bg-gray-900/40 backdrop-blur-lg border border-gray-700/40 rounded-2xl shadow-2xl overflow-hidden">
+            <div className="p-8">
+              <div className="space-y-8">
+                {/* Plan Selection - Apple-like Dropdown */}
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-600/20 rounded-lg">
+                      <CreditCard className="w-6 h-6 text-blue-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">Choose Your Plan</h2>
+                  </div>
+                  <div className="max-w-md">
+                    <label className="block text-sm font-medium text-purple-200 mb-2">Membership Plan</label>
+                    <select
+                      value={selectedPlan}
+                      onChange={e => setSelectedPlan(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white hover:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    >
+                      <option value="">Select a plan</option>
+                      {plans.map(plan => (
+                        <option key={plan.id} value={String(plan.id)}>
+                          {plan.name} - {plan.duration_days} days - {formatCurrency(plan.price)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </section>
+                {/* Membership Details */}
+                {selectedPlan && (
+                  <section className="space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-600/20 rounded-lg">
+                        <Calendar className="w-6 h-6 text-purple-400" />
+                      </div>
+                      <h2 className="text-2xl font-bold text-white">Renewal Details</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-purple-200 flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-purple-400" />
+                          Renewal Start Date
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={membershipStart}
+                          onChange={(e) => setMembershipStart(e.target.value)}
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 hover:bg-white/15 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-purple-200 flex items-center gap-2">
+                          <CalendarDays className="w-4 h-4 text-purple-400" />
+                          Plan Duration
+                        </label>
+                        <input
+                          readOnly
+                          value={`${computedDurationMonths} months (${selectedPlanData?.duration_days} days)`}
+                          className="w-full px-4 py-3 bg-gray-700/50 border border-white/10 rounded-xl text-gray-300 cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-purple-200 flex items-center gap-2">
+                        <CalendarDays className="w-4 h-4 text-purple-400" />
+                        Membership Expiry Date
+                      </label>
+                      <input
+                        readOnly
+                        value={computedExpiryDate}
+                        className="w-full px-4 py-3 bg-gray-700/50 border border-white/10 rounded-xl text-gray-300 cursor-not-allowed"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-purple-200 flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-purple-400" />
+                        Payment Amount *
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder={`Recommended: ${selectedPlanData?.price}`}
+                        value={initialPayment}
+                        onChange={(e) => setInitialPayment(e.target.value)}
+                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 hover:bg-white/15 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                      />
+                    </div>
+                  </section>
+                )}
+                {/* Summary Card */}
+                {selectedPlan && initialPayment && (
+                  <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-400" />
+                      Renewal ready! Please review and submit.
+                    </h3>
+                  </div>
+                )}
+                {/* Action Buttons */}
+                <div className="flex flex-col md:flex-row gap-4">
+                  <button
+                    type="submit"
+                    className="w-full h-12 bg-[#007AFF] hover:bg-[#0056CC] text-white rounded-xl shadow-lg font-semibold text-base transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  >
+                    Update Member
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => router.back()}
+                    className="w-full h-12 bg-gray-800 hover:bg-gray-700 text-white rounded-xl shadow-md font-semibold text-base transition-all duration-200 focus:ring-2 focus:ring-gray-400 focus:outline-none"
+                  >
+                    Back
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

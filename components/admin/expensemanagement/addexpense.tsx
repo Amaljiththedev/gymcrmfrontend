@@ -125,72 +125,64 @@ export default function CreateExpense() {
   /* JSX                                                          */
   /* ------------------------------------------------------------ */
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-10">
-      <Card className="bg-transparent border border-white/10 shadow-md shadow-white/5 p-4">
-        <CardContent className="space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-gray-800 py-10 px-2">
+      <Card className="w-full max-w-2xl bg-black/60 border border-white/10 shadow-2xl backdrop-blur-lg rounded-2xl p-0">
+        <CardContent className="p-8 space-y-8">
           {/* Header */}
-          <div>
-            <h2 className="text-2xl font-bold text-white">Log New Expense</h2>
-            <p className="text-gray-400 mt-1">
-              Fill in the details to record an expense
-            </p>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-full bg-red-500/10">
+              <FileText className="h-6 w-6 text-red-500" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">Log New Expense</h2>
+              <p className="text-gray-400 mt-1 text-sm">
+                Fill in the details to record an expense
+              </p>
+            </div>
           </div>
-
           <Separator className="bg-white/10" />
-
-          <form onSubmit={handleSubmit} className="space-y-10">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {/* Expense Info */}
-            <div className="space-y-6 border border-white/10 p-6 rounded-xl bg-black/20">
-              <h3 className="text-white text-lg font-semibold">
-                Expense Information
+            <div className="space-y-6 border border-white/10 p-6 rounded-xl bg-black/30 shadow-inner">
+              <h3 className="text-white text-lg font-semibold flex items-center gap-2 mb-2">
+                <Tag className="h-5 w-5 text-red-500" /> Expense Information
               </h3>
-
               {/* Title & Amount */}
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Title */}
                 <div className="space-y-2">
-                  <Label htmlFor="title" className="text-white">
-                    Title
-                  </Label>
+                  <Label htmlFor="title" className="text-white">Title</Label>
                   <div className="relative">
                     <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="title"
-                      className="pl-10 bg-black/40 border-white/20 text-white"
+                      className="pl-10 bg-black/40 border-white/20 text-white focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition"
                       value={form.title}
-                      onChange={(e) =>
-                        setForm({ ...form, title: e.target.value })
-                      }
+                      onChange={(e) => setForm({ ...form, title: e.target.value })}
                     />
                   </div>
                   {errors.title && (
-                    <p className="text-red-500 text-sm">{errors.title}</p>
+                    <p className="text-red-400 text-xs mt-1">{errors.title}</p>
                   )}
                 </div>
-
                 {/* Amount */}
                 <div className="space-y-2">
-                  <Label htmlFor="amount" className="text-white">
-                    Amount (₹)
-                  </Label>
+                  <Label htmlFor="amount" className="text-white">Amount (₹)</Label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="amount"
                       type="number"
-                      className="pl-10 bg-black/40 border-white/20 text-white"
+                      className="pl-10 bg-black/40 border-white/20 text-white focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition"
                       value={form.amount}
-                      onChange={(e) =>
-                        setForm({ ...form, amount: e.target.value })
-                      }
+                      onChange={(e) => setForm({ ...form, amount: e.target.value })}
                     />
                   </div>
                   {errors.amount && (
-                    <p className="text-red-500 text-sm">{errors.amount}</p>
+                    <p className="text-red-400 text-xs mt-1">{errors.amount}</p>
                   )}
                 </div>
               </div>
-
               {/* Category & Source */}
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Category */}
@@ -199,16 +191,13 @@ export default function CreateExpense() {
                   <div className="relative">
                     <Tag className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
                     <Select
-                      disabled={metaLoading}
                       value={form.category}
                       onValueChange={(v) => setForm({ ...form, category: v })}
                     >
-                      <SelectTrigger className="pl-10 bg-black/40 border-white/20 text-white">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-900 border-white/20 text-white">
-                        {categories.map((c) => (
-                          <SelectItem key={c.value} value={c.value}>
+                      <SelectTrigger className="pl-10 bg-black/40 border-white/20 text-white focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition" />
+                      <SelectContent className="bg-black/80 border-white/10 text-white">
+                        {categories.map((c: any) => (
+                          <SelectItem key={c.value} value={c.value} className="capitalize">
                             {c.label}
                           </SelectItem>
                         ))}
@@ -216,28 +205,22 @@ export default function CreateExpense() {
                     </Select>
                   </div>
                   {errors.category && (
-                    <p className="text-red-500 text-sm">{errors.category}</p>
+                    <p className="text-red-400 text-xs mt-1">{errors.category}</p>
                   )}
                 </div>
-
                 {/* Source */}
                 <div className="space-y-2">
-                  <Label className="text-white">Expense Source</Label>
+                  <Label className="text-white">Source</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
                     <Select
-                      disabled={metaLoading}
                       value={form.expenseSource}
-                      onValueChange={(v) =>
-                        setForm({ ...form, expenseSource: v })
-                      }
+                      onValueChange={(v) => setForm({ ...form, expenseSource: v })}
                     >
-                      <SelectTrigger className="pl-10 bg-black/40 border-white/20 text-white">
-                        <SelectValue placeholder="Select source" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-900 border-white/20 text-white">
-                        {sources.map((s) => (
-                          <SelectItem key={s.value} value={s.value}>
+                      <SelectTrigger className="pl-10 bg-black/40 border-white/20 text-white focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition" />
+                      <SelectContent className="bg-black/80 border-white/10 text-white">
+                        {sources.map((s: any) => (
+                          <SelectItem key={s.value} value={s.value} className="capitalize">
                             {s.label}
                           </SelectItem>
                         ))}
@@ -245,62 +228,49 @@ export default function CreateExpense() {
                     </Select>
                   </div>
                   {errors.expenseSource && (
-                    <p className="text-red-500 text-sm">
-                      {errors.expenseSource}
-                    </p>
+                    <p className="text-red-400 text-xs mt-1">{errors.expenseSource}</p>
                   )}
                 </div>
               </div>
-
               {/* Date */}
               <div className="space-y-2">
                 <Label className="text-white">Date</Label>
-                <div className="relative bg-black/40 border border-white/20 rounded-md">
-                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <div className="pl-10">
-                    <DatePicker
-                      selectedDate={form.date}
-                      onDateChange={(d: Date) => setForm({ ...form, date: d })}
-                    />
-                  </div>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
+                  <DatePicker
+                    value={form.date}
+                    onChange={(date) => setForm({ ...form, date: date! })}
+                    className="pl-10 bg-black/40 border-white/20 text-white focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition w-full"
+                  />
                 </div>
                 {errors.date && (
-                  <p className="text-red-500 text-sm">{errors.date}</p>
+                  <p className="text-red-400 text-xs mt-1">{errors.date}</p>
                 )}
               </div>
-
               {/* Description */}
               <div className="space-y-2">
-                <Label className="text-white">Description (optional)</Label>
-                <textarea
-                  className="w-full min-h-[100px] p-3 bg-black/40 border border-white/20 text-white rounded-md"
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                />
+                <Label className="text-white">Description</Label>
+                <div className="relative">
+                  <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
+                  <Input
+                    as="textarea"
+                    rows={3}
+                    className="pl-10 bg-black/40 border-white/20 text-white focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition resize-none"
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
-
-            {/* Footer */}
-            <CardFooter className="flex justify-end gap-4 px-0">
-              <Button
-                type="button"
-                variant="outline"
-                className="border-white/20 text-white hover:bg-white/10"
-                onClick={() => router.back()}
-              >
-                Cancel
-              </Button>
+            {/* Submit Button */}
+            <CardFooter className="flex justify-end bg-transparent border-t border-white/10 pt-6">
               <Button
                 type="submit"
-                className="bg-red-600 hover:bg-red-700 text-white"
                 disabled={submitting}
+                className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-2 rounded-lg shadow-lg transition-all flex items-center gap-2"
               >
-                {submitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Save Expense
+                {submitting ? <Loader2 className="animate-spin h-5 w-5" /> : <FileText className="h-5 w-5" />}
+                {submitting ? "Logging..." : "Log Expense"}
               </Button>
             </CardFooter>
           </form>

@@ -410,7 +410,7 @@ export default function MainDashboard() {
   const [startDate, setStartDate] = useState<Date>(() => {
     const today = new Date();
     const past = new Date();
-    past.setDate(today.getDate() - 30); // default last 30 days
+    past.setMonth(today.getMonth() - 2); // default to two months ago
     return past;
   });
 

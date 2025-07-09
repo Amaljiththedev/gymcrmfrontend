@@ -14,39 +14,6 @@ export default function page() {
   return (
     <>
       {/* Breadcrumb Navigation */}
-      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-        <Breadcrumbs
-          size="sm"
-          aria-label="breadcrumbs"
-          separator={<ChevronRightRoundedIcon fontSize="large" />}
-          sx={{ pl: 0 }}
-        >
-          <Link underline="none" color="neutral" href="/admin/dashboard">
-            <HomeRoundedIcon />
-          </Link>
-          <Link underline="hover" color="neutral" href="/admin/staff" sx={{ fontSize: 12, fontWeight: 500 }}>
-            Staff Management
-          </Link>
-
-        </Breadcrumbs>
-      </Box>
-
-      {/* Page Header */}
-      <Box
-        sx={{
-          display: "flex",
-          mb: 2,
-          gap: 1,
-          flexDirection: { xs: "column", sm: "row" },
-          alignItems: { xs: "start", sm: "center" },
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-        }}
-      >
-        <Button color="primary" startDecorator={<DownloadRoundedIcon />} size="sm">
-          Download PDF
-        </Button>
-      </Box>
       <RegularStaffPage />
     </>
   );

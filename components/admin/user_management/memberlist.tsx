@@ -817,10 +817,10 @@ export default function AppleMemberTable() {
                               my: 1,
                               mx: 1
                             }} />
-                            <MenuItem onClick={() => console.log(`Payment history for ${member.id}`)}>
+                            <MenuItem onClick={() => router.push(`/admin/membermanagement/payments/${member.id}`)}>
                               Payment History
                             </MenuItem>
-                            <MenuItem onClick={() => console.log(`Renewal for ${member.id}`)}>
+                            <MenuItem onClick={() => router.push(`/admin/membermanagement/renewal/${member.id}`)}>
                               Membership Renewal
                             </MenuItem>
                           </Menu>
